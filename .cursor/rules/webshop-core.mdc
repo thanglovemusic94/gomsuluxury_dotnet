@@ -1,0 +1,51 @@
+---
+description: WebShop — stack, URL, soft-delete, seed/restart, cập nhật rule
+alwaysApply: true
+---
+
+# WebShop (.NET 8 Razor)
+
+Stack: ASP.NET Core 8 Razor Pages + EF Core SQLite. Thư mục app: `WebShop/`. Nội dung UI tiếng Việt.
+
+## Kiến trúc
+
+- Shop: `Pages/Shop/`, layout `_ShopLayout`. Admin: `Pages/Admin/`, layout `_AdminLayout`.
+- Logic/seed dùng chung: `Infrastructure/`. Model: `Models/`. DB: `Data/AppDbContext.cs`.
+- Ưu tiên mở rộng helper có sẵn (`TextHelper`, `PagePaths`, `SoftDelete`, `AdminContentDelete`, `MediaStorage`) thay vì tạo utility song song.
+- Đổi schema/seed: dùng `Ensure*Async` / `*Schema.EnsureAsync` idempotent gọi từ `Program.cs` lúc startup — không chỉ dựa vào EF migration.
+- Cờ `Seed` trong config (`appsettings.json` / `appsettings.Local.json`): `DemoCatalog`, `LuxuryCatalog`, `SourceSiteSync`, `RemoteImageImport`. Local mặc định tắt sync/seed demo. `AdminSeed` luôn chạy nhưng **không** ghi đè mật khẩu nếu đã có user `admin`.
+
+## URL công khai
+
+- Trang tĩnh: `/{slug}` qua `Pages/Shop/Content.cshtml` + `PagePaths`. Không đưa lại link `/p/`.
+- Giữ redirect `/p/{*slug}` → 301. Khi lưu/resolve slug dùng `PagePaths.NormalizeSlug` / `PublicUrl` / `IsReserved`.
+- Sản phẩm `/san-pham/{slug}`, danh mục `/danh-muc/{slug}`, blog `/blog/{slug}` — không trùng segment đầu trong `PagePaths.IsReserved`.
+
+## Đăng nhập
+
+- “Ghi nhớ đăng nhập” = cookie phiên ~30 ngày + nhớ **tên đăng nhập** (cookie `WebShop.RememberUser`). Không lưu mật khẩu plaintext.
+- Không tick = session cookie; xóa cookie tên đăng nhập.
+- Form login: checkbox native (không dùng class ACE `ace` vì CSS ẩn input). Có `autocomplete` để trình duyệt gợi ý mật khẩu.
+- Đăng xuất vẫn phải login lại; “ghi nhớ” giúp khỏi đăng nhập lại sau khi **đóng trình duyệt**.
+
+## Soft delete
+
+- Xóa nội dung mặc định vào Thùng rác (`SoftDelete.Mark*`), không hard-delete.
+- Bulk admin: dùng lại `AdminContentDelete` + `admin-bulk.js`. Hard-delete chỉ trong luồng Thùng rác.
+- Cần đọc bản đã xóa: `IgnoreQueryFilters()` khi cố ý.
+
+## Cập nhật rule
+
+- Khi user đổi convention, hoặc task chốt pattern lâu dài (URL, xóa, asset, admin UX, seed/restart, SEO…): cùng lượt cập nhật file tương ứng trong `.cursor/rules/`.
+- Ưu tiên sửa rule có sẵn (`webshop-core`, `shop-frontend`, `admin`); chỉ tạo `.mdc` mới khi chủ đề tách biệt rõ.
+- Giữ rule ngắn, actionable; thay dòng cũ, tránh chồng trùng.
+- Câu kiểu “nhớ giúp”, “thêm vào rule”, “từ giờ…” = yêu cầu sửa `.cursor/rules/` ngay.
+
+## Thói quen agent
+
+- Sau đổi C# / Razor / `.cshtml`: build + restart (`dotnet run` cổng `:5262`). Không có RazorRuntimeCompilation — view cần restart mới thấy.
+- Diff nhỏ; bám naming/pattern hiện có.
+- Không commit trừ khi được hỏi. Không tự invent design system hay theme tím gradient.
+- Smoke-check route công khai đã đụng trước khi báo xong.
+- Rule viết bằng tiếng Việt (giữ tên file/API tiếng Anh).
+- Triển khai VPS: xem `docs/deploy.md` (+ mẫu trong `docs/deploy/`). Không mặc định Docker/n8n trên VPS nhỏ.

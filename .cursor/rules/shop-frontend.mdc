@@ -1,0 +1,24 @@
+---
+description: Convention CSS/JS/Razor storefront Shop
+globs: WebShop/wwwroot/css/shop*.css,WebShop/wwwroot/js/shop*.js,WebShop/Pages/Shop/**/*.cshtml,WebShop/Pages/Shared/_Shop*.cshtml,WebShop/Pages/Shared/Components/Shop*/**/*
+alwaysApply: false
+---
+
+# Shop frontend
+
+## Asset
+
+- Style chính: `wwwroot/css/shop.css`. Script tách theo trang: `shop-core.js`, `shop-home.js`, `shop-catalog.js`, `shop-detail.js` — nạp qua `ViewData["ShopAssets"]`, không dồn hết vào một file global.
+- Ưu tiên CSS variable và prefix class sẵn có (`shop-`, `shop-prose`, buy-bar, slider) thay framework mới.
+
+## Layout & UX
+
+- Mobile-first; giữ sticky buy-bar / tabbar.
+- Tôn trọng `prefers-reduced-motion` với hover/animation (desktop hover OK khi cho phép motion).
+- Slider sản phẩm: fit media bằng contain / đúng tỷ lệ — không kéo giãn full bừa.
+- HtmlBlock (`Component.InvokeAsync("HtmlBlock", …)`): HTML/CSS/JS sửa được trong DB; style scoped nằm trong block khi Admin cần chỉnh (vd. YouTube facade).
+
+## Markup
+
+- Trang shop dùng `Layout = "_ShopLayout"`. Độ rộng prose/nội dung thống nhất với trang tĩnh hiện có.
+- Ảnh: dùng `MediaStorage` / helper URL kích thước; tránh hotlink remote khi đã có media local.

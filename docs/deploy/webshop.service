@@ -1,0 +1,23 @@
+[Unit]
+Description=WebShop ASP.NET Core
+After=network.target
+
+[Service]
+Type=simple
+User=webshop
+Group=webshop
+WorkingDirectory=/var/www/webshop/WebShop
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://127.0.0.1:5000
+# Tuỳ chọn: file config ngoài (nếu dùng)
+# Environment=DOTNET_ADDITIONAL_DEPS=
+ExecStart=/usr/bin/dotnet /var/www/webshop/WebShop/WebShop.dll
+Restart=always
+RestartSec=5
+KillSignal=SIGINT
+SyslogIdentifier=webshop
+# Giới hạn nhẹ trên VPS nhỏ (tuỳ chỉnh)
+# MemoryMax=512M
+
+[Install]
+WantedBy=multi-user.target

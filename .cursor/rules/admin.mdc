@@ -1,0 +1,28 @@
+---
+description: Convention Admin Razor, menu, bulk xóa, asset admin
+globs: WebShop/Pages/Admin/**/*,WebShop/wwwroot/css/admin.css,WebShop/wwwroot/js/admin*.js,WebShop/Infrastructure/Admin*.cs
+alwaysApply: false
+---
+
+# Admin
+
+## Trang
+
+- Route dưới `/Admin/...`. Giữ `[Authorize]` / kiểm tra role hiện có.
+- List: paging qua helper sẵn; thumb list theo token size trong `admin.css` (đổi CSS/Razor cần restart).
+- Soft-delete + bulk: checkbox qua `admin-bulk.js` và `AdminContentDelete` — soft vào Thùng rác; hard chỉ nơi Trash đã làm.
+
+## Menu
+
+- Cây Header/Footer: SortableJS + `admin-menus.js`. Lưu parent/order; lọc theo Position.
+- URL menu trang tĩnh phải là `/{slug}` (không `/p/...`).
+
+## Trang tĩnh & SEO
+
+- Lưu slug: `PagePaths.NormalizeSlug` + `IsReserved`. Placeholder/help hiển thị `/{slug}`.
+- Tái dùng `_SeoFields` / `SeoInput` cho meta.
+
+## Style
+
+- Dùng token `admin.css`. Không đưa lại chrome ACE / thí nghiệm theme nặng trừ khi được yêu cầu rõ.
+- Ưu tiên chỉnh font/spacing vừa phải thay redesign admin toàn bộ.

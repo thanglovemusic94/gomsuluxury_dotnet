@@ -1,0 +1,22 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Data Source=/var/www/webshop/data/webshop.db"
+  },
+  "Seed": {
+    "DemoCatalog": false,
+    "LuxuryCatalog": false,
+    "SourceSiteSync": false,
+    "RemoteImageImport": false
+  },
+  "Gemini": {
+    "ApiKey": "",
+    "Model": "gemini-3.8-flash"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "gomsuluxury.vn;www.gomsuluxury.vn"
+}

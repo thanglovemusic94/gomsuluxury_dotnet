@@ -1,0 +1,29 @@
+# Secrets & local
+**/appsettings.Local.json
+**/*.pem
+**/*.key
+
+# Build
+**/bin/
+**/obj/
+**/publish/
+**/artifacts/
+*.user
+*.log
+
+# Data (deploy riêng qua SCP, không commit)
+**/*.db
+**/*.db-shm
+**/*.db-wal
+**/wwwroot/uploads/
+**/wwwroot/is-cache/
+
+# IDE
+.idea/
+.vs/
+*.suo
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
