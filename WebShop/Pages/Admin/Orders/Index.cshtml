@@ -56,6 +56,7 @@
 						<th>Mã</th>
 						<th>Ngày</th>
 						<th>Khách</th>
+						<th>Nguồn</th>
 						<th class="text-right">Tổng</th>
 						<th>Trạng thái</th>
 						<th>Thanh toán</th>
@@ -65,7 +66,7 @@
 				<tbody>
 				@if (Model.Items.Count == 0)
 				{
-					<tr><td colspan="7">Không có đơn hàng phù hợp.</td></tr>
+					<tr><td colspan="8">Không có đơn hàng phù hợp.</td></tr>
 				}
 				@foreach (var order in Model.Items)
 				{
@@ -73,6 +74,7 @@
 						<td>@order.OrderCode</td>
 						<td>@order.OrderDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
 						<td>@order.CustomerName<br /><small>@order.CustomerPhone</small></td>
+						<td><small>@(string.IsNullOrWhiteSpace(order.Source) ? "—" : order.Source)</small></td>
 						<td class="text-right">@order.TotalAmount.ToString("N0")</td>
 						<td>@order.Status</td>
 						<td>@order.PaymentStatus</td>

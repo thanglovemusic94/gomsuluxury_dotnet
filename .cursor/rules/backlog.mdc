@@ -1,0 +1,34 @@
+---
+description: Backlog sản phẩm WebShop — việc đã xếp hàng, chưa làm hoặc làm sau
+alwaysApply: true
+---
+
+# Backlog
+
+Rule này chỉ liệt kê việc **chưa làm / làm sau**. Convention kỹ thuật vẫn ở `webshop-core`, `admin`, `shop-frontend`.
+Khi hoàn thành một mục: xóa khỏi đây (hoặc đánh dấu xong rồi gỡ), đừng để backlog phình.
+
+## Landing Ads (`/lp/{slug}`)
+
+Đã có (P0/P1): Admin CRUD, layout `_ShopAdsLayout`, form đơn + `Order.Source=LP:{slug}`, Pixel/script, countdown `OfferEndsAt`, `AdsPrice`, list Tracking/số đơn, SEO collapsed.
+
+- Preview LP realtime trên Admin Edit (block mock hero/CTA/countdown/SP — không iframe bắt buộc đã lưu).
+- (Tuỳ chọn) block CMS / full HTML builder — chỉ khi form có cấu trúc không đủ; vẫn **một** Razor `/lp/{slug}`, không sinh file theo chiến dịch.
+- Soft-delete LP (+ Thùng rác) cho đồng bộ nội dung khác.
+- UTM / A-B variant (nhẹ) nếu Marketing cần so sánh cùng sản phẩm.
+
+## CSS / asset theo trang
+
+### Admin (đã làm)
+- `ViewData["AdminAssets"]`: `seo` / `bulk` — layout chỉ nạp `admin-seo-fields.js` / `admin-bulk.js` khi cần. `_SeoFields` tự đăng ký `seo`.
+
+### Shop
+- Đã làm: LP Ads tách `shop-base`/`shop-ads`; Production bundle minify `/css/shop-ads.bundle.css` (WebOptimizer). Gift Ads = `shop.css` + `shop-ads.css`. Storefront vẫn `shop.css`.
+- Tiếp: tách CSS home/catalog/detail; minify `shop.css`; gift-ads bundle gọn (không full `shop.css`).
+- Không sinh file CSS theo từng chiến dịch LP.
+
+## Tạm hoãn (đã bàn, không làm sớm)
+
+- SignalR / FOMO realtime trên shop.
+- Redis (cache phân tán) — local/VPS nhỏ dùng MemoryCache hiện có.
+- Admin activity log UI nặng (ngoài `AuditLogs` tối thiểu nếu đã có).

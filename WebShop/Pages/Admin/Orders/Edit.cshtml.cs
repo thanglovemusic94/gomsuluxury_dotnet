@@ -119,6 +119,8 @@ public class EditModel(AppDbContext db) : PageModel
 
         public string? OrderNote { get; set; }
 
+        public string? Source { get; set; }
+
         public decimal TotalAmount { get; set; }
 
         public static OrderInput From(Order order) => new()
@@ -132,6 +134,7 @@ public class EditModel(AppDbContext db) : PageModel
             CustomerPhone = order.CustomerPhone,
             ShippingAddress = order.ShippingAddress,
             OrderNote = order.OrderNote,
+            Source = order.Source,
             TotalAmount = order.TotalAmount
         };
     }

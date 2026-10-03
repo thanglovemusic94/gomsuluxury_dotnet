@@ -1,0 +1,195 @@
+/* Shop base — shared tokens + primitives for Ads LP (and future page bundles).
+   Full storefront vẫn dùng shop.css (đã gồm các rule tương đương). */
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+img { max-width: 100%; height: auto; border: 0; }
+
+:root {
+	--shop-wine: #5a1010;
+	--shop-wine-deep: #3f0b0b;
+	--shop-cat: #2b1812;
+	--shop-gold: #c9a24a;
+	--shop-max: 1400px;
+	--shop-rail: 260px;
+	--shop-font: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
+	--shop-font-display: "Cormorant Garamond", "Times New Roman", Georgia, serif;
+	--shop-card-border: #d9d0c4;
+	--shop-card-border-hover: #c4b8a8;
+	--shop-card-radius: 6px;
+	--shop-card-shadow: 0 3px 14px rgba(62, 42, 28, 0.055);
+	--shop-gutter: 28px;
+	--shop-tabbar-clearance: 72px;
+}
+
+.alert {
+	padding: 12px 14px;
+	margin: 0 0 16px;
+	border: 1px solid transparent;
+	border-radius: 6px;
+}
+.alert-success { color: #3c763d; background: #dff0d8; border-color: #d6e9c6; }
+.alert-danger { color: #a94442; background: #f2dede; border-color: #ebccd1; }
+.alert-warning { color: #8a6d3b; background: #fcf8e3; border-color: #faebcc; }
+
+body.shop {
+	margin: 0;
+	background: #fff;
+	color: #2b2622;
+	font-family: var(--shop-font);
+	font-size: 14px;
+	line-height: 1.55;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	text-rendering: optimizeLegibility;
+}
+body.shop,
+body.shop button,
+body.shop input,
+body.shop select,
+body.shop textarea,
+body.shop .btn,
+body.shop .form-control {
+	font-family: var(--shop-font);
+}
+body.shop h1,
+body.shop h2,
+body.shop h3,
+body.shop h4,
+body.shop .shop-title {
+	font-family: var(--shop-font-display);
+	font-weight: 600;
+	color: #2b2622;
+}
+body.shop a,
+body.shop a:focus,
+body.shop a:active { color: inherit; text-decoration: none; }
+body.shop a:hover { color: #8f3d32; }
+
+body.shop .container {
+	width: min(var(--shop-max), calc(100% - (var(--shop-gutter) * 2)));
+	margin-left: auto;
+	margin-right: auto;
+	float: none;
+}
+body.shop .text-muted { color: #7a756e; }
+
+body.shop .btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	padding: 8px 14px;
+	border: 1px solid transparent;
+	border-radius: 6px;
+	background: #f5f2ec;
+	color: #2b2622;
+	cursor: pointer;
+	line-height: 1.3;
+	font-size: 14px;
+	text-align: center;
+	user-select: none;
+	appearance: none;
+}
+body.shop .btn:disabled,
+body.shop .btn[disabled] { opacity: 0.55; cursor: not-allowed; }
+body.shop .btn-lg { padding: 12px 20px; font-size: 16px; }
+body.shop .btn-primary {
+	background: #8b1e1e;
+	border-color: #6f1818;
+	color: #fff8f0;
+}
+body.shop .btn-primary:hover,
+body.shop .btn-primary:focus {
+	background: #6f1818;
+	border-color: #5a1212;
+	color: #fff;
+}
+body.shop .btn-default {
+	background: #fff;
+	border-color: #e4ddd6;
+	color: #2b2622;
+}
+
+body.shop .form-group { margin-bottom: 14px; }
+body.shop .form-control {
+	display: block;
+	width: 100%;
+	padding: 8px 10px;
+	font-size: 14px;
+	line-height: 1.4;
+	background: #fff;
+	border: 1px solid #e4ddd6;
+	border-radius: var(--shop-card-radius);
+	color: #2c2825;
+	height: 38px;
+	box-shadow: none;
+}
+body.shop textarea.form-control { height: auto; }
+body.shop input:focus,
+body.shop textarea:focus,
+body.shop select:focus,
+body.shop .form-control:focus {
+	border-color: #e4ddd6 !important;
+	outline: none !important;
+	box-shadow: none !important;
+	background-color: #fff;
+}
+body.shop .form-horizontal .form-group { margin-left: 0; margin-right: 0; }
+body.shop .form-horizontal .control-label {
+	display: block;
+	float: none;
+	width: auto;
+	text-align: left;
+	padding: 0 0 6px;
+}
+body.shop .form-horizontal [class*="col-"] {
+	float: none;
+	width: 100%;
+	max-width: 100%;
+	padding-left: 0;
+	padding-right: 0;
+}
+body.shop .form-horizontal [class*="offset"] { margin-left: 0; }
+
+.shop-title {
+	position: relative;
+	text-align: center;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	font-size: 22px;
+	font-weight: 600;
+	margin: 22px 0 18px;
+	padding-bottom: 14px;
+}
+.shop-title::after {
+	content: "";
+	position: absolute;
+	left: 50%;
+	bottom: 0;
+	width: min(220px, 55%);
+	height: 1px;
+	transform: translateX(-50%);
+	background: linear-gradient(90deg, transparent, rgba(201, 162, 74, 0.2), #c9a24a, rgba(201, 162, 74, 0.2), transparent);
+}
+.shop-title::before {
+	content: "";
+	position: absolute;
+	left: 50%;
+	bottom: -3px;
+	width: 7px;
+	height: 7px;
+	transform: translateX(-50%) rotate(45deg);
+	background: #c9a24a;
+	border: 1px solid rgba(90, 16, 16, 0.35);
+	z-index: 1;
+}
+
+/* Prose tối thiểu cho BodyHtml LP */
+.shop-prose { line-height: 1.65; color: #2b2622; }
+.shop-prose h2,
+.shop-prose h3 { font-family: var(--shop-font-display); margin: 1.2em 0 0.5em; }
+.shop-prose p,
+.shop-prose ul { margin: 0 0 0.85em; }
+.shop-prose ul { padding-left: 1.2em; }

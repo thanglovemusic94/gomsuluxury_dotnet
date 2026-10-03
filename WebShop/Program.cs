@@ -70,6 +70,18 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("AdminOrViewer", policy =>
         policy.RequireRole(AppRoles.Admin, AppRoles.Viewer));
 });
+// Production: minify/bundle CSS Ads LP. Development giữ file gốc để sửa dễ.
+if (!builder.Environment.IsDevelopment())
+{
+    builder.Services.AddWebOptimizer(pipeline =>
+    {
+        pipeline.AddCssBundle(
+            "/css/shop-ads.bundle.css",
+            "css/shop-base.css",
+            "css/shop-ads.css");
+    });
+}
+
 builder.Services.AddRazorPages(options =>
 {
     // Admin + Staff + Viewer: vào khu vực Admin
@@ -132,6 +144,8 @@ var uploadsPath = Path.Combine(app.Environment.WebRootPath, "uploads");
 Directory.CreateDirectory(uploadsPath);
 // On-the-fly resize/format for /uploads/originals/*?width=&format= (before static files).
 app.UseShopImageSharp();
+if (!app.Environment.IsDevelopment())
+    app.UseWebOptimizer();
 app.UseStaticFiles(new StaticFileOptions
 {
     OnPrepareResponse = ctx =>
@@ -250,6 +264,7 @@ using (var scope = app.Services.CreateScope())
     await ShopNavSeed.EnsureAsync(db);
     await HtmlBlockSeed.EnsureAsync(db);
     await GiftLandingSeed.EnsureAsync(db);
+    await LandingPageSchema.EnsureAsync(db);
     await PagePaths.MigrateLegacyPrefixAsync(db);
     if (seed.GetValue("SourceSiteSync", true))
     {

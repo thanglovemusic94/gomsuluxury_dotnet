@@ -135,6 +135,13 @@
 					</a>
 					<b class="arrow"></b>
 				</li>
+				<li class="@(IsActive("Landings") ? "active" : null)">
+					<a href="/Admin/Landings">
+						<i class="menu-icon fa fa-bullhorn"></i>
+						<span class="menu-text"> Landing Page </span>
+					</a>
+					<b class="arrow"></b>
+				</li>
 				<li class="@(IsActive("Media") ? "active" : null)">
 					<a href="/Admin/Media">
 						<i class="menu-icon fa fa-picture-o"></i>
@@ -233,12 +240,25 @@
 
 	<script src="/ace/assets/js/jquery-2.1.4.min.js"></script>
 	<script src="/ace/assets/js/bootstrap.min.js"></script>
-	<script src="~/js/admin-bulk.js" asp-append-version="true"></script>
+	@if (HasAdminAsset("bulk"))
+	{
+		<script src="~/js/admin-bulk.js" asp-append-version="true"></script>
+	}
 	@await RenderSectionAsync("Scripts", required: false)
-	<script src="~/js/admin-seo-fields.js" asp-append-version="true"></script>
+	@if (HasAdminAsset("seo"))
+	{
+		<script src="~/js/admin-seo-fields.js" asp-append-version="true"></script>
+	}
 </body>
 </html>
 
 @functions {
 	bool IsActive(string key) => string.Equals(ViewData["Menu"] as string, key, StringComparison.Ordinal);
+
+	bool HasAdminAsset(string key)
+	{
+		var raw = ViewData["AdminAssets"] as string ?? "";
+		var assets = raw.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+		return assets.Contains(key, StringComparer.OrdinalIgnoreCase);
+	}
 }

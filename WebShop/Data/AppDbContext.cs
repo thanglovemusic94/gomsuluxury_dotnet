@@ -41,6 +41,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<TemporaryCart> TemporaryCarts => Set<TemporaryCart>();
 
+    public DbSet<LandingPage> LandingPages => Set<LandingPage>();
+
+    public DbSet<LandingPageProduct> LandingPageProducts => Set<LandingPageProduct>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ConfigureUser(modelBuilder);
@@ -61,6 +65,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         ConfigureMediaAsset(modelBuilder);
         ConfigureAuditLog(modelBuilder);
         ConfigureTemporaryCart(modelBuilder);
+        ConfigureLandingPage(modelBuilder);
+        ConfigureLandingPageProduct(modelBuilder);
     }
 
     private static void ConfigureUser(ModelBuilder modelBuilder)
@@ -242,6 +248,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(order => order.CustomerPhone).HasMaxLength(15).IsRequired();
             entity.Property(order => order.ShippingAddress).HasMaxLength(500).IsRequired();
             entity.Property(order => order.OrderNote).HasMaxLength(500);
+            entity.Property(order => order.Source).HasMaxLength(100);
             entity.HasIndex(order => order.OrderCode).IsUnique();
 
             entity.HasOne(order => order.User)
@@ -428,6 +435,44 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .WithMany()
                 .HasForeignKey(item => item.OrderId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+    }
+
+    private static void ConfigureLandingPage(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<LandingPage>(entity =>
+        {
+            entity.Property(item => item.Name).HasMaxLength(200).IsRequired();
+            entity.Property(item => item.Slug).HasMaxLength(150).IsRequired();
+            entity.Property(item => item.RedirectWhenOff).HasMaxLength(20).IsRequired().HasDefaultValue("Home");
+            entity.Property(item => item.Headline).HasMaxLength(250).IsRequired();
+            entity.Property(item => item.Subheadline).HasMaxLength(500);
+            entity.Property(item => item.HeroImageUrl).HasMaxLength(500);
+            entity.Property(item => item.CtaText).HasMaxLength(80).IsRequired().HasDefaultValue("Đặt mua ngay");
+            entity.Property(item => item.CtaUrl).HasMaxLength(500);
+            entity.Property(item => item.ThankYouMessage).HasMaxLength(500).IsRequired();
+            entity.Property(item => item.MetaPixelId).HasMaxLength(40);
+            entity.Property(item => item.TikTokPixelId).HasMaxLength(40);
+            entity.HasIndex(item => item.Slug).IsUnique();
+            ConfigureSeo(entity);
+        });
+    }
+
+    private static void ConfigureLandingPageProduct(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<LandingPageProduct>(entity =>
+        {
+            entity.HasKey(item => new { item.LandingPageId, item.ProductId });
+            entity.Property(item => item.DisplayOrder).HasDefaultValue(0);
+            entity.Property(item => item.AdsPrice).HasColumnType("TEXT");
+            entity.HasOne(item => item.LandingPage)
+                .WithMany(page => page.Products)
+                .HasForeignKey(item => item.LandingPageId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(item => item.Product)
+                .WithMany()
+                .HasForeignKey(item => item.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 

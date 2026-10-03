@@ -22,7 +22,9 @@ Stack: ASP.NET Core 8 Razor Pages + EF Core SQLite. Thư mục app: `WebShop/`. 
 
 - Trang tĩnh: `/{slug}` qua `Pages/Shop/Content.cshtml` + `PagePaths`. Không đưa lại link `/p/`.
 - Giữ redirect `/p/{*slug}` → 301. Khi lưu/resolve slug dùng `PagePaths.NormalizeSlug` / `PublicUrl` / `IsReserved`.
-- Sản phẩm `/san-pham/{slug}`, danh mục `/danh-muc/{slug}`, blog `/blog/{slug}` — không trùng segment đầu trong `PagePaths.IsReserved`.
+- Sản phẩm `/san-pham/{slug}`, danh mục `/danh-muc/{slug}`, blog `/blog/{slug}`, landing Ads `/lp/{slug}` — không trùng segment đầu trong `PagePaths.IsReserved`.
+- Landing Ads: Admin → Landing Page; layout `_ShopAdsLayout` (không full header/footer shop); đơn form LP gắn `Order.Source` = `LP:{slug}`.
+- LP Ads: tracking per-page (Pixel ID + script head/body, conversion trên thank-you); countdown `OfferEndsAt`; giá Ads đè catalog qua `LandingPageProduct.AdsPrice`.
 
 ## Đăng nhập
 
@@ -41,6 +43,7 @@ Stack: ASP.NET Core 8 Razor Pages + EF Core SQLite. Thư mục app: `WebShop/`. 
 ## Cập nhật rule
 
 - Khi user đổi convention, hoặc task chốt pattern lâu dài (URL, xóa, asset, admin UX, seed/restart, SEO…): cùng lượt cập nhật file tương ứng trong `.cursor/rules/`.
+- Việc **xếp hàng / làm sau**: ghi vào `backlog.mdc` (luôn áp dụng); xóa mục khi đã ship.
 - Ưu tiên sửa rule có sẵn (`webshop-core`, `shop-frontend`, `admin`); chỉ tạo `.mdc` mới khi chủ đề tách biệt rõ.
 - Giữ rule ngắn, actionable; thay dòng cũ, tránh chồng trùng.
 - Câu kiểu “nhớ giúp”, “thêm vào rule”, “từ giờ…” = yêu cầu sửa `.cursor/rules/` ngay.

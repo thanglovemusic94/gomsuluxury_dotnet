@@ -2,6 +2,10 @@
 @{
 	var previewTitle = string.IsNullOrWhiteSpace(Model.MetaTitle) ? "(Meta title)" : Model.MetaTitle;
 	var previewDesc = string.IsNullOrWhiteSpace(Model.MetaDescription) ? "(Meta description)" : Model.MetaDescription;
+	var assets = ViewData["AdminAssets"] as string ?? "";
+	if (!assets.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+		.Contains("seo", StringComparer.OrdinalIgnoreCase))
+		ViewData["AdminAssets"] = string.IsNullOrWhiteSpace(assets) ? "seo" : assets.Trim() + " seo";
 }
 <div class="js-seo-fields" data-seo-root>
 	<div class="form-group">

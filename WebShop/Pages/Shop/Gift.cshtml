@@ -2,6 +2,8 @@
 @model WebShop.Pages.Shop.GiftModel
 @{
 	Layout = Model.IsAdsLanding ? "_ShopAdsLayout" : "_ShopLayout";
+	if (Model.IsAdsLanding)
+		ViewData["AdsUseFullShopCss"] = true;
 	var hero = Model.HeroImageUrl;
 }
 <section class="shop-gift-hero" aria-label="Quà biếu">

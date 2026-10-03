@@ -1,10 +1,22 @@
 @using WebShop.Infrastructure
+@using System.Globalization
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment HostEnv
 @{
 	var lcp = ViewData["LcpImage"] as string;
 	var siteName = ViewData["AdsSiteName"] as string ?? "WebShop";
 	var logoUrl = ViewData["AdsLogoUrl"] as string;
 	var hotline = ViewData["AdsHotline"] as string;
 	var hotlineHref = ViewData["AdsHotlineHref"] as string;
+	var headScripts = ViewData["LpHeadScripts"] as string;
+	var bodyScripts = ViewData["LpBodyScripts"] as string;
+	var metaPixelId = ViewData["LpMetaPixelId"] as string;
+	var tikTokPixelId = ViewData["LpTikTokPixelId"] as string;
+	var conversion = ViewData["LpConversion"] as bool? == true;
+	var orderCode = ViewData["LpOrderCode"] as string ?? "";
+	var orderTotal = ViewData["LpOrderTotal"] is decimal d ? d : 0m;
+	var orderTotalJs = orderTotal.ToString(CultureInfo.InvariantCulture);
+	var useAdsBundle = !HostEnv.IsDevelopment();
+	var useFullShopCss = ViewData["AdsUseFullShopCss"] as bool? == true;
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -21,10 +33,48 @@
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
 	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600&amp;family=Cormorant+Garamond:wght@600;700&amp;display=swap" />
 	<link rel="stylesheet" href="/ace/assets/font-awesome/4.5.0/css/font-awesome.min.css" />
-	<link rel="stylesheet" href="~/css/shop.css" asp-append-version="true" />
+	@if (useFullShopCss)
+	{
+		@* Gift Ads: shop.css (card/gift) + chrome ads riêng — không dùng bundle (tránh trùng base) *@
+		<link rel="stylesheet" href="~/css/shop.css" asp-append-version="true" />
+		<link rel="stylesheet" href="~/css/shop-ads.css" asp-append-version="true" />
+	}
+	else if (useAdsBundle)
+	{
+		@* Production LP: base+ads minify một file *@
+		<link rel="stylesheet" href="~/css/shop-ads.bundle.css" asp-append-version="true" />
+	}
+	else
+	{
+		<link rel="stylesheet" href="~/css/shop-base.css" asp-append-version="true" />
+		<link rel="stylesheet" href="~/css/shop-ads.css" asp-append-version="true" />
+	}
 	@if (!string.IsNullOrWhiteSpace(lcp))
 	{
 		<link rel="preload" as="image" href="@lcp" fetchpriority="high" />
+	}
+	@if (!string.IsNullOrWhiteSpace(metaPixelId))
+	{
+		<script>
+			!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+			n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+			n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+			t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script',
+			'https://connect.facebook.net/en_US/fbevents.js');
+			fbq('init','@metaPixelId');fbq('track','PageView');
+		</script>
+		<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=@metaPixelId&ev=PageView&noscript=1" alt="" /></noscript>
+	}
+	@if (!string.IsNullOrWhiteSpace(tikTokPixelId))
+	{
+		<script>
+			!function(w,d,t){w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq.load=function(e,n){var r="https://analytics.tiktok.com/i18n/pixel/events.js",o=n&&n.partner;ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=r,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{};n=document.createElement("script");n.type="text/javascript",n.async=!0,n.src=r+"?sdkid="+e+"&lib="+t;e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(n,e)};
+			ttq.load('@tikTokPixelId');ttq.page();}(window,document,'ttq');
+		</script>
+	}
+	@if (!string.IsNullOrWhiteSpace(headScripts))
+	{
+		@Html.Raw(headScripts)
 	}
 </head>
 <body class="shop shop--ads">
@@ -56,6 +106,27 @@
 		<p class="shop-ads-foot__note">© @siteName</p>
 		<a class="shop-ads-foot__link" href="/">Xem cửa hàng</a>
 	</footer>
+	@if (conversion)
+	{
+		<script>
+			(function () {
+				var code = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(orderCode));
+				var value = @orderTotalJs;
+				window.dataLayer = window.dataLayer || [];
+				window.dataLayer.push({ event: 'lp_purchase', transaction_id: code, value: value, currency: 'VND' });
+				if (typeof fbq === 'function') {
+					fbq('track', 'Purchase', { value: value, currency: 'VND', content_ids: [code] });
+				}
+				if (window.ttq && typeof window.ttq.track === 'function') {
+					window.ttq.track('CompletePayment', { value: value, currency: 'VND' });
+				}
+			})();
+		</script>
+	}
+	@if (!string.IsNullOrWhiteSpace(bodyScripts))
+	{
+		@Html.Raw(bodyScripts)
+	}
 	<script src="~/js/shop-core.js" asp-append-version="true"></script>
 </body>
 </html>

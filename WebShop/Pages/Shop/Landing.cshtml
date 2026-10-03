@@ -1,0 +1,192 @@
+@page "/lp/{slug}"
+@model WebShop.Pages.Shop.LandingModel
+@{
+	Layout = "_ShopAdsLayout";
+	var lp = Model.PageData;
+	var hero = MediaUrls.For(lp.HeroImageUrl, MediaSize.Large);
+	var ctaHref = string.IsNullOrWhiteSpace(lp.CtaUrl) ? "#dat-hang" : lp.CtaUrl;
+	var endsAt = lp.OfferEndsAt;
+	var showCountdown = endsAt is DateTime e && e > DateTime.Now && string.IsNullOrEmpty(Model.OrderCode) && !Model.ShowExpired;
+}
+
+@if (Model.ShowExpired)
+{
+	<section class="shop-lp-expired">
+		<div class="container">
+			<h1>Chương trình đã kết thúc</h1>
+			<p>Ưu đãi <strong>@lp.Name</strong> không còn hiệu lực.</p>
+			<a class="btn btn-primary" href="/">Về trang chủ</a>
+		</div>
+	</section>
+	return;
+}
+
+@if (!string.IsNullOrEmpty(Model.OrderCode))
+{
+	<section class="shop-lp-thanks">
+		<div class="container">
+			<h1>Đã nhận đơn</h1>
+			<p>@lp.ThankYouMessage</p>
+			<p>Mã đơn: <strong>@Model.OrderCode</strong></p>
+			<a class="btn btn-primary" href="/">Về cửa hàng</a>
+		</div>
+	</section>
+	return;
+}
+
+<section class="shop-lp-hero" aria-label="@lp.Headline">
+	@if (!string.IsNullOrWhiteSpace(hero))
+	{
+		<img class="shop-lp-hero__bg" src="@hero" alt="" width="1600" height="900" fetchpriority="high" decoding="async" />
+	}
+	<div class="shop-lp-hero__veil" aria-hidden="true"></div>
+	<div class="shop-lp-hero__inner">
+		<h1 class="shop-lp-hero__title">@lp.Headline</h1>
+		@if (!string.IsNullOrWhiteSpace(lp.Subheadline))
+		{
+			<p class="shop-lp-hero__sub">@lp.Subheadline</p>
+		}
+		@if (showCountdown)
+		{
+			<div class="shop-lp-countdown" data-ends="@endsAt!.Value.ToString("yyyy-MM-ddTHH:mm:ss")" aria-live="polite">
+				<span class="shop-lp-countdown__label">Ưu đãi còn</span>
+				<span class="shop-lp-countdown__digits" data-countdown-digits>—:—:—</span>
+			</div>
+		}
+		<a class="btn btn-primary shop-lp-hero__cta" href="@ctaHref">@lp.CtaText</a>
+	</div>
+</section>
+
+<div class="container shop-lp">
+	@if (!string.IsNullOrWhiteSpace(lp.BodyHtml))
+	{
+		<article class="shop-prose shop-lp__body">
+			@Html.Raw(lp.BodyHtml)
+		</article>
+	}
+
+	@if (Model.Offers.Count > 0)
+	{
+		<section class="shop-lp-products" aria-label="Sản phẩm">
+			<h2 class="shop-title">Sản phẩm ưu đãi</h2>
+			<div class="shop-lp-product-grid">
+				@foreach (var offer in Model.Offers)
+				{
+					var product = offer.Product;
+					var img = MediaUrls.For(product.ImageUrl, MediaSize.Medium);
+					<div class="shop-lp-card">
+						@if (offer.DiscountPercent is int pct)
+						{
+							<span class="shop-lp-card__badge">-@pct%</span>
+						}
+						@if (!string.IsNullOrWhiteSpace(img))
+						{
+							<img src="@img" alt="@product.Name" width="400" height="400" loading="lazy" decoding="async" />
+						}
+						<h3>@product.Name</h3>
+						<p class="shop-lp-card__price">
+							@if (offer.UnitPrice < offer.ListPrice)
+							{
+								<s class="shop-lp-card__list">@offer.ListPrice.ToString("N0") đ</s>
+							}
+							<span>@offer.UnitPrice.ToString("N0") đ</span>
+						</p>
+						@if (product.Stock < 1)
+						{
+							<span class="shop-lp-card__out">Hết hàng</span>
+						}
+					</div>
+				}
+			</div>
+		</section>
+	}
+
+	<section id="dat-hang" class="shop-lp-form" aria-label="Đặt hàng">
+		<h2 class="shop-title">Đặt hàng nhanh</h2>
+		@if (showCountdown)
+		{
+			<p class="shop-lp-form__urgency">Kết thúc sau <strong data-countdown-digits>—:—:—</strong></p>
+		}
+		<form method="post" class="form-horizontal">
+			<div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+			@if (Model.Offers.Count > 1)
+			{
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Sản phẩm</label>
+					<div class="col-sm-9">
+						<select asp-for="Input.ProductId" class="form-control">
+							@foreach (var offer in Model.Offers)
+							{
+								var product = offer.Product;
+								if (product.Stock < 1)
+								{
+									<option value="@product.Id" disabled>@product.Name (hết hàng)</option>
+								}
+								else
+								{
+									<option value="@product.Id">@product.Name — @offer.UnitPrice.ToString("N0") đ</option>
+								}
+							}
+						</select>
+					</div>
+				</div>
+			}
+			else if (Model.Offers.Count == 1)
+			{
+				<input type="hidden" asp-for="Input.ProductId" />
+			}
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Số lượng</label>
+				<div class="col-sm-9"><input asp-for="Input.Quantity" class="form-control" type="number" min="1" /></div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Họ tên</label>
+				<div class="col-sm-9"><input asp-for="Input.CustomerName" class="form-control" maxlength="150" /></div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Điện thoại</label>
+				<div class="col-sm-9"><input asp-for="Input.CustomerPhone" class="form-control" maxlength="20" /></div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Địa chỉ</label>
+				<div class="col-sm-9"><textarea asp-for="Input.ShippingAddress" class="form-control" maxlength="500" rows="2"></textarea></div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Ghi chú</label>
+				<div class="col-sm-9"><textarea asp-for="Input.OrderNote" class="form-control" maxlength="500" rows="2"></textarea></div>
+			</div>
+			<div class="form-group">
+				<div class="col-sm-offset-3 col-sm-9">
+					<button type="submit" class="btn btn-primary btn-lg">@lp.CtaText</button>
+				</div>
+			</div>
+		</form>
+	</section>
+</div>
+
+@if (showCountdown)
+{
+	<script>
+		(function () {
+			var endsAttr = document.querySelector('[data-ends]');
+			if (!endsAttr) return;
+			var ends = new Date(endsAttr.getAttribute('data-ends')).getTime();
+			var nodes = document.querySelectorAll('[data-countdown-digits]');
+			function tick() {
+				var left = Math.max(0, ends - Date.now());
+				var s = Math.floor(left / 1000);
+				var d = Math.floor(s / 86400); s -= d * 86400;
+				var h = Math.floor(s / 3600); s -= h * 3600;
+				var m = Math.floor(s / 60); s -= m * 60;
+				var text = (d > 0 ? d + 'n ' : '') +
+					String(h).padStart(2, '0') + ':' +
+					String(m).padStart(2, '0') + ':' +
+					String(s).padStart(2, '0');
+				nodes.forEach(function (n) { n.textContent = text; });
+				if (left <= 0) location.reload();
+			}
+			tick();
+			setInterval(tick, 1000);
+		})();
+	</script>
+}

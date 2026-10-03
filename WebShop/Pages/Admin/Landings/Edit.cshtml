@@ -1,0 +1,203 @@
+@page "{id:int?}"
+@model WebShop.Pages.Admin.Landings.EditModel
+@{
+	ViewData["Title"] = Model.Input.Id == 0 ? "Thêm Landing Page" : "Sửa Landing Page";
+	ViewData["Menu"] = "Landings";
+	var offerLocal = Model.Input.OfferEndsAt?.ToString("yyyy-MM-ddTHH:mm");
+}
+
+<div class="page-header"><h1>@ViewData["Title"]</h1></div>
+<partial name="_AdminAlerts" />
+
+<form method="post" class="form-horizontal">
+	<input asp-for="Input.Id" type="hidden" />
+	<div class="widget-box">
+		<div class="widget-header"><h4 class="widget-title">Chiến dịch</h4></div>
+		<div class="widget-body"><div class="widget-main">
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Tên chiến dịch</label>
+				<div class="col-sm-9"><input asp-for="Input.Name" class="form-control" maxlength="200" /></div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Slug</label>
+				<div class="col-sm-9">
+					<input asp-for="Input.Slug" class="form-control" maxlength="150" placeholder="am-tra-hoa-bien" />
+					<span class="help-block">URL công khai: <code>/lp/{slug}</code></span>
+				</div>
+			</div>
+			<div class="form-group">
+				<div class="col-sm-offset-3 col-sm-9">
+					<label><input asp-for="Input.IsActive" /> Đang chạy (bật)</label>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Khi tắt / hết giờ</label>
+				<div class="col-sm-9">
+					<select asp-for="Input.RedirectWhenOff" class="form-control">
+						<option value="Home">Về trang chủ</option>
+						<option value="Product">Về sản phẩm đầu tiên</option>
+						<option value="Expired">Hiện trang hết chương trình</option>
+					</select>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Hết ưu đãi</label>
+				<div class="col-sm-9">
+					<input type="datetime-local" name="Input.OfferEndsAt" value="@offerLocal" class="form-control" />
+					<span class="help-block">Đếm ngược trên LP. Để trống = không hiện timer. Hết giờ dùng hành vi “Khi tắt / hết giờ”.</span>
+				</div>
+			</div>
+		</div></div>
+	</div>
+
+	<div class="widget-box">
+		<div class="widget-header"><h4 class="widget-title">Hero &amp; CTA</h4></div>
+		<div class="widget-body"><div class="widget-main">
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Tiêu đề lớn</label>
+				<div class="col-sm-9"><input asp-for="Input.Headline" class="form-control" maxlength="250" /></div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Phụ đề</label>
+				<div class="col-sm-9"><input asp-for="Input.Subheadline" class="form-control" maxlength="500" /></div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Ảnh hero</label>
+				<div class="col-sm-9">
+					<div class="input-group">
+						<input asp-for="Input.HeroImageUrl" class="form-control" maxlength="500" id="Input_HeroImageUrl" />
+						<span class="input-group-btn">
+							<button type="button" class="btn btn-info js-media-pick" data-input="Input_HeroImageUrl" data-size="large" data-folder="khac">
+								<i class="fa fa-folder-open"></i> Thư viện
+							</button>
+						</span>
+					</div>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Nút CTA</label>
+				<div class="col-sm-9"><input asp-for="Input.CtaText" class="form-control" maxlength="80" /></div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Link CTA</label>
+				<div class="col-sm-9">
+					<input asp-for="Input.CtaUrl" class="form-control" maxlength="500" placeholder="#dat-hang hoặc /san-pham/..." />
+					<span class="help-block">Để trống = cuộn tới form đặt hàng trên trang.</span>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Nội dung thêm</label>
+				<div class="col-sm-9">
+					<textarea asp-for="Input.BodyHtml" class="form-control js-ckeditor" rows="8"></textarea>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Sau khi đặt</label>
+				<div class="col-sm-9"><textarea asp-for="Input.ThankYouMessage" class="form-control" maxlength="500" rows="2"></textarea></div>
+			</div>
+		</div></div>
+	</div>
+
+	<div class="widget-box">
+		<div class="widget-header"><h4 class="widget-title">Sản phẩm &amp; giá Ads</h4></div>
+		<div class="widget-body"><div class="widget-main">
+			@if (Model.Catalog.Count == 0)
+			{
+				<div class="alert alert-warning">Chưa có sản phẩm hiển thị.</div>
+			}
+			else
+			{
+				<table class="table table-condensed table-bordered" style="max-height:320px;display:block;overflow:auto;">
+					<thead>
+						<tr>
+							<th style="width:40px;"></th>
+							<th>Sản phẩm</th>
+							<th style="width:120px;">Giá catalog</th>
+							<th style="width:140px;">Giá Ads (đè)</th>
+						</tr>
+					</thead>
+					<tbody>
+					@foreach (var product in Model.Catalog)
+					{
+						var checkedProduct = Model.ProductIds.Contains(product.Id);
+						var catalogPrice = product.DiscountPrice ?? product.Price;
+						Model.AdsPrices.TryGetValue(product.Id, out var adsRaw);
+						<tr>
+							<td>
+								<input type="checkbox" name="ProductIds" value="@product.Id" @(checkedProduct ? "checked" : null) />
+							</td>
+							<td>@product.Name <span class="text-muted">(tồn @product.Stock)</span></td>
+							<td>@catalogPrice.ToString("N0")</td>
+							<td>
+								<input type="text" name="AdsPrices[@product.Id]" value="@adsRaw" class="form-control input-sm" placeholder="trống = catalog" inputmode="numeric" />
+							</td>
+						</tr>
+					}
+					</tbody>
+				</table>
+				<span class="help-block">Tick chọn SP. Giá Ads để trống = dùng giá KM/catalog. Thứ tự = thứ tự tick từ trên xuống.</span>
+			}
+		</div></div>
+	</div>
+
+	<div class="widget-box">
+		<div class="widget-header"><h4 class="widget-title">Mã theo dõi Ads</h4></div>
+		<div class="widget-body"><div class="widget-main">
+			<div class="alert alert-info">
+				Chỉ Admin nên sửa. Pixel ID gắn snippet chuẩn; ô script dùng cho GTM / mã tùy chỉnh. Sau đặt hàng trang cảm ơn bắn sự kiện <code>Purchase</code>/<code>Lead</code>.
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Meta Pixel ID</label>
+				<div class="col-sm-9"><input asp-for="Input.MetaPixelId" class="form-control" maxlength="40" placeholder="1234567890" /></div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">TikTok Pixel ID</label>
+				<div class="col-sm-9"><input asp-for="Input.TikTokPixelId" class="form-control" maxlength="40" placeholder="XXXXXXXXXX" /></div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Script &lt;head&gt;</label>
+				<div class="col-sm-9">
+					<textarea asp-for="Input.HeadScripts" class="form-control" rows="5" spellcheck="false" placeholder="<!-- GTM / custom -->"></textarea>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Script &lt;/body&gt;</label>
+				<div class="col-sm-9">
+					<textarea asp-for="Input.BodyScripts" class="form-control" rows="5" spellcheck="false"></textarea>
+				</div>
+			</div>
+		</div></div>
+	</div>
+
+	<div class="widget-box collapsed">
+		<div class="widget-header">
+			<h4 class="widget-title">SEO / chia sẻ <small class="text-muted">(tuỳ chọn · LP Ads thường noindex)</small></h4>
+			<div class="widget-toolbar">
+				<a href="#" data-action="collapse"><i class="ace-icon fa fa-chevron-down"></i></a>
+			</div>
+		</div>
+		<div class="widget-body"><div class="widget-main">
+			<p class="help-block">LP Ads mặc định <code>noindex</code>. Điền Meta/OG nếu cần preview khi share; không bắt buộc điểm cao.</p>
+			<partial name="_SeoFields" for="Seo" />
+		</div></div>
+	</div>
+
+	<div class="clearfix form-actions">
+		<button type="submit" class="btn btn-primary"><i class="ace-icon fa fa-check"></i> Lưu</button>
+		<a class="btn btn-default" href="/Admin/Landings">Hủy</a>
+		@if (Model.Input.Id != 0 && !string.IsNullOrWhiteSpace(Model.Input.Slug))
+		{
+			<a class="btn btn-info" href="/lp/@Model.Input.Slug" target="_blank" rel="noopener">Xem LP</a>
+		}
+	</div>
+</form>
+
+@section Scripts {
+	<script src="https://cdn.ckeditor.com/4.22.1/full/ckeditor.js"></script>
+	<script src="/js/admin-editor.js"></script>
+	<script>
+		WebShopEditor.replace('.js-ckeditor');
+		WebShopEditor.bindForms();
+		WebShopEditor.bindMediaPickers();
+	</script>
+}

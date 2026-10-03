@@ -26,6 +26,9 @@ public class Order
 
     public string? OrderNote { get; set; }
 
+    /// <summary>Nguồn đơn, vd. LP:am-tra-hoa-bien hoặc Web.</summary>
+    public string? Source { get; set; }
+
     public User? User { get; set; }
 
     public List<OrderItem> Items { get; set; } = [];

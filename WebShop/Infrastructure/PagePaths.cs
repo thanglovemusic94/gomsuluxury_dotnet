@@ -9,7 +9,7 @@ public static class PagePaths
     private static readonly HashSet<string> Reserved = new(StringComparer.OrdinalIgnoreCase)
     {
         "admin", "login", "logout", "error", "accessdenied",
-        "san-pham", "blog", "gio-hang", "thanh-toan", "danh-muc", "qua-bieu", "chot", "p",
+        "san-pham", "blog", "gio-hang", "thanh-toan", "danh-muc", "qua-bieu", "chot", "lp", "p",
         "css", "js", "lib", "uploads", "media", "favicon.ico"
     };
 
