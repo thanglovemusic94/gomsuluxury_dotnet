@@ -1,0 +1,58 @@
+# Mẫu: copy thành .github/workflows/deploy.yml khi repo đã trên GitHub.
+# Cần secrets: VPS_HOST, VPS_USER, VPS_SSH_KEY (và tuỳ chọn VPS_PORT).
+
+name: Deploy WebShop
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Publish
+        run: dotnet publish WebShop/WebShop.csproj -c Release -o artifacts/publish
+
+      - name: Upload ace theme
+        run: |
+          mkdir -p artifacts/bundle
+          cp -a artifacts/publish artifacts/bundle/WebShop
+          cp -a ace artifacts/bundle/ace
+
+      - name: Start SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: Rsync to VPS
+        env:
+          HOST: ${{ secrets.VPS_HOST }}
+          USER: ${{ secrets.VPS_USER }}
+          PORT: ${{ secrets.VPS_PORT || 22 }}
+        run: |
+          set -euo pipefail
+          rsync -az --delete \
+            -e "ssh -p $PORT -o StrictHostKeyChecking=accept-new" \
+            artifacts/bundle/WebShop/ \
+            "$USER@$HOST:/var/www/webshop/WebShop/"
+          rsync -az \
+            -e "ssh -p $PORT -o StrictHostKeyChecking=accept-new" \
+            artifacts/bundle/ace/ \
+            "$USER@$HOST:/var/www/webshop/ace/"
+
+      - name: Restart service
+        env:
+          HOST: ${{ secrets.VPS_HOST }}
+          USER: ${{ secrets.VPS_USER }}
+          PORT: ${{ secrets.VPS_PORT || 22 }}
+        run: |
+          ssh -p "$PORT" -o StrictHostKeyChecking=accept-new \
+            "$USER@$HOST" "sudo systemctl restart webshop && sudo systemctl is-active webshop"
