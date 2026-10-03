@@ -45,10 +45,19 @@ jobs:
             --exclude 'webshop.db-shm' \
             --exclude 'webshop.db-wal' \
             --exclude 'wwwroot/uploads/' \
+            --exclude 'wwwroot/uploads/***' \
             --exclude 'wwwroot/is-cache/' \
+            --exclude 'wwwroot/is-cache/***' \
+            --filter 'protect wwwroot/uploads/' \
+            --filter 'protect wwwroot/uploads/***' \
+            --filter 'protect wwwroot/is-cache/' \
+            --filter 'protect wwwroot/is-cache/***' \
             -e "ssh -p $PORT -o StrictHostKeyChecking=accept-new" \
             artifacts/bundle/WebShop/ \
             "$USER@$HOST:/var/www/webshop/WebShop/"
+          # Never touch media on deploy — uploads live only on the server (sync separately).
+          ssh -p "$PORT" -o StrictHostKeyChecking=accept-new "$USER@$HOST" \
+            "mkdir -p /var/www/webshop/WebShop/wwwroot/uploads && test -d /var/www/webshop/WebShop/wwwroot/uploads"
           rsync -az \
             -e "ssh -p $PORT -o StrictHostKeyChecking=accept-new" \
             artifacts/bundle/ace/ \

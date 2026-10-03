@@ -261,6 +261,14 @@ Giữ thư mục release cũ hoặc bản backup `app`; trỏ lại / rsync bả
 
 ---
 
+### Uploads / media
+
+- Thư mục `wwwroot/uploads` **không** nằm trong git và **không** deploy qua CI.
+- Đồng bộ lần đầu / khi thiếu ảnh: copy từ máy local lên `/var/www/webshop/WebShop/wwwroot/uploads`.
+- CI dùng `rsync --delete` nhưng **protect/exclude** `wwwroot/uploads` — vẫn kiểm tra sau mỗi deploy nếu nghi ngờ mất file.
+
+---
+
 ## 10. Checklist sau deploy
 
 - [ ] `https://domain` mở được, chứng chỉ xanh  
