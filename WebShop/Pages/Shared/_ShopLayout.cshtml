@@ -21,10 +21,6 @@
 	var ogImage = request is null ? ogImageRaw : SiteSocial.Absolute(request, MediaUrls.For(ogImageRaw, MediaSize.Large));
 	if (string.IsNullOrWhiteSpace(ogImage) && request is not null)
 		ogImage = SiteSocial.Absolute(request, MediaUrls.For(ogImageRaw, MediaSize.Medium));
-	var faviconRaw = SiteSocial.PickImage(snap.FaviconUrl);
-	var favicon = !string.IsNullOrWhiteSpace(faviconRaw)
-		? (request is null ? MediaUrls.For(faviconRaw, MediaSize.Icon) : SiteSocial.Absolute(request, MediaUrls.For(faviconRaw, MediaSize.Icon)))
-		: "/favicon.svg";
 	var canonical = request is null
 		? string.Empty
 		: SiteSocial.Absolute(request, $"{request.PathBase}{request.Path}{request.QueryString}");
@@ -35,8 +31,10 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<title>@pageTitle</title>
-	<link rel="icon" href="@favicon" sizes="any" />
-	<link rel="apple-touch-icon" href="@favicon" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+	<link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
+	<link rel="apple-touch-icon" href="/favicon.png" />
 	@if (!allowIndex)
 	{
 		<meta name="robots" content="noindex,nofollow" />
