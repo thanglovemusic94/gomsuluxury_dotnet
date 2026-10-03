@@ -15,6 +15,43 @@
 <partial name="_AdminAlerts" />
 
 <div class="widget-box">
+	<div class="widget-header">
+		<h4 class="widget-title">
+			<i class="ace-icon fa fa-search"></i>
+			Công cụ tìm kiếm (SEO index)
+		</h4>
+	</div>
+	<div class="widget-body">
+		<div class="widget-main">
+			<form method="post" asp-page-handler="Seo" class="form-horizontal">
+				<div class="form-group" style="margin-bottom:12px;">
+					<label class="col-sm-3 control-label">Cho phép index</label>
+					<div class="col-sm-9">
+						<label style="font-weight:normal;margin-top:7px;">
+							<input asp-for="AllowIndexing" type="checkbox" />
+							Google / Bing được phép quét và đưa site vào kết quả tìm kiếm
+						</label>
+						<p class="help-block" style="margin-bottom:0;">
+							Đang test (sslip.io / chưa domain chính thức): <strong>giữ tắt</strong>.
+							Khi domain ổn định mới bật. Ảnh hưởng <code>/robots.txt</code> và thẻ <code>noindex</code>.
+						</p>
+					</div>
+				</div>
+				<div class="clearfix form-actions" style="margin-bottom:0;">
+					<div class="col-sm-offset-3 col-sm-9">
+						<button type="submit" class="btn btn-primary btn-sm">
+							<i class="ace-icon fa fa-check"></i> Lưu SEO index
+						</button>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<div class="space-10"></div>
+
+<div class="widget-box">
 	<div class="widget-body">
 		<div class="widget-main no-padding">
 			<table class="table table-striped table-bordered table-hover">

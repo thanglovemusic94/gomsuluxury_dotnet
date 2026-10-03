@@ -8,6 +8,12 @@
     "SourceSiteSync": false,
     "RemoteImageImport": false
   },
+  "Media": {
+    "WebpQuality": 78
+  },
+  "Seo": {
+    "AllowIndexing": false
+  },
   "Gemini": {
     "ApiKey": "",
     "Model": "gemini-3.8-flash"

@@ -13,6 +13,7 @@ Stack: ASP.NET Core 8 Razor Pages + EF Core SQLite. Thư mục app: `WebShop/`. 
 - Logic/seed dùng chung: `Infrastructure/`. Model: `Models/`. DB: `Data/AppDbContext.cs`.
 - Ưu tiên mở rộng helper có sẵn (`TextHelper`, `PagePaths`, `SoftDelete`, `AdminContentDelete`, `MediaStorage`) thay vì tạo utility song song.
 - Đổi schema/seed: dùng `Ensure*Async` / `*Schema.EnsureAsync` idempotent gọi từ `Program.cs` lúc startup — không chỉ dựa vào EF migration.
+- SEO index toàn site: khóa DB `Seo.AllowIndexing` chỉnh tại **Admin → Cấu hình** (checkbox). Config `Seo:AllowIndexing` chỉ là mặc định seed khi chưa có dòng DB. Tắt → `robots.txt` Disallow + `noindex`. Meta SEO từng trang vẫn qua `_SeoFields` / `SeoInput`.
 - Cờ `Seed` trong config (`appsettings.json` / `appsettings.Local.json`): `DemoCatalog`, `LuxuryCatalog`, `SourceSiteSync`, `RemoteImageImport`. Local mặc định tắt sync/seed demo. `AdminSeed` luôn chạy nhưng **không** ghi đè mật khẩu nếu đã có user `admin`.
 
 ## URL công khai

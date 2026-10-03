@@ -209,8 +209,13 @@ Trong `appsettings.Production.json` (server):
   "SourceSiteSync": false,
   "RemoteImageImport": false
 },
+"Seo": {
+  "AllowIndexing": false
+},
 "AllowedHosts": "gomsuluxury.vn;www.gomsuluxury.vn"
 ```
+
+Staging (sslip.io / IP): giữ **tắt** trong Admin → Cấu hình → “Cho phép index” (khóa DB `Seo.AllowIndexing`). Config `Seo.AllowIndexing` chỉ seed mặc định. Khi domain chính thức ổn định mới bật trong Admin.
 
 `AdminSeed` vẫn tạo `admin` **chỉ khi chưa có user** — không ghi đè mật khẩu đã đổi.
 
@@ -276,6 +281,7 @@ Giữ thư mục release cũ hoặc bản backup `app`; trỏ lại / rsync bả
 - [ ] `/Login` → Admin; đã đổi mật khẩu `admin`  
 - [ ] Upload ảnh trong Media  
 - [ ] `Seed.SourceSiteSync` = false trên Production  
+- [ ] `Seo.AllowIndexing` tắt trong Admin khi đang test (sslip.io); bật sau khi có domain chính thức  
 - [ ] Backup DB chạy thử một lần  
 - [ ] `sudo systemctl status webshop` active  
 

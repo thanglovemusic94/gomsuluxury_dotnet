@@ -1,3 +1,4 @@
+@inject IHttpContextAccessor HttpContextAccessor
 @{
 	var assets = (ViewData["ShopAssets"] as string ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 	bool Has(string key) => assets.Contains(key, StringComparer.OrdinalIgnoreCase);
@@ -5,6 +6,7 @@
 	var lcpSrcSet = ViewData["LcpImageSrcSet"] as string;
 	var lcpSizes = ViewData["LcpImageSizes"] as string ?? "100vw";
 	var isHome = Has("home");
+	var allowIndex = HttpContextAccessor.HttpContext?.Items[SiteSeoService.AllowIndexingKey] as bool? ?? false;
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -12,6 +14,10 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<title>@(ViewData["Title"] ?? "WebShop")</title>
+	@if (!allowIndex)
+	{
+		<meta name="robots" content="noindex,nofollow" />
+	}
 	@if (ViewData["Description"] is string description && !string.IsNullOrWhiteSpace(description))
 	{
 		<meta name="description" content="@description" />

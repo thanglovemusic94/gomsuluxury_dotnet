@@ -37,6 +37,8 @@ builder.Services.AddScoped<ShopStore>();
 builder.Services.AddScoped<AuditService>();
 builder.Services.Configure<MediaOptions>(builder.Configuration.GetSection("Media"));
 builder.Services.Configure<GeminiOptions>(builder.Configuration.GetSection(GeminiOptions.SectionName));
+builder.Services.Configure<SeoOptions>(builder.Configuration.GetSection(SeoOptions.SectionName));
+builder.Services.AddScoped<SiteSeoService>();
 builder.Services.AddSingleton<MediaStorage>();
 builder.Services.AddSingleton<MediaUsageService>();
 builder.Services.AddHostedService<MediaGarbageCollector>();
@@ -154,6 +156,36 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Staging / pre-launch: discourage search engines when Admin tắt index.
+app.Use(async (context, next) =>
+{
+    var seo = context.RequestServices.GetRequiredService<SiteSeoService>();
+    var allow = await seo.GetAllowIndexingAsync(context.RequestAborted);
+    context.Items[SiteSeoService.AllowIndexingKey] = allow;
+    if (!allow)
+        context.Response.Headers["X-Robots-Tag"] = "noindex, nofollow";
+    await next();
+});
+
+app.MapGet("/robots.txt", async (SiteSeoService seo) =>
+{
+    var allow = await seo.GetAllowIndexingAsync();
+    var body = allow
+        ? """
+          User-agent: *
+          Allow: /
+          Disallow: /Admin
+          Disallow: /Login
+          Disallow: /AccessDenied
+          Disallow: /api
+          """
+        : """
+          User-agent: *
+          Disallow: /
+          """;
+    return Results.Text(body.Replace("\r\n", "\n").Trim() + "\n", "text/plain; charset=utf-8");
+});
+
 // SEO: URL cũ /p/{slug} → /{slug}
 app.MapGet("/p", () => Results.Redirect("/", permanent: true));
 app.MapGet("/p/{*slug}", (string slug) =>
@@ -177,6 +209,7 @@ using (var scope = app.Services.CreateScope())
     await SoftDeleteSchema.EnsureAsync(db);
     await scope.ServiceProvider.GetRequiredService<TemporaryCartService>().EnsureSchemaAsync();
     await AdminSeed.EnsureAdminAsync(db);
+    await scope.ServiceProvider.GetRequiredService<SiteSeoService>().EnsureSeedAsync();
     if (seed.GetValue("DemoCatalog", true))
         await DemoCatalog.EnsureAsync(db);
     if (seed.GetValue("LuxuryCatalog", true))
