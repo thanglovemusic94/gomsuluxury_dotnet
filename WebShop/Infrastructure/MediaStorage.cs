@@ -15,7 +15,7 @@ public sealed class MediaOptions
     public int ThumbWidth { get; set; } = 400;
     public int MediumWidth { get; set; } = 800;
     public int LargeWidth { get; set; } = 1200;
-    public int WebpQuality { get; set; } = 50;
+    public int WebpQuality { get; set; } = 78;
     public long MaxUploadBytes { get; set; } = 15 * 1024 * 1024;
     public bool DedupeOnUpload { get; set; } = true;
     public bool GarbageCollectEnabled { get; set; } = true;

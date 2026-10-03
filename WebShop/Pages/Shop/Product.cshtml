@@ -14,14 +14,14 @@
 		altBase += " Gốm sứ";
 	}
 
-	var gallery = new List<(string Medium, string Thumb, string SrcSet, string Alt)>();
+	var gallery = new List<(string Large, string Thumb, string SrcSet, string Alt)>();
 	void AddGallery(string? url, string alt)
 	{
 		if (string.IsNullOrWhiteSpace(url)) return;
-		var medium = MediaUrls.For(url, MediaSize.Medium);
-		if (gallery.Any(g => string.Equals(g.Medium, medium, StringComparison.OrdinalIgnoreCase)))
+		var large = MediaUrls.For(url, MediaSize.Large);
+		if (gallery.Any(g => string.Equals(g.Large, large, StringComparison.OrdinalIgnoreCase)))
 			return;
-		gallery.Add((medium, MediaUrls.For(url, MediaSize.Thumb), MediaUrls.SrcSet(url), alt));
+		gallery.Add((large, MediaUrls.For(url, MediaSize.Thumb), MediaUrls.SrcSet(url), alt));
 	}
 
 	AddGallery(item.ImageUrl, altBase);
@@ -74,12 +74,12 @@
 								var slide = gallery[i];
 								<div class="shop-gallery__slide" data-gallery-slide="@i">
 									<img class="shop-gallery__photo"
-									     src="@slide.Medium"
+									     src="@slide.Large"
 									     srcset="@slide.SrcSet"
-									     sizes="(max-width: 767px) 100vw, (max-width: 991px) 50vw, min(560px, 50vw)"
+									     sizes="(max-width: 767px) 100vw, (max-width: 991px) 50vw, min(640px, 48vw)"
 									     alt="@slide.Alt"
-									     width="960"
-									     height="960"
+									     width="1200"
+									     height="1200"
 									     fetchpriority="@(i == 0 ? "high" : "auto")"
 									     loading="@(i == 0 ? "eager" : "lazy")"
 									     decoding="async" />

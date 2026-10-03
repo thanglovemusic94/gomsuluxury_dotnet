@@ -4,7 +4,7 @@
 {
 	var price = item.DiscountPrice ?? item.Price;
 	var image = MediaUrls.For(item.ImageUrl, MediaSize.Thumb);
-	var srcset = MediaUrls.SrcSetUpTo(item.ImageUrl, MediaSize.Thumb);
+	var srcset = MediaUrls.SrcSetUpTo(item.ImageUrl, MediaSize.Medium);
 	var alt = item.Name?.Trim() ?? "";
 	if (!string.IsNullOrEmpty(alt) &&
 	    alt.IndexOf("gốm", StringComparison.OrdinalIgnoreCase) < 0 &&
