@@ -56,12 +56,12 @@
 									}
 									@foreach (var slide in slides)
 									{
-										@* src=Thumb: mobile/DPR vừa phải; srcset vẫn có Medium/Large cho desktop *@
-										var slideSrc = MediaUrls.For(slide.ImageUrl, MediaSize.Thumb);
+										@* Medium..Large (Max) — không Thumb crop vuông *@
+										var slideSrc = MediaUrls.For(slide.ImageUrl, MediaSize.Medium);
 										<div class="shop-slider__slide">
 											<a href="@slide.LinkUrl">
 												<img src="@slideSrc"
-												     srcset="@MediaUrls.SrcSetUpTo(slide.ImageUrl, MediaSize.Large)"
+												     srcset="@MediaUrls.SrcSetBetween(slide.ImageUrl, MediaSize.Medium, MediaSize.Large)"
 												     sizes="(max-width: 991px) 100vw, min(920px, calc(100vw - 280px))"
 												     alt="@slide.Alt"
 												     width="1200"
@@ -78,9 +78,12 @@
 								{
 									<button type="button" class="shop-slider__nav shop-slider__prev" data-slider-prev aria-label="Ảnh trước"><i class="fa fa-angle-left"></i></button>
 									<button type="button" class="shop-slider__nav shop-slider__next" data-slider-next aria-label="Ảnh sau"><i class="fa fa-angle-right"></i></button>
-									<div class="shop-slider__dots" data-slider-dots></div>
 								}
 							</div>
+							@if (slides.Count > 1)
+							{
+								<div class="shop-slider__dots" data-slider-dots></div>
+							}
 						</section>
 					}
 				</div>

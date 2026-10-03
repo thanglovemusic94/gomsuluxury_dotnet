@@ -33,9 +33,9 @@ public class IndexModel(AppDbContext db, ShopStore shop) : PageModel
         Slides = await ShopSlides.LoadAsync(db);
         if (Slides.Count > 0)
         {
-            // LCP: preload Thumb; browser chọn Medium/Large qua imagesrcset theo sizes/DPR.
-            ViewData["LcpImage"] = MediaUrls.For(Slides[0].ImageUrl, MediaSize.Thumb);
-            ViewData["LcpImageSrcSet"] = MediaUrls.SrcSetUpTo(Slides[0].ImageUrl, MediaSize.Large);
+            // LCP: Medium..Large (Max) — không Thumb crop vuông.
+            ViewData["LcpImage"] = MediaUrls.For(Slides[0].ImageUrl, MediaSize.Medium);
+            ViewData["LcpImageSrcSet"] = MediaUrls.SrcSetBetween(Slides[0].ImageUrl, MediaSize.Medium, MediaSize.Large);
             ViewData["LcpImageSizes"] = "(max-width: 991px) 100vw, min(920px, calc(100vw - 280px))";
             ViewData["OgImage"] = Slides[0].ImageUrl;
         }
@@ -52,7 +52,7 @@ public class IndexModel(AppDbContext db, ShopStore shop) : PageModel
 
         GiftProducts = await LoadGiftProductsAsync();
         if (GiftProducts.Count > 0)
-            GiftTeaserImage = MediaUrls.For(GiftProducts[0].ImageUrl, MediaSize.Medium);
+            GiftTeaserImage = MediaDynamicUrls.For(GiftProducts[0].ImageUrl, 720);
 
         Posts = await db.Posts.AsNoTracking()
             .Where(item => item.IsPublished)

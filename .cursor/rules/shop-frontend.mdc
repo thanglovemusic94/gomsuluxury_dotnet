@@ -19,8 +19,8 @@ alwaysApply: false
 
 - Mobile-first; giữ sticky buy-bar / tabbar.
 - Tôn trọng `prefers-reduced-motion` với hover/animation (desktop hover OK khi cho phép motion).
-- Slider: ảnh LCP dùng Medium + `imagesrcset`/`sizes`; slide đầu `fetchpriority=high`.
-- Font: Be Vietnam Pro critical; Cormorant + Font Awesome load không chặn (`media=print` → `onload`).
+- Slider: LCP Medium + `SrcSetBetween(Medium, Large)`; dots dưới viewport (không đè slide); slide đầu `fetchpriority=high`.
+- Font: Be Vietnam + Cormorant + Font Awesome đều không chặn (`media=print` → `onload`).
 - JS shop: `defer`. Below-fold home: `content-visibility: auto`.
 - Slider sản phẩm: fit media bằng contain / đúng tỷ lệ — không kéo giãn full bừa.
 - HtmlBlock (`Component.InvokeAsync("HtmlBlock", …)`): HTML/CSS/JS sửa được trong DB; style scoped nằm trong block khi Admin cần chỉnh (vd. YouTube facade).
@@ -29,5 +29,6 @@ alwaysApply: false
 
 - Trang shop dùng `Layout = "_ShopLayout"`. Độ rộng prose/nội dung thống nhất với trang tĩnh hiện có.
 - Ảnh: dùng `MediaStorage` / helper URL kích thước; tránh hotlink remote khi đã có media local.
-- Logo site (header/footer/ads bar): luôn `MediaSize.Medium` (resize Max). Không dùng `Thumb`/`Icon` — hai size đó crop vuông, cắt logo chữ ngang.
+- Logo site (header/footer/ads bar): `MediaDynamicUrls` ~display×2, `rmode=max`. Không `Thumb`/`Icon` (crop vuông cắt chữ ngang).
+- Banner/slider: chỉ Medium..Large trong srcset (`SrcSetBetween`) — bỏ Thumb/Icon crop vuông.
 - Favicon + Open Graph trong `_ShopLayout` (`SiteSocial`); trang set `ViewData["OgImage"]` / `OgType` khi có ảnh riêng.

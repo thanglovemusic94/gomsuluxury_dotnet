@@ -54,21 +54,33 @@ public static class MediaUrls
     /// <summary>
     /// Srcset up to <paramref name="maxSize"/> (inclusive). Use Large for home slider (~1200px).
     /// </summary>
-    public static string? SrcSetUpTo(string? url, MediaSize maxSize)
+    public static string? SrcSetUpTo(string? url, MediaSize maxSize) =>
+        SrcSetBetween(url, MediaSize.Icon, maxSize);
+
+    /// <summary>
+    /// Srcset from <paramref name="minSize"/>..max (inclusive). Banner/slider: Medium..Large
+    /// (bỏ Thumb/Icon — hai size đó crop vuông).
+    /// </summary>
+    public static string? SrcSetBetween(string? url, MediaSize minSize, MediaSize maxSize)
     {
         if (string.IsNullOrWhiteSpace(url) ||
             !url.Contains("/uploads/optimized/", StringComparison.OrdinalIgnoreCase))
             return null;
 
+        if (minSize > maxSize)
+            (minSize, maxSize) = (maxSize, minSize);
+
         var parts = new List<string>();
-        if (maxSize >= MediaSize.Icon)
-            parts.Add($"{For(url, MediaSize.Icon)} {IconW}w");
-        if (maxSize >= MediaSize.Thumb)
-            parts.Add($"{For(url, MediaSize.Thumb)} {ThumbW}w");
-        if (maxSize >= MediaSize.Medium)
-            parts.Add($"{For(url, MediaSize.Medium)} {MediumW}w");
-        if (maxSize >= MediaSize.Large)
-            parts.Add($"{For(url, MediaSize.Large)} {LargeW}w");
+        void Add(MediaSize size, int width)
+        {
+            if (size >= minSize && size <= maxSize)
+                parts.Add($"{For(url, size)} {width}w");
+        }
+
+        Add(MediaSize.Icon, IconW);
+        Add(MediaSize.Thumb, ThumbW);
+        Add(MediaSize.Medium, MediumW);
+        Add(MediaSize.Large, LargeW);
 
         return parts.Count == 0 ? null : string.Join(", ", parts);
     }

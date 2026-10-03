@@ -43,7 +43,9 @@
 					<a class="shop-foot-logo" href="/">
 						@if (!string.IsNullOrWhiteSpace(Model.LogoUrl))
 						{
-							<img src="@WebShop.Infrastructure.MediaUrls.For(Model.LogoUrl, WebShop.Infrastructure.MediaSize.Medium)"
+							<img src="@WebShop.Infrastructure.MediaDynamicUrls.For(Model.LogoUrl, 320)"
+							     srcset="@WebShop.Infrastructure.MediaDynamicUrls.For(Model.LogoUrl, 240) 240w, @WebShop.Infrastructure.MediaDynamicUrls.For(Model.LogoUrl, 320) 320w, @WebShop.Infrastructure.MediaDynamicUrls.For(Model.LogoUrl, 400) 400w"
+							     sizes="160px"
 							     alt="@Model.SiteName"
 							     width="200"
 							     height="54"

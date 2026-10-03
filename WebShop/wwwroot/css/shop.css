@@ -762,20 +762,22 @@ body.shop .shop-stage-list a span { color: inherit; }
 }
 .shop-slider {
 	position: relative;
+	display: flex;
+	flex-direction: column;
 	overflow: hidden;
 	background: #7a1212;
 	flex: 1 1 auto;
 	width: 100%;
-	/* Khớp tỉ lệ banner gốc (1920×1080) — không ép theo cột danh mục */
-	aspect-ratio: 16 / 9;
 	min-height: 0;
 }
 .shop-slider__viewport {
-	position: absolute;
-	inset: 0;
+	position: relative;
 	overflow: hidden;
 	width: 100%;
-	height: 100%;
+	/* Khớp tỉ lệ banner gốc (1920×1080) — không ép theo cột danh mục */
+	aspect-ratio: 16 / 9;
+	min-height: 0;
+	flex: 0 0 auto;
 }
 .shop-slider__track { display: flex; height: 100%; transition: transform 0.5s ease; will-change: transform; }
 .shop-slider__slide { flex: 0 0 100%; min-width: 100%; height: 100%; }
@@ -818,22 +820,26 @@ body.shop .shop-stage-list a span { color: inherit; }
 .shop-slider__nav:hover { color: #fff; border-color: var(--shop-gold); }
 .shop-slider__prev { left: 12px; }
 .shop-slider__next { right: 12px; }
+/* Dots dưới viewport — không đè lên <a> slide (Lighthouse touch overlap) */
 .shop-slider__dots {
-	position: absolute;
-	left: 0;
-	right: 0;
-	bottom: 8px;
+	position: relative;
+	left: auto;
+	right: auto;
+	bottom: auto;
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	gap: 4px;
+	gap: 0;
 	z-index: 2;
+	padding: 2px 0 4px;
+	flex: 0 0 auto;
+	background: #7a1212;
 }
-/* Hit area ≥44×44 (Lighthouse touch target); chấm nhìn vẫn nhỏ qua ::after */
+/* Hit area ≥48×48 (Lighthouse); chấm nhìn vẫn nhỏ qua ::after */
 .shop-slider__dot {
 	position: relative;
-	width: 44px;
-	height: 44px;
+	width: 48px;
+	height: 48px;
 	border: 0;
 	padding: 0;
 	margin: 0;
@@ -1275,10 +1281,12 @@ body.shop .shop-card h3.shop-card__title,
 	font-weight: 700;
 	font-size: 15px;
 }
+body.shop .shop-price__was,
+body.shop .shop-price s,
 .shop-price__was,
 .shop-price s {
-	/* ≥4.5:1 trên nền card trắng — tránh Lighthouse contrast fail (#a39e96 quá nhạt) */
-	color: #5c574f;
+	/* ≥4.5:1 trên nền card (#fff) — #5c574f đôi khi vẫn fail khi chồng opacity/font */
+	color: #3f3b35;
 	font-weight: 400;
 	font-size: 12px;
 	margin-left: 0;
@@ -1743,7 +1751,7 @@ body.shop .shop-pager__btn.is-active {
 }
 .shop-detail-buy__price .shop-price__was {
 	font-size: 0.55em;
-	color: #5c574f;
+	color: #3f3b35;
 }
 .shop-detail-buy__stock {
 	margin: 0;
@@ -3135,10 +3143,10 @@ body.shop .login-dialog__submit:focus {
 		touch-action: pan-y;
 	}
 	.shop-slider__nav { display: none; }
-	.shop-slider__dots { bottom: 4px; gap: 2px; }
+	.shop-slider__dots { bottom: auto; gap: 0; padding: 0 0 2px; }
 	.shop-slider__dot {
-		width: 44px;
-		height: 44px;
+		width: 48px;
+		height: 48px;
 		background: transparent;
 	}
 	.shop-slider__dot::after {

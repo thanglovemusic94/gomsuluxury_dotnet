@@ -14,8 +14,8 @@
 						{
 							<div class="shop-slider__slide">
 								<a href="@slide.LinkUrl">
-									<img src="@MediaUrls.For(slide.ImageUrl, MediaSize.Thumb)"
-									     srcset="@MediaUrls.SrcSetUpTo(slide.ImageUrl, MediaSize.Large)"
+									<img src="@MediaUrls.For(slide.ImageUrl, MediaSize.Medium)"
+									     srcset="@MediaUrls.SrcSetBetween(slide.ImageUrl, MediaSize.Medium, MediaSize.Large)"
 									     sizes="(max-width: 991px) 100vw, min(1200px, 100vw)"
 									     alt="@slide.Alt"
 									     width="1200"
@@ -32,9 +32,12 @@
 					{
 						<button type="button" class="shop-slider__nav shop-slider__prev" data-slider-prev aria-label="Ảnh trước"><i class="fa fa-angle-left"></i></button>
 						<button type="button" class="shop-slider__nav shop-slider__next" data-slider-next aria-label="Ảnh sau"><i class="fa fa-angle-right"></i></button>
-						<div class="shop-slider__dots" data-slider-dots></div>
 					}
 				</div>
+				@if (Model.Count > 1)
+				{
+					<div class="shop-slider__dots" data-slider-dots></div>
+				}
 			</section>
 		</div>
 	</div>
