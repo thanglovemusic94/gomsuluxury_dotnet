@@ -52,7 +52,7 @@ public class IndexModel(AppDbContext db, ShopStore shop) : PageModel
 
         GiftProducts = await LoadGiftProductsAsync();
         if (GiftProducts.Count > 0)
-            GiftTeaserImage = MediaDynamicUrls.For(GiftProducts[0].ImageUrl, 720);
+            GiftTeaserImage = MediaUrls.For(GiftProducts[0].ImageUrl, MediaSize.Medium);
 
         Posts = await db.Posts.AsNoTracking()
             .Where(item => item.IsPublished)

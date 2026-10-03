@@ -343,6 +343,12 @@ body.shop .shop-side-search__row .btn-primary::before { display: none !important
 	color: var(--shop-gold);
 	line-height: 1.15;
 }
+/* Thắng body.shop a { color: inherit } — fallback chữ khi ảnh lỗi vẫn vàng */
+body.shop .shop-logo,
+body.shop .shop-logo:visited,
+body.shop .shop-logo:focus,
+body.shop .shop-logo:active { color: var(--shop-gold); }
+body.shop .shop-logo:hover { color: #e0bf6a; }
 .shop-logo:hover { color: #e0bf6a; }
 .shop-logo img {
 	height: auto;

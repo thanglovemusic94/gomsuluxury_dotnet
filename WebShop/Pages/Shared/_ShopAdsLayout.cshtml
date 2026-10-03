@@ -82,9 +82,7 @@
 		<a class="shop-ads-bar__brand" href="/" title="@siteName">
 			@if (!string.IsNullOrWhiteSpace(logoUrl))
 			{
-				<img src="@MediaDynamicUrls.For(logoUrl, 280)"
-				     srcset="@MediaDynamicUrls.For(logoUrl, 200) 200w, @MediaDynamicUrls.For(logoUrl, 280) 280w, @MediaDynamicUrls.For(logoUrl, 360) 360w"
-				     sizes="140px"
+				<img src="@MediaUrls.For(logoUrl, MediaSize.Medium)"
 				     alt="@siteName"
 				     width="140"
 				     height="40"

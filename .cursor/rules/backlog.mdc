@@ -23,7 +23,7 @@ Khi hoàn thành một mục: xóa khỏi đây (hoặc đánh dấu xong rồi 
 - `ViewData["AdminAssets"]`: `seo` / `bulk` — layout chỉ nạp `admin-seo-fields.js` / `admin-bulk.js` khi cần. `_SeoFields` tự đăng ký `seo`.
 
 ### Shop
-- Đã làm: LP Ads `shop-base`/`shop-ads` + Production `shop-ads.bundle`; Production minify `shop.css` / `shop-ads.css`; logo dynamic Max; slider Medium..Large; dots dưới viewport; font Google non-blocking.
+- Đã làm: LP Ads `shop-base`/`shop-ads` + Production `shop-ads.bundle`; Production minify `shop.css` / `shop-ads.css`; logo Medium (không Thumb/DynamicUrls); slider Medium..Large; dots dưới viewport; font Google non-blocking.
 - Tiếp: tách CSS home/catalog/detail (render-blocking / unused CSS Lighthouse ~100 KiB `shop.css`); gift-ads bundle gọn; subset Font Awesome nếu cần.
 - Audit Lighthouse local: minify CSS chỉ thấy khi **Production** (Dev giữ file gốc). Deploy VPS mới thấy contrast/touch/font đã sửa local.
 - Không sinh file CSS theo từng chiến dịch LP.

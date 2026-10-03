@@ -29,6 +29,6 @@ alwaysApply: false
 
 - Trang shop dùng `Layout = "_ShopLayout"`. Độ rộng prose/nội dung thống nhất với trang tĩnh hiện có.
 - Ảnh: dùng `MediaStorage` / helper URL kích thước; tránh hotlink remote khi đã có media local.
-- Logo site (header/footer/ads bar): `MediaDynamicUrls` ~display×2, `rmode=max`. Không `Thumb`/`Icon` (crop vuông cắt chữ ngang).
+- Logo site (header/footer/ads bar): `MediaSize.Medium` (Max). Không `Thumb`/`Icon` (crop vuông). Không `MediaDynamicUrls` cho logo — path original thường lệch folder → 404 → fallback chữ.
 - Banner/slider: chỉ Medium..Large trong srcset (`SrcSetBetween`) — bỏ Thumb/Icon crop vuông.
 - Favicon + Open Graph trong `_ShopLayout` (`SiteSocial`); trang set `ViewData["OgImage"]` / `OgType` khi có ảnh riêng.
