@@ -201,3 +201,22 @@ td.admin-list-thumb-col {
 	color: #a94442;
 	border: 1px solid #ebccd1;
 }
+
+/* Viewer read-only: hide write actions; GET filters still work */
+body.admin--readonly form[method="post"] .btn:not(.admin-top-btn--logout),
+body.admin--readonly form[method="post"] button[type="submit"]:not(.admin-top-btn--logout),
+body.admin--readonly a.btn-primary,
+body.admin--readonly a.btn-success,
+body.admin--readonly a.btn-danger,
+body.admin--readonly a.btn-warning,
+body.admin--readonly .btn-primary.pull-right,
+body.admin--readonly .page-header a.btn {
+	pointer-events: none;
+	opacity: 0.4;
+	cursor: not-allowed;
+}
+body.admin--readonly form[method="post"] input,
+body.admin--readonly form[method="post"] textarea,
+body.admin--readonly form[method="post"] select {
+	pointer-events: none;
+}

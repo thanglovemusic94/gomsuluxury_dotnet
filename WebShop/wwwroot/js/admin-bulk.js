@@ -5,6 +5,10 @@
 		return document.body.getAttribute("data-admin-can-hard-delete") === "1";
 	}
 
+	function isReadOnly() {
+		return document.body.getAttribute("data-admin-readonly") === "1";
+	}
+
 	function setMode($form, mode) {
 		var $field = $form.find('input[name="mode"]');
 		if ($field.length === 0) {
@@ -14,6 +18,7 @@
 	}
 
 	function openDeleteModal(count, noun, onPick) {
+		if (isReadOnly()) return;
 		var $modal = $("#admin-delete-modal");
 		if ($modal.length === 0) {
 			var mode = window.confirm("Chuyển " + count + " " + noun + " vào thùng rác?") ? "trash" : null;
@@ -37,6 +42,10 @@
 	});
 
 	$(document).on("submit", "form.js-admin-delete-one", function (e) {
+		if (isReadOnly()) {
+			e.preventDefault();
+			return false;
+		}
 		var $form = $(this);
 		if ($form.data("confirmed")) return true;
 		e.preventDefault();
@@ -83,6 +92,10 @@
 	});
 
 	$(document).on("submit", "form.js-admin-bulk-form", function (e) {
+		if (isReadOnly()) {
+			e.preventDefault();
+			return false;
+		}
 		var $form = $(this);
 		if ($form.data("confirmed")) return true;
 		e.preventDefault();

@@ -25,3 +25,4 @@ alwaysApply: false
 
 - Trang shop dùng `Layout = "_ShopLayout"`. Độ rộng prose/nội dung thống nhất với trang tĩnh hiện có.
 - Ảnh: dùng `MediaStorage` / helper URL kích thước; tránh hotlink remote khi đã có media local.
+- Favicon + Open Graph trong `_ShopLayout` (`SiteSocial`); trang set `ViewData["OgImage"]` / `OgType` khi có ảnh riêng.

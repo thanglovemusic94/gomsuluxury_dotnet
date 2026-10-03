@@ -1,4 +1,5 @@
 @inject IHttpContextAccessor HttpContextAccessor
+@inject ShopStore Shop
 @{
 	var assets = (ViewData["ShopAssets"] as string ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 	bool Has(string key) => assets.Contains(key, StringComparer.OrdinalIgnoreCase);
@@ -6,22 +7,65 @@
 	var lcpSrcSet = ViewData["LcpImageSrcSet"] as string;
 	var lcpSizes = ViewData["LcpImageSizes"] as string ?? "100vw";
 	var isHome = Has("home");
+	var request = HttpContextAccessor.HttpContext?.Request;
 	var allowIndex = HttpContextAccessor.HttpContext?.Items[SiteSeoService.AllowIndexingKey] as bool? ?? false;
+	var snap = await Shop.GetAsync();
+	var pageTitle = ViewData["Title"] as string ?? snap.SiteName;
+	var description = ViewData["Description"] as string;
+	if (string.IsNullOrWhiteSpace(description))
+		description = snap.SiteName;
+	var ogType = ViewData["OgType"] as string ?? "website";
+	var ogImageRaw = SiteSocial.PickImage(
+		ViewData["OgImage"] as string,
+		snap.ShareImageUrl);
+	var ogImage = request is null ? ogImageRaw : SiteSocial.Absolute(request, MediaUrls.For(ogImageRaw, MediaSize.Large));
+	if (string.IsNullOrWhiteSpace(ogImage) && request is not null)
+		ogImage = SiteSocial.Absolute(request, MediaUrls.For(ogImageRaw, MediaSize.Medium));
+	var faviconRaw = SiteSocial.PickImage(snap.FaviconUrl);
+	var favicon = !string.IsNullOrWhiteSpace(faviconRaw)
+		? (request is null ? MediaUrls.For(faviconRaw, MediaSize.Icon) : SiteSocial.Absolute(request, MediaUrls.For(faviconRaw, MediaSize.Icon)))
+		: "/favicon.svg";
+	var canonical = request is null
+		? string.Empty
+		: SiteSocial.Absolute(request, $"{request.PathBase}{request.Path}{request.QueryString}");
 }
 <!DOCTYPE html>
 <html lang="vi">
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<title>@(ViewData["Title"] ?? "WebShop")</title>
+	<title>@pageTitle</title>
+	<link rel="icon" href="@favicon" sizes="any" />
+	<link rel="apple-touch-icon" href="@favicon" />
 	@if (!allowIndex)
 	{
 		<meta name="robots" content="noindex,nofollow" />
 	}
-	@if (ViewData["Description"] is string description && !string.IsNullOrWhiteSpace(description))
+	@if (!string.IsNullOrWhiteSpace(description))
 	{
 		<meta name="description" content="@description" />
 	}
+	@if (!string.IsNullOrWhiteSpace(canonical))
+	{
+		<link rel="canonical" href="@canonical" />
+		<meta property="og:url" content="@canonical" />
+	}
+	<meta property="og:site_name" content="@snap.SiteName" />
+	<meta property="og:type" content="@ogType" />
+	<meta property="og:title" content="@pageTitle" />
+	<meta property="og:description" content="@description" />
+	@if (!string.IsNullOrWhiteSpace(ogImage))
+	{
+		<meta property="og:image" content="@ogImage" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:image" content="@ogImage" />
+	}
+	else
+	{
+		<meta name="twitter:card" content="summary" />
+	}
+	<meta name="twitter:title" content="@pageTitle" />
+	<meta name="twitter:description" content="@description" />
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
 	@* Body font: keep in critical path (small). Display font + FA: non-blocking. *@

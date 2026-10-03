@@ -63,20 +63,23 @@ builder.Services.Configure<FormOptions>(options =>
 });
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("AdminOrStaff", policy => policy.RequireRole(AppRoles.Admin, AppRoles.Staff));
+    options.AddPolicy("AdminOrStaff", policy =>
+        policy.RequireRole(AppRoles.Admin, AppRoles.Staff, AppRoles.Viewer));
     options.AddPolicy("AdminOnly", policy => policy.RequireRole(AppRoles.Admin));
+    options.AddPolicy("AdminOrViewer", policy =>
+        policy.RequireRole(AppRoles.Admin, AppRoles.Viewer));
 });
 builder.Services.AddRazorPages(options =>
 {
-    // Staff + Admin: vận hành nội dung / đơn hàng
+    // Admin + Staff + Viewer: vào khu vực Admin
     options.Conventions.AuthorizeFolder("/Admin", "AdminOrStaff");
-    // Chỉ Admin: thành viên, phân quyền, cấu hình, menu site
-    options.Conventions.AuthorizeFolder("/Admin/Users", "AdminOnly");
-    options.Conventions.AuthorizeFolder("/Admin/Roles", "AdminOnly");
-    options.Conventions.AuthorizeFolder("/Admin/Settings", "AdminOnly");
-    options.Conventions.AuthorizeFolder("/Admin/Menus", "AdminOnly");
-    options.Conventions.AuthorizeFolder("/Admin/Trash", "AdminOnly");
-    options.Conventions.AuthorizeFolder("/Admin/AuditLogs", "AdminOnly");
+    // Admin + Viewer (đọc): thành viên, phân quyền, cấu hình… — Staff không vào
+    options.Conventions.AuthorizeFolder("/Admin/Users", "AdminOrViewer");
+    options.Conventions.AuthorizeFolder("/Admin/Roles", "AdminOrViewer");
+    options.Conventions.AuthorizeFolder("/Admin/Settings", "AdminOrViewer");
+    options.Conventions.AuthorizeFolder("/Admin/Menus", "AdminOrViewer");
+    options.Conventions.AuthorizeFolder("/Admin/Trash", "AdminOrViewer");
+    options.Conventions.AuthorizeFolder("/Admin/AuditLogs", "AdminOrViewer");
 });
 builder.Services.Configure<Microsoft.AspNetCore.Mvc.MvcOptions>(options =>
 {
@@ -155,6 +158,24 @@ if (Directory.Exists(acePath))
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Viewer: xem Admin được, không ghi trong /Admin.
+app.Use(async (context, next) =>
+{
+    var path = context.Request.Path.Value ?? string.Empty;
+    if (path.StartsWith("/Admin", StringComparison.OrdinalIgnoreCase)
+        && AppRoles.IsReadOnlyAdmin(context.User)
+        && !HttpMethods.IsGet(context.Request.Method)
+        && !HttpMethods.IsHead(context.Request.Method)
+        && !HttpMethods.IsOptions(context.Request.Method))
+    {
+        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+        await context.Response.WriteAsync("Tài khoản Viewer chỉ được xem Admin, không thực hiện thao tác.");
+        return;
+    }
+
+    await next();
+});
 
 // Staging / pre-launch: discourage search engines when Admin tắt index.
 app.Use(async (context, next) =>

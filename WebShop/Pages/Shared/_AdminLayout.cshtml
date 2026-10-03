@@ -1,6 +1,8 @@
 @using WebShop.Infrastructure
 @{
 	var isAdmin = AppRoles.IsAdmin(User);
+	var isViewer = AppRoles.IsReadOnlyAdmin(User);
+	var showManagement = AppRoles.CanSeeAdminManagement(User);
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -9,6 +11,7 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title>@ViewData["Title"] - WebShop</title>
+	<link rel="icon" href="/favicon.svg" sizes="any" />
 	<link rel="stylesheet" href="/ace/assets/css/bootstrap.min.css" />
 	<link rel="stylesheet" href="/ace/assets/font-awesome/4.5.0/css/font-awesome.min.css" />
 	<link rel="stylesheet" href="/ace/assets/css/fonts.googleapis.com.css" />
@@ -17,7 +20,7 @@
 	<link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
 	@await RenderSectionAsync("Styles", required: false)
 </head>
-<body class="no-skin" data-admin-can-hard-delete="@(isAdmin ? "1" : "0")">
+<body class="no-skin@(isViewer ? " admin--readonly" : null)" data-admin-can-hard-delete="@(isAdmin ? "1" : "0")" data-admin-readonly="@(isViewer ? "1" : "0")">
 	<div id="navbar" class="navbar navbar-default">
 		<div class="navbar-container" id="navbar-container">
 			<div class="navbar-header pull-left">
@@ -39,6 +42,13 @@
 							<a href="/Admin/Users" class="admin-top-btn admin-top-btn--user" title="Tài khoản">
 								<i class="fa fa-user"></i>
 								<span class="admin-top-btn__text">@User.Identity?.Name</span>
+							</a>
+						}
+						else if (isViewer)
+						{
+							<a href="/Admin" class="admin-top-btn admin-top-btn--user" title="Tài khoản">
+								<i class="fa fa-user"></i>
+								<span class="admin-top-btn__text">@User.Identity?.Name <small>(Viewer)</small></span>
 							</a>
 						}
 						else
@@ -72,7 +82,7 @@
 					</a>
 					<b class="arrow"></b>
 				</li>
-				@if (isAdmin)
+				@if (showManagement)
 				{
 					<li class="@(IsActive("Users") ? "active" : null)">
 						<a href="/Admin/Users">
@@ -138,7 +148,7 @@
 					</a>
 					<b class="arrow"></b>
 				</li>
-				@if (isAdmin)
+				@if (showManagement)
 				{
 					<li class="@(IsActive("Trash") ? "active" : null)">
 						<a href="/Admin/Trash">
@@ -184,6 +194,13 @@
 					</ul>
 				</div>
 				<div class="page-content">
+					@if (isViewer)
+					{
+						<div class="alert alert-info" style="margin-top:0;">
+							<i class="ace-icon fa fa-eye"></i>
+							<strong>Chế độ chỉ xem.</strong> Bạn có thể duyệt mọi mục Admin nhưng không lưu, xóa hay tải lên.
+						</div>
+					}
 					@RenderBody()
 				</div>
 			</div>

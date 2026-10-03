@@ -24,7 +24,7 @@
 			<input type="text" name="Q" value="@Model.Q" class="form-control input-sm" placeholder="Username / họ tên / email" style="min-width:200px;" />
 			<select name="Role" class="form-control input-sm">
 				<option value="">Mọi vai trò</option>
-				@foreach (var role in new[] { AppRoles.Admin, AppRoles.Staff, AppRoles.Customer })
+				@foreach (var role in new[] { AppRoles.Admin, AppRoles.Staff, AppRoles.Viewer, AppRoles.Customer })
 				{
 					if (Model.Role == role) { <option value="@role" selected>@role</option> }
 					else { <option value="@role">@role</option> }

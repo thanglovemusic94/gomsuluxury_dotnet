@@ -49,6 +49,12 @@ public class ShopSnapshot
 
     public string LogoUrl { get; init; } = string.Empty;
 
+    /// <summary>Tab icon; setting FaviconUrl or LogoUrl.</summary>
+    public string FaviconUrl { get; init; } = string.Empty;
+
+    /// <summary>Default share image; setting OgImageUrl or LogoUrl.</summary>
+    public string ShareImageUrl { get; init; } = string.Empty;
+
     public string FacebookUrl { get; init; } = string.Empty;
 
     public string TikTokUrl { get; init; } = string.Empty;
@@ -107,6 +113,8 @@ public class ShopStore(AppDbContext db, CartService cart)
             Hotline = Value("Hotline"),
             Address = Value("Address"),
             LogoUrl = Value("LogoUrl"),
+            FaviconUrl = SiteSocial.PickImage(Value("FaviconUrl"), Value("LogoUrl")),
+            ShareImageUrl = SiteSocial.PickImage(Value("OgImageUrl"), Value("LogoUrl")),
             FacebookUrl = Value("FacebookUrl"),
             TikTokUrl = Value("TikTokUrl"),
             ZaloUrl = Value("ZaloUrl"),

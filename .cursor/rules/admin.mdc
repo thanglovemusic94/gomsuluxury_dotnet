@@ -22,6 +22,7 @@ alwaysApply: false
 - Lưu slug: `PagePaths.NormalizeSlug` + `IsReserved`. Placeholder/help hiển thị `/{slug}`.
 - Tái dùng `_SeoFields` / `SeoInput` cho meta.
 - Index toàn site: Admin → Cấu hình → checkbox “Cho phép index” (`SiteSeoService` / `Seo.AllowIndexing`). Không hard-code chỉ trong appsettings.
+- Role Viewer: banner “chỉ xem” + `admin--readonly`; không dựa vào ẩn nút thôi — server chặn POST `/Admin`.
 
 ## Style
 

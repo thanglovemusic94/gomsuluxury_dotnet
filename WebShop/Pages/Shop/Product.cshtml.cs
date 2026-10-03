@@ -116,8 +116,10 @@ public class ProductModel(AppDbContext db, CartService cart) : PageModel
             ? "/san-pham"
             : "/san-pham?cat=" + Uri.EscapeDataString(categorySlug);
 
-        ViewData["Title"] = Product.MetaTitle ?? Product.Name;
+		ViewData["Title"] = Product.MetaTitle ?? Product.Name;
         ViewData["Description"] = Product.MetaDescription ?? Product.ShortDescription;
+        ViewData["OgType"] = "product";
+        ViewData["OgImage"] = SiteSocial.PickImage(Product.SeoImage, Product.ImageUrl);
         ViewData["ImmersiveDetail"] = true;
         ViewData["ShopAssets"] = "detail";
         return true;

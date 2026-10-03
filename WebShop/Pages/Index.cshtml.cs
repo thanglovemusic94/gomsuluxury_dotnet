@@ -37,7 +37,12 @@ public class IndexModel(AppDbContext db, ShopStore shop) : PageModel
             ViewData["LcpImage"] = MediaUrls.For(Slides[0].ImageUrl, MediaSize.Medium);
             ViewData["LcpImageSrcSet"] = MediaUrls.SrcSetUpTo(Slides[0].ImageUrl, MediaSize.Large);
             ViewData["LcpImageSizes"] = "(max-width: 991px) 100vw, min(1200px, calc(100vw - 280px))";
+            ViewData["OgImage"] = Slides[0].ImageUrl;
         }
+
+        ViewData["Description"] = SiteName + " — gốm sứ cao cấp, quà biếu và bộ ấm trà.";
+        ViewData["OgType"] = "website";
+        ViewData["ShopAssets"] = "home";
 
         Products = await db.Products.AsNoTracking()
             .Where(item => item.IsVisible)

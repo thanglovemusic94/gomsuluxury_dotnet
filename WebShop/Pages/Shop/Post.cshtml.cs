@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using WebShop.Data;
+using WebShop.Infrastructure;
 using WebShop.Models;
 
 namespace WebShop.Pages.Shop;
@@ -21,6 +22,8 @@ public class PostPageModel(AppDbContext db) : PageModel
 
         ViewData["Title"] = Post.MetaTitle ?? Post.Title;
         ViewData["Description"] = Post.MetaDescription ?? Post.Summary;
+        ViewData["OgType"] = "article";
+        ViewData["OgImage"] = SiteSocial.PickImage(Post.SeoImage, Post.ImageUrl);
         return Page();
     }
 }

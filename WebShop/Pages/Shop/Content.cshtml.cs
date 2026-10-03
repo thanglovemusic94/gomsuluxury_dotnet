@@ -23,6 +23,8 @@ public class ContentPageModel(AppDbContext db) : PageModel
 
         ViewData["Title"] = PageContent.MetaTitle ?? PageContent.Title;
         ViewData["Description"] = PageContent.MetaDescription;
+        ViewData["OgType"] = "article";
+        ViewData["OgImage"] = PageContent.SeoImage;
         return Page();
     }
 }
