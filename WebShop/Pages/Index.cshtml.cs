@@ -33,10 +33,10 @@ public class IndexModel(AppDbContext db, ShopStore shop) : PageModel
         Slides = await ShopSlides.LoadAsync(db);
         if (Slides.Count > 0)
         {
-            // Mobile LCP: preload Medium; browser picks Large via imagesrcset when needed.
-            ViewData["LcpImage"] = MediaUrls.For(Slides[0].ImageUrl, MediaSize.Medium);
+            // LCP: preload Thumb; browser chọn Medium/Large qua imagesrcset theo sizes/DPR.
+            ViewData["LcpImage"] = MediaUrls.For(Slides[0].ImageUrl, MediaSize.Thumb);
             ViewData["LcpImageSrcSet"] = MediaUrls.SrcSetUpTo(Slides[0].ImageUrl, MediaSize.Large);
-            ViewData["LcpImageSizes"] = "(max-width: 991px) 100vw, min(1200px, calc(100vw - 280px))";
+            ViewData["LcpImageSizes"] = "(max-width: 991px) 100vw, min(920px, calc(100vw - 280px))";
             ViewData["OgImage"] = Slides[0].ImageUrl;
         }
 

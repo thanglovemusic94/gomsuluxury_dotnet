@@ -70,7 +70,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("AdminOrViewer", policy =>
         policy.RequireRole(AppRoles.Admin, AppRoles.Viewer));
 });
-// Production: minify/bundle CSS Ads LP. Development giữ file gốc để sửa dễ.
+// Production: minify/bundle CSS. Development giữ file gốc để sửa dễ.
 if (!builder.Environment.IsDevelopment())
 {
     builder.Services.AddWebOptimizer(pipeline =>
@@ -79,6 +79,8 @@ if (!builder.Environment.IsDevelopment())
             "/css/shop-ads.bundle.css",
             "css/shop-base.css",
             "css/shop-ads.css");
+        // Cùng path wwwroot — response minify (storefront + Gift Ads).
+        pipeline.MinifyCssFiles("css/shop.css", "css/shop-ads.css");
     });
 }
 

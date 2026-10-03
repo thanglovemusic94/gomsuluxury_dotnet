@@ -822,23 +822,42 @@ body.shop .shop-stage-list a span { color: inherit; }
 	position: absolute;
 	left: 0;
 	right: 0;
-	bottom: 14px;
+	bottom: 8px;
 	display: flex;
 	justify-content: center;
-	gap: 7px;
+	align-items: center;
+	gap: 4px;
 	z-index: 2;
 }
+/* Hit area ≥44×44 (Lighthouse touch target); chấm nhìn vẫn nhỏ qua ::after */
 .shop-slider__dot {
+	position: relative;
+	width: 44px;
+	height: 44px;
+	border: 0;
+	padding: 0;
+	margin: 0;
+	background: transparent;
+	cursor: pointer;
+	flex: 0 0 auto;
+}
+.shop-slider__dot::after {
+	content: "";
+	position: absolute;
+	left: 50%;
+	top: 50%;
 	width: 9px;
 	height: 9px;
-	border: 0;
 	border-radius: 50%;
+	transform: translate(-50%, -50%);
 	background: rgba(255, 255, 255, 0.4);
-	padding: 0;
-	cursor: pointer;
-	transition: transform 0.2s ease, background 0.2s ease;
+	transition: transform 0.2s ease, background 0.2s ease, width 0.2s ease;
 }
-.shop-slider__dot.is-active { background: var(--shop-gold); transform: scale(1.15); }
+.shop-slider__dot.is-active::after {
+	background: var(--shop-gold);
+	transform: translate(-50%, -50%) scale(1.15);
+}
+.shop-main { display: block; }
 
 .shop-hero { background: #fff; color: #2c2825; border-bottom: 1px solid #ece7e1; padding: 56px 0 48px; text-align: center; }
 .shop-hero h1 { margin: 0 0 10px; font-size: 46px; letter-spacing: 0.03em; font-weight: 600; }
@@ -1258,7 +1277,8 @@ body.shop .shop-card h3.shop-card__title,
 }
 .shop-price__was,
 .shop-price s {
-	color: #a39e96;
+	/* ≥4.5:1 trên nền card trắng — tránh Lighthouse contrast fail (#a39e96 quá nhạt) */
+	color: #5c574f;
 	font-weight: 400;
 	font-size: 12px;
 	margin-left: 0;
@@ -1723,7 +1743,7 @@ body.shop .shop-pager__btn.is-active {
 }
 .shop-detail-buy__price .shop-price__was {
 	font-size: 0.55em;
-	color: #9e9e9e;
+	color: #5c574f;
 }
 .shop-detail-buy__stock {
 	margin: 0;
@@ -3115,16 +3135,22 @@ body.shop .login-dialog__submit:focus {
 		touch-action: pan-y;
 	}
 	.shop-slider__nav { display: none; }
-	.shop-slider__dots { bottom: 10px; gap: 6px; }
+	.shop-slider__dots { bottom: 4px; gap: 2px; }
 	.shop-slider__dot {
+		width: 44px;
+		height: 44px;
+		background: transparent;
+	}
+	.shop-slider__dot::after {
 		width: 7px;
 		height: 7px;
 		border-radius: 999px;
 		background: rgba(255, 255, 255, 0.45);
 	}
-	.shop-slider__dot.is-active {
+	.shop-slider__dot.is-active::after {
 		width: 18px;
-		transform: none;
+		height: 7px;
+		transform: translate(-50%, -50%);
 		background: var(--shop-gold);
 	}
 	.shop-hero { padding: 32px 0 28px; }

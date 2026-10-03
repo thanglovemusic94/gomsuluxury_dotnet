@@ -117,7 +117,9 @@
 </head>
 <body class="shop@(ViewData["ImmersiveDetail"] is true ? " shop--detail-immersive" : null)">
 	@await Component.InvokeAsync("ShopHeader")
-	@RenderBody()
+	<main id="main" class="shop-main">
+		@RenderBody()
+	</main>
 	@await Component.InvokeAsync("ShopFooter")
 	<script src="~/js/shop-core.js" asp-append-version="true" defer></script>
 	@if (Has("home"))

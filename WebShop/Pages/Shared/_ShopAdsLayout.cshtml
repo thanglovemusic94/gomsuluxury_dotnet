@@ -82,7 +82,9 @@
 		<a class="shop-ads-bar__brand" href="/" title="@siteName">
 			@if (!string.IsNullOrWhiteSpace(logoUrl))
 			{
-				<img src="@MediaUrls.For(logoUrl, MediaSize.Medium)"
+				<img src="@MediaUrls.For(logoUrl, MediaSize.Thumb)"
+				     srcset="@MediaUrls.SrcSetUpTo(logoUrl, MediaSize.Thumb)"
+				     sizes="140px"
 				     alt="@siteName"
 				     width="140"
 				     height="40"
@@ -101,7 +103,9 @@
 			</a>
 		}
 	</header>
-	@RenderBody()
+	<main id="main" class="shop-main shop-main--ads">
+		@RenderBody()
+	</main>
 	<footer class="shop-ads-foot">
 		<p class="shop-ads-foot__note">© @siteName</p>
 		<a class="shop-ads-foot__link" href="/">Xem cửa hàng</a>

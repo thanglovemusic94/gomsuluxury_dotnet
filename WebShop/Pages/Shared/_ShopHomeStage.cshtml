@@ -56,18 +56,19 @@
 									}
 									@foreach (var slide in slides)
 									{
-										var slideSrc = MediaUrls.For(slide.ImageUrl, first ? MediaSize.Medium : MediaSize.Large);
+										@* src=Thumb: mobile/DPR vừa phải; srcset vẫn có Medium/Large cho desktop *@
+										var slideSrc = MediaUrls.For(slide.ImageUrl, MediaSize.Thumb);
 										<div class="shop-slider__slide">
 											<a href="@slide.LinkUrl">
 												<img src="@slideSrc"
 												     srcset="@MediaUrls.SrcSetUpTo(slide.ImageUrl, MediaSize.Large)"
-												     sizes="(max-width: 991px) 100vw, min(1200px, calc(100vw - 280px))"
+												     sizes="(max-width: 991px) 100vw, min(920px, calc(100vw - 280px))"
 												     alt="@slide.Alt"
 												     width="1200"
 												     height="675"
 												     loading="@(first ? "eager" : "lazy")"
 												     fetchpriority="@(first ? "high" : "auto")"
-												     decoding="@(first ? "sync" : "async")" />
+												     decoding="async" />
 											</a>
 										</div>
 										first = false;

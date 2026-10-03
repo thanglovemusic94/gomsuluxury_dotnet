@@ -31,7 +31,9 @@
 			<a class="shop-logo" href="/">
 				@if (!string.IsNullOrWhiteSpace(Model.LogoUrl))
 				{
-					<img src="@WebShop.Infrastructure.MediaUrls.For(Model.LogoUrl, WebShop.Infrastructure.MediaSize.Medium)"
+					<img src="@WebShop.Infrastructure.MediaUrls.For(Model.LogoUrl, WebShop.Infrastructure.MediaSize.Thumb)"
+					     srcset="@WebShop.Infrastructure.MediaUrls.SrcSetUpTo(Model.LogoUrl, WebShop.Infrastructure.MediaSize.Thumb)"
+					     sizes="180px"
 					     alt="@Model.SiteName"
 					     width="180"
 					     height="48"

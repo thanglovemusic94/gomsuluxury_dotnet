@@ -23,8 +23,9 @@ Khi hoàn thành một mục: xóa khỏi đây (hoặc đánh dấu xong rồi 
 - `ViewData["AdminAssets"]`: `seo` / `bulk` — layout chỉ nạp `admin-seo-fields.js` / `admin-bulk.js` khi cần. `_SeoFields` tự đăng ký `seo`.
 
 ### Shop
-- Đã làm: LP Ads tách `shop-base`/`shop-ads`; Production bundle minify `/css/shop-ads.bundle.css` (WebOptimizer). Gift Ads = `shop.css` + `shop-ads.css`. Storefront vẫn `shop.css`.
-- Tiếp: tách CSS home/catalog/detail; minify `shop.css`; gift-ads bundle gọn (không full `shop.css`).
+- Đã làm: LP Ads `shop-base`/`shop-ads` + Production `shop-ads.bundle`; Production minify `shop.css` / `shop-ads.css`; home slider/logo/card srcset gọn hơn.
+- Tiếp: tách CSS home/catalog/detail (unused CSS Lighthouse); gift-ads bundle gọn; subset Font Awesome nếu cần.
+- Audit Lighthouse local: minify CSS chỉ thấy khi **Production** (Dev giữ file gốc).
 - Không sinh file CSS theo từng chiến dịch LP.
 
 ## Tạm hoãn (đã bàn, không làm sớm)
