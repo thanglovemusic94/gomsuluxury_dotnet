@@ -1,0 +1,64 @@
+@page "{id:int?}"
+@model WebShop.Pages.Admin.Menus.EditModel
+@{
+    ViewData["Title"] = Model.Input.Id == 0 ? "Thêm menu" : "Sửa menu";
+    ViewData["Menu"] = "Menus";
+}
+
+<div class="page-header"><h1>@ViewData["Title"]</h1></div>
+<partial name="_AdminAlerts" />
+
+<form method="post" class="form-horizontal">
+	<input asp-for="Input.Id" type="hidden" />
+	<div class="widget-box">
+		<div class="widget-header"><h4 class="widget-title">Menu</h4></div>
+		<div class="widget-body"><div class="widget-main">
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Tên</label>
+				<div class="col-sm-9"><input asp-for="Input.Name" class="form-control" maxlength="100" /></div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">URL</label>
+				<div class="col-sm-9"><input asp-for="Input.Url" class="form-control" maxlength="255" /></div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Vị trí</label>
+				<div class="col-sm-9">
+					<select asp-for="Input.Position" class="form-control">
+						@foreach (var position in CatalogRules.MenuPositions)
+						{
+							<option value="@position">@position</option>
+						}
+					</select>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Menu cha</label>
+				<div class="col-sm-9">
+					<select asp-for="Input.ParentId" class="form-control">
+						<option value="">Không có</option>
+						@foreach (var parent in Model.Parents)
+						{
+							<option value="@parent.Id">@parent.Label</option>
+						}
+					</select>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Thứ tự</label>
+				<div class="col-sm-9"><input asp-for="Input.DisplayOrder" class="form-control" type="number" /></div>
+			</div>
+			<div class="form-group">
+				<div class="col-sm-offset-3 col-sm-9">
+					<label><input asp-for="Input.IsActive" /> Hiển thị</label>
+				</div>
+			</div>
+			<div class="clearfix form-actions">
+				<div class="col-sm-offset-3 col-sm-9">
+					<button type="submit" class="btn btn-primary"><i class="ace-icon fa fa-check"></i> Lưu</button>
+					<a class="btn btn-default" href="/Admin/Menus?Position=@Model.Input.Position">Hủy</a>
+				</div>
+			</div>
+		</div></div>
+	</div>
+</form>

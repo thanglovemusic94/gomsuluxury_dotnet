@@ -1,0 +1,93 @@
+@page "/qua-bieu/{mode?}"
+@model WebShop.Pages.Shop.GiftModel
+@{
+	Layout = Model.IsAdsLanding ? "_ShopAdsLayout" : "_ShopLayout";
+	var hero = Model.HeroImageUrl;
+}
+<section class="shop-gift-hero" aria-label="Quà biếu">
+	@if (!string.IsNullOrWhiteSpace(hero))
+	{
+		<img class="shop-gift-hero__bg"
+		     src="@hero"
+		     alt=""
+		     width="1600"
+		     height="900"
+		     fetchpriority="high"
+		     decoding="async" />
+	}
+	<div class="shop-gift-hero__veil" aria-hidden="true"></div>
+	<div class="shop-gift-hero__inner">
+		<p class="shop-gift-hero__brand">@Model.SiteName</p>
+		@await Component.InvokeAsync("HtmlBlock", new { key = "gift-hero" })
+		<div class="shop-gift-hero__cta">
+			<a class="btn btn-primary shop-gift-hero__btn" href="#bo-qua">Xem bộ quà</a>
+			@if (!string.IsNullOrWhiteSpace(Model.HotlineHref))
+			{
+				<a class="btn shop-gift-hero__btn shop-gift-hero__btn--ghost" href="@Model.HotlineHref">Gọi @Model.Hotline</a>
+			}
+		</div>
+	</div>
+</section>
+
+<div class="container shop-page shop-gift@(Model.IsAdsLanding ? " shop-gift--ads" : null)">
+	@if (!Model.IsAdsLanding)
+	{
+		<nav class="shop-breadcrumb" aria-label="Breadcrumb">
+			<a href="/">Trang chủ</a>
+			<span>/</span>
+			<span>Quà biếu</span>
+		</nav>
+	}
+
+	<section class="shop-gift-occasions" data-reveal aria-label="Gợi ý theo dịp">
+		@await Component.InvokeAsync("HtmlBlock", new { key = "gift-occasions" })
+	</section>
+
+	<section id="bo-qua" class="shop-gift-picks" aria-labelledby="gift-picks-heading">
+		<h2 id="gift-picks-heading" class="shop-title">
+			Bộ quà gợi ý
+			@if (!Model.IsAdsLanding)
+			{
+				<a href="/san-pham?cat=qua-bieu">@(Model.FromGiftCategory ? "Tất cả trong danh mục" : "Danh mục Quà biếu")</a>
+			}
+		</h2>
+		@if (!Model.IsAdsLanding && !Model.FromGiftCategory)
+		{
+			<p class="shop-gift-picks__hint" data-reveal>
+				Đang gợi ý tạm. Trong Admin → Sản phẩm, tick thêm danh mục <strong>Quà biếu</strong> (giữ danh mục chính) để cố định bộ sưu tập.
+			</p>
+		}
+		@if (Model.Products.Count == 0)
+		{
+			<div class="alert alert-warning">Chưa có sản phẩm để gợi ý. Thêm sản phẩm vào danh mục Quà biếu trong Admin.</div>
+		}
+		else
+		{
+			<partial name="_ProductCards" model="Model.Products" />
+		}
+	</section>
+
+	<div class="shop-gift-note" data-reveal>
+		@await Component.InvokeAsync("HtmlBlock", new { key = "gift-lead" })
+	</div>
+
+	<section class="shop-gift-band" data-reveal aria-label="Tư vấn quà biếu">
+		<div class="shop-gift-band__copy">
+			@await Component.InvokeAsync("HtmlBlock", new { key = "gift-cta" })
+		</div>
+		<div class="shop-gift-band__actions">
+			@if (!string.IsNullOrWhiteSpace(Model.HotlineHref))
+			{
+				<a class="btn btn-primary" href="@Model.HotlineHref">@Model.Hotline</a>
+			}
+			@if (Model.IsAdsLanding)
+			{
+				<a class="btn btn-default" href="/">Xem cửa hàng</a>
+			}
+			else
+			{
+				<a class="btn btn-default" href="/san-pham">Xem toàn bộ sản phẩm</a>
+			}
+		</div>
+	</section>
+</div>

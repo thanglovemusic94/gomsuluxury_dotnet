@@ -1,0 +1,83 @@
+@page
+@model WebShop.Pages.Admin.Orders.CreateModel
+@{
+    ViewData["Title"] = "Tạo đơn hàng";
+    ViewData["Menu"] = "Orders";
+}
+
+<div class="page-header"><h1>Tạo đơn hàng</h1></div>
+<partial name="_AdminAlerts" />
+
+@if (Model.Products.Count == 0)
+{
+	<div class="alert alert-warning">Chưa có sản phẩm đang hiển thị để lập đơn.</div>
+}
+
+<form method="post" class="form-horizontal">
+	<div class="widget-box">
+		<div class="widget-header"><h4 class="widget-title">Khách hàng</h4></div>
+		<div class="widget-body"><div class="widget-main">
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Tài khoản</label>
+				<div class="col-sm-9">
+					<select asp-for="Input.UserId" class="form-control">
+						<option value="">Khách vãng lai</option>
+						@foreach (var user in Model.Customers)
+						{
+							<option value="@user.Id">@user.Username</option>
+						}
+					</select>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Tên khách</label>
+				<div class="col-sm-9"><input asp-for="Input.CustomerName" class="form-control" maxlength="100" /></div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Điện thoại</label>
+				<div class="col-sm-9"><input asp-for="Input.CustomerPhone" class="form-control" maxlength="15" /></div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Địa chỉ</label>
+				<div class="col-sm-9"><textarea asp-for="Input.ShippingAddress" class="form-control" maxlength="500" rows="2"></textarea></div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Thanh toán</label>
+				<div class="col-sm-9"><input asp-for="Input.PaymentMethod" class="form-control" maxlength="50" /></div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Ghi chú</label>
+				<div class="col-sm-9"><textarea asp-for="Input.OrderNote" class="form-control" maxlength="500" rows="2"></textarea></div>
+			</div>
+		</div></div>
+	</div>
+	<div class="widget-box">
+		<div class="widget-header"><h4 class="widget-title">Sản phẩm</h4></div>
+		<div class="widget-body"><div class="widget-main">
+			<p class="help-block">Giá bán và giá vốn được chốt theo sản phẩm tại lúc tạo đơn. Dòng để trống sẽ bị bỏ qua.</p>
+			@for (var index = 0; index < Model.Input.Items.Count; index++)
+			{
+				<div class="form-group">
+					<div class="col-sm-8">
+						<select asp-for="Input.Items[index].ProductId" class="form-control">
+							<option value="0">Chọn sản phẩm</option>
+							@foreach (var product in Model.Products)
+							{
+								<option value="@product.Id">@product.Name (tồn @product.Stock, giá @((product.DiscountPrice ?? product.Price).ToString("N0")))</option>
+							}
+						</select>
+					</div>
+					<div class="col-sm-4">
+						<input asp-for="Input.Items[index].Quantity" class="form-control" type="number" min="1" />
+					</div>
+				</div>
+			}
+			<div class="clearfix form-actions">
+				<div class="col-sm-12">
+					<button type="submit" class="btn btn-primary"><i class="ace-icon fa fa-check"></i> Tạo đơn</button>
+					<a class="btn btn-default" href="/Admin/Orders">Hủy</a>
+				</div>
+			</div>
+		</div></div>
+	</div>
+</form>

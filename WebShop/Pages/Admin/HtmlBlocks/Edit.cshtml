@@ -1,0 +1,100 @@
+@page "/Admin/Blocks/Edit/{id:int?}"
+@model WebShop.Pages.Admin.HtmlBlocks.EditModel
+@{
+	ViewData["Title"] = Model.Input.Id == 0 ? "Thêm HTML block" : "Sửa HTML block";
+	ViewData["Menu"] = "Blocks";
+}
+
+<div class="page-header">
+	<h1>
+		@ViewData["Title"]
+		@if (Model.Input.Id > 0)
+		{
+			<a class="btn btn-sm btn-info pull-right" href="/Admin/Blocks/Detail/@Model.Input.Id">Xem chi tiết / preview</a>
+		}
+	</h1>
+</div>
+<partial name="_AdminAlerts" />
+
+<div class="alert alert-info">
+	CSS và JavaScript viết <strong>trong Content</strong> (nút <code>Source</code>):
+	<code>&lt;style&gt;...&lt;/style&gt;</code> và <code>&lt;script&gt;...&lt;/script&gt;</code>.
+</div>
+
+<div class="row">
+	<div class="col-sm-7">
+		<form method="post" class="form-horizontal" id="blockEditForm">
+			<input asp-for="Input.Id" type="hidden" />
+			<div class="widget-box">
+				<div class="widget-header"><h4 class="widget-title">Block</h4></div>
+				<div class="widget-body"><div class="widget-main">
+					<div class="form-group">
+						<label class="col-sm-3 control-label">Key</label>
+						<div class="col-sm-9">
+							<input asp-for="Input.Key" class="form-control" maxlength="100" placeholder="home-promo" />
+							<span class="help-block">Shortcode: <code>{{block:@(string.IsNullOrWhiteSpace(Model.Input.Key) ? "ten-key" : Model.Input.Key)}}</code></span>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label">Tiêu đề</label>
+						<div class="col-sm-9"><input asp-for="Input.Title" class="form-control" maxlength="200" /></div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label">Mô tả</label>
+						<div class="col-sm-9">
+							<input asp-for="Input.Note" class="form-control" maxlength="255" placeholder="Mô tả ngắn — chỗ dùng trên website" />
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label">Nội dung</label>
+						<div class="col-sm-9">
+							<textarea asp-for="Input.Content" class="form-control js-ckeditor-block" rows="14"></textarea>
+							<span class="help-block">HTML + CSS + JS trong Content.</span>
+						</div>
+					</div>
+					<div class="form-group">
+						<div class="col-sm-offset-3 col-sm-9">
+							<label><input asp-for="Input.IsActive" /> Bật hiển thị</label>
+						</div>
+					</div>
+					<div class="clearfix form-actions">
+						<div class="col-sm-offset-3 col-sm-9">
+							<button type="submit" class="btn btn-primary"><i class="ace-icon fa fa-check"></i> Lưu</button>
+							<button type="button" class="btn btn-info" id="btnRefreshPreview"><i class="fa fa-refresh"></i> Làm mới preview</button>
+							<a class="btn btn-default" href="/Admin/Blocks">Hủy</a>
+						</div>
+					</div>
+				</div></div>
+			</div>
+		</form>
+	</div>
+	<div class="col-sm-5">
+		<div class="widget-box" id="blockPreviewBox">
+			<div class="widget-header">
+				<h4 class="widget-title">Xem trước (review)</h4>
+			</div>
+			<div class="widget-body">
+				<div class="widget-main" style="padding:8px;">
+					<iframe id="blockPreview"
+							title="Preview HTML block"
+							sandbox="allow-scripts allow-same-origin allow-forms"
+							style="display:block;width:100%;min-height:560px;height:560px;border:1px solid #d5d5d5;background:#fff;"></iframe>
+					<p class="help-block" style="margin:8px 0 0;">Nếu trống, bấm <strong>Làm mới preview</strong>. CSS/JS trong Content sẽ chạy trong khung này.</p>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+@section Scripts {
+	<script src="https://cdn.ckeditor.com/4.22.1/full/ckeditor.js"></script>
+	<script src="/js/admin-editor.js?v=2"></script>
+	<script>
+		(function () {
+			var selector = '.js-ckeditor-block';
+			WebShopEditor.replaceBlock(selector);
+			WebShopEditor.bindForms();
+			WebShopEditor.bindBlockPreview(selector, '#blockPreview', '#btnRefreshPreview');
+		})();
+	</script>
+}

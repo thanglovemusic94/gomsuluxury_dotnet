@@ -1,0 +1,18 @@
+@page "/{slug}"
+@model WebShop.Pages.Shop.ContentPageModel
+@{
+	Layout = "_ShopLayout";
+	ViewData["ShopAssets"] = "detail";
+}
+@if (Model.PageContent is null)
+{
+	return;
+}
+<div class="shop-page">
+	<div class="container">
+		<article class="shop-prose" style="max-width:820px;margin:0 auto;padding:28px 0 48px;">
+			<h1 class="shop-title" style="text-align:left;margin-top:0;">@Model.PageContent.Title</h1>
+			@Html.Raw(Model.PageContent.Content)
+		</article>
+	</div>
+</div>

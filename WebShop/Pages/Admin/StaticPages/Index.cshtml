@@ -1,0 +1,67 @@
+@page "/Admin/Pages"
+@model WebShop.Pages.Admin.StaticPages.IndexModel
+@{
+    ViewData["Title"] = "Trang tĩnh";
+    ViewData["Menu"] = "Pages";
+}
+
+<div class="page-header">
+	<h1>
+		Trang tĩnh
+		<small><i class="ace-icon fa fa-angle-double-right"></i> giới thiệu, chính sách</small>
+		<a href="/Admin/Pages/Edit" class="btn btn-sm btn-primary pull-right">Thêm trang</a>
+	</h1>
+</div>
+<partial name="_AdminAlerts" />
+
+<div class="widget-box js-admin-bulk-root">
+	<form method="post" asp-page-handler="BulkDelete" class="js-admin-bulk-form" data-noun="trang" id="pages-bulk-form">
+		<input type="hidden" name="mode" value="trash" />
+		<div class="admin-bulk-bar">
+			<label class="checkbox-inline" style="margin:0;">
+				<input type="checkbox" class="js-admin-select-all" /> Chọn tất cả
+			</label>
+			<span class="text-muted">Đã chọn: <strong class="js-admin-bulk-count">0</strong></span>
+			<button type="submit" class="btn btn-xs btn-danger js-admin-bulk-delete" disabled>Xóa đã chọn</button>
+		</div>
+	</form>
+	<div class="widget-body">
+		<div class="widget-main no-padding">
+			<table class="table table-striped table-bordered table-hover">
+				<thead>
+					<tr>
+						<th class="admin-check-col"></th>
+						<th>Tiêu đề</th>
+						<th>Slug</th>
+						<th>Xuất bản</th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+				@if (Model.Items.Count == 0)
+				{
+					<tr><td colspan="5">Chưa có trang tĩnh.</td></tr>
+				}
+				@foreach (var item in Model.Items)
+				{
+					<tr>
+						<td class="admin-check-col">
+							<input type="checkbox" class="js-admin-row-check" name="ids" value="@item.Id" form="pages-bulk-form" />
+						</td>
+						<td>@item.Title</td>
+						<td>@item.Slug</td>
+						<td>@(item.IsPublished ? "Có" : "Ẩn")</td>
+						<td class="text-right">
+							<a class="btn btn-xs btn-info" href="/Admin/Pages/Edit/@item.Id">Sửa</a>
+							<form method="post" asp-page-handler="Delete" asp-route-id="@item.Id" class="inline js-admin-delete-one" data-noun="trang">
+								<input type="hidden" name="mode" value="trash" />
+								<button type="submit" class="btn btn-xs btn-danger">Xóa</button>
+							</form>
+						</td>
+					</tr>
+				}
+				</tbody>
+			</table>
+		</div>
+	</div>
+</div>

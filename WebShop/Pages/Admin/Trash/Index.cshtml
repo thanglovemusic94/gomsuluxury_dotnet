@@ -1,0 +1,94 @@
+@page "/Admin/Trash"
+@model WebShop.Pages.Admin.Trash.IndexModel
+@{
+	ViewData["Title"] = "Thùng rác";
+	ViewData["Menu"] = "Trash";
+	var pager = Model.Pager(Model.ListUrl);
+	var entityTypes = new[] { AuditEntities.Product, AuditEntities.Post, AuditEntities.Page, AuditEntities.Media };
+}
+
+<div class="page-header">
+	<h1>Thùng rác <small><i class="ace-icon fa fa-angle-double-right"></i> khôi phục hoặc xóa vĩnh viễn</small></h1>
+</div>
+<partial name="_AdminAlerts" />
+
+<div class="widget-box">
+	<div class="widget-header"><h4 class="widget-title">Bộ lọc</h4></div>
+	<div class="widget-body"><div class="widget-main">
+		<form method="get" class="form-inline">
+			<input type="hidden" name="PageSize" value="@Model.PageSize" />
+			<input type="text" name="Q" value="@Model.Q" class="form-control input-sm" placeholder="Tên / ID" style="min-width:160px;" />
+			<select name="EntityType" class="form-control input-sm">
+				<option value="">Mọi loại</option>
+				@foreach (var t in entityTypes)
+				{
+					if (Model.EntityType == t) { <option value="@t" selected>@AuditEntities.Label(t)</option> }
+					else { <option value="@t">@AuditEntities.Label(t)</option> }
+				}
+			</select>
+			<button type="submit" class="btn btn-sm btn-primary">Lọc</button>
+			@if (!string.IsNullOrWhiteSpace(Model.Q) || !string.IsNullOrWhiteSpace(Model.EntityType))
+			{
+				<a href="/Admin/Trash?PageSize=@Model.PageSize" class="btn btn-sm btn-link">Xóa lọc</a>
+			}
+		</form>
+	</div></div>
+</div>
+
+<div class="widget-box">
+	<div class="widget-header"><h4 class="widget-title">Mục đã xóa mềm (@Model.TotalCount)</h4></div>
+	<div class="widget-body">
+		<div class="widget-main no-padding">
+		<table class="table table-striped table-bordered" style="margin:0;">
+			<thead>
+				<tr>
+					<th>Loại</th>
+					<th>Tên</th>
+					<th>Xóa lúc</th>
+					<th>Người xóa</th>
+					<th style="width:280px;"></th>
+				</tr>
+			</thead>
+			<tbody>
+			@if (Model.Items.Count == 0)
+			{
+				<tr><td colspan="5" class="text-muted text-center">Không có mục phù hợp.</td></tr>
+			}
+			else foreach (var item in Model.Items)
+			{
+				<tr>
+					<td><span class="label label-info">@AuditEntities.Label(item.Type)</span></td>
+					<td>
+						<a href="/Admin/Trash/Detail?Type=@Uri.EscapeDataString(item.Type)&Id=@item.Id">#@item.Id · @item.Title</a>
+					</td>
+					<td>@(item.DeletedAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "—")</td>
+					<td>@(item.DeletedBy ?? "—")</td>
+					<td>
+						<a class="btn btn-xs btn-info" href="/Admin/Trash/Detail?Type=@Uri.EscapeDataString(item.Type)&Id=@item.Id">Chi tiết</a>
+						<form method="post" asp-page-handler="Restore" class="inline">
+							<input type="hidden" name="type" value="@item.Type" />
+							<input type="hidden" name="id" value="@item.Id" />
+							<input type="hidden" name="pageNumber" value="@Model.PageNumber" />
+							<input type="hidden" name="pageSize" value="@Model.PageSize" />
+							<input type="hidden" name="entityType" value="@Model.EntityType" />
+							<input type="hidden" name="q" value="@Model.Q" />
+							<button type="submit" class="btn btn-xs btn-success">Khôi phục</button>
+						</form>
+						<form method="post" asp-page-handler="HardDelete" class="inline" onsubmit="return confirm('Xóa vĩnh viễn? Không hoàn tác được.');">
+							<input type="hidden" name="type" value="@item.Type" />
+							<input type="hidden" name="id" value="@item.Id" />
+							<input type="hidden" name="pageNumber" value="@Model.PageNumber" />
+							<input type="hidden" name="pageSize" value="@Model.PageSize" />
+							<input type="hidden" name="entityType" value="@Model.EntityType" />
+							<input type="hidden" name="q" value="@Model.Q" />
+							<button type="submit" class="btn btn-xs btn-danger">Xóa cứng</button>
+						</form>
+					</td>
+				</tr>
+			}
+			</tbody>
+		</table>
+		</div>
+		<partial name="_AdminPager" model="pager" />
+	</div>
+</div>

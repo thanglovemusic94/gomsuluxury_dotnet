@@ -1,0 +1,39 @@
+@page "{id:int?}"
+@model WebShop.Pages.Admin.Settings.EditModel
+@{
+    ViewData["Title"] = Model.Input.Id == 0 ? "Thêm cấu hình" : "Sửa cấu hình";
+    ViewData["Menu"] = "Settings";
+}
+
+<div class="page-header"><h1>@ViewData["Title"]</h1></div>
+<partial name="_AdminAlerts" />
+
+<form method="post" class="form-horizontal">
+	<input asp-for="Input.Id" type="hidden" />
+	<div class="widget-box">
+		<div class="widget-header"><h4 class="widget-title">Cấu hình</h4></div>
+		<div class="widget-body"><div class="widget-main">
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Khóa</label>
+				<div class="col-sm-9">
+					<input asp-for="Input.Key" class="form-control" maxlength="100" placeholder="Hotline" />
+					<span class="help-block">Ví dụ: Hotline, Address, LogoUrl, MaintenanceMode.</span>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Giá trị</label>
+				<div class="col-sm-9"><textarea asp-for="Input.Value" class="form-control" rows="4"></textarea></div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Mô tả</label>
+				<div class="col-sm-9"><input asp-for="Input.Description" class="form-control" maxlength="255" /></div>
+			</div>
+			<div class="clearfix form-actions">
+				<div class="col-sm-offset-3 col-sm-9">
+					<button type="submit" class="btn btn-primary"><i class="ace-icon fa fa-check"></i> Lưu</button>
+					<a class="btn btn-default" href="/Admin/Settings">Hủy</a>
+				</div>
+			</div>
+		</div></div>
+	</div>
+</form>

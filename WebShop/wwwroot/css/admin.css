@@ -1,0 +1,203 @@
+/* Admin chrome — loaded on every admin page */
+form.inline { display: inline; }
+
+/* Chữ lớn hơn một chút so với ACE mặc định */
+body.no-skin {
+	font-size: 14px;
+	line-height: 1.45;
+}
+body.no-skin .page-header h1 { font-size: 26px; }
+body.no-skin .page-header h1 small { font-size: 15px; }
+body.no-skin .nav-list > li > a { font-size: 14px; }
+body.no-skin .table { font-size: 14px; }
+body.no-skin .form-control { font-size: 14px; }
+body.no-skin .form-control.input-sm { font-size: 13px; height: 32px; }
+body.no-skin .btn { font-size: 13.5px; }
+body.no-skin .btn-sm { font-size: 13px; }
+body.no-skin .btn-xs { font-size: 12.5px; }
+body.no-skin .widget-title { font-size: 15px; }
+body.no-skin .breadcrumb { font-size: 13.5px; }
+
+.admin-top-actions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	height: 45px;
+	padding: 0 12px 0 0;
+	margin: 0;
+	list-style: none;
+}
+.admin-top-actions > li {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+.admin-top-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 30px;
+	padding: 0 12px;
+	border: 0;
+	border-radius: 3px;
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 1;
+	text-decoration: none !important;
+	color: #fff !important;
+	white-space: nowrap;
+	box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
+	transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+.admin-top-btn i {
+	font-size: 13px;
+	width: 14px;
+	text-align: center;
+}
+.admin-top-btn:hover {
+	color: #fff !important;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+}
+.admin-top-btn--site { background: #4f99c6; }
+.admin-top-btn--site:hover { background: #3f89b6; }
+.admin-top-btn--user { background: #6fb3e0; }
+.admin-top-btn--user:hover { background: #5aa3d0; }
+.admin-top-btn--user small {
+	font-weight: 500;
+	opacity: 0.9;
+	margin-left: 2px;
+}
+.admin-top-btn--logout {
+	background: #d15b47;
+	cursor: pointer;
+}
+.admin-top-btn--logout:hover { background: #c04836; }
+.admin-top-actions form {
+	margin: 0;
+	display: flex;
+	align-items: center;
+}
+@media (max-width: 480px) {
+	.admin-top-btn span.admin-top-btn__text { display: none; }
+	.admin-top-btn { padding: 0 10px; }
+}
+
+.admin-bulk-bar {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex-wrap: wrap;
+	padding: 10px 12px;
+	background: #f8f8f8;
+	border-bottom: 1px solid #e3e3e3;
+}
+.admin-bulk-bar .js-admin-bulk-delete[disabled] { opacity: 0.55; cursor: not-allowed; }
+.admin-check-col { width: 36px; text-align: center; vertical-align: middle !important; }
+.admin-check-col input { margin: 0; }
+
+/* Ảnh trong danh sách admin */
+body.no-skin .admin-list-thumb,
+.admin-list-thumb {
+	width: 110px !important;
+	height: 110px !important;
+	max-width: none !important;
+	object-fit: cover;
+	border-radius: 6px;
+	border: 1px solid #ddd;
+	display: block;
+	margin: 0 auto;
+	background: #f5f5f5;
+}
+body.no-skin .admin-list-thumb--empty,
+.admin-list-thumb--empty {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 110px;
+	height: 110px;
+	line-height: 1;
+	background: #f5f5f5;
+	border: 1px solid #ddd;
+	border-radius: 6px;
+	color: #999;
+	font-size: 13px;
+}
+body.no-skin th.admin-list-thumb-col,
+body.no-skin td.admin-list-thumb-col,
+th.admin-list-thumb-col,
+td.admin-list-thumb-col {
+	width: 128px;
+	min-width: 128px;
+	text-align: center;
+	vertical-align: middle !important;
+}
+
+/* Admin menu tree (kéo thả) */
+.menu-tree,
+.menu-tree__children {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+.menu-tree__children {
+	margin-left: 28px;
+	padding-left: 12px;
+	border-left: 2px solid #e8e8e8;
+	min-height: 8px;
+}
+.menu-tree__item { margin: 0 0 6px; }
+.menu-tree__row {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 10px 12px;
+	background: #fafafa;
+	border: 1px solid #e3e3e3;
+	border-radius: 4px;
+}
+.menu-tree__row.is-inactive { opacity: 0.65; }
+.menu-tree__handle {
+	cursor: grab;
+	color: #999;
+	padding: 2px 6px;
+	flex: 0 0 auto;
+}
+.menu-tree__handle:active { cursor: grabbing; }
+.menu-tree__meta {
+	flex: 1 1 auto;
+	min-width: 0;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 8px 12px;
+}
+.menu-tree__name { font-size: 14px; }
+.menu-tree__url { font-size: 12.5px; word-break: break-all; }
+.menu-tree__actions {
+	flex: 0 0 auto;
+	white-space: nowrap;
+}
+.menu-tree__item.sortable-ghost > .menu-tree__row {
+	opacity: 0.45;
+	background: #eef6fc;
+}
+.menu-tree__item.sortable-drag > .menu-tree__row {
+	box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+	background: #fff;
+}
+.menu-tree-status {
+	margin: 0 0 12px;
+	padding: 8px 12px;
+	border-radius: 4px;
+	font-size: 13px;
+}
+.menu-tree-status.is-ok {
+	background: #dff0d8;
+	color: #3c763d;
+	border: 1px solid #d6e9c6;
+}
+.menu-tree-status.is-error {
+	background: #f2dede;
+	color: #a94442;
+	border: 1px solid #ebccd1;
+}

@@ -1,0 +1,253 @@
+@page "/san-pham/{slug}"
+@model WebShop.Pages.Shop.ProductModel
+@inject WebShop.Infrastructure.HtmlBlockService Blocks
+@using WebShop.Infrastructure
+@{
+	var item = Model.Product!;
+	var price = item.DiscountPrice ?? item.Price;
+	var description = await Blocks.ExpandAsync(item.Description);
+	var altBase = item.Name?.Trim() ?? "";
+	if (!string.IsNullOrEmpty(altBase) &&
+	    altBase.IndexOf("gốm", StringComparison.OrdinalIgnoreCase) < 0 &&
+	    altBase.IndexOf("gom", StringComparison.OrdinalIgnoreCase) < 0)
+	{
+		altBase += " Gốm sứ";
+	}
+
+	var gallery = new List<(string Medium, string Thumb, string SrcSet, string Alt)>();
+	void AddGallery(string? url, string alt)
+	{
+		if (string.IsNullOrWhiteSpace(url)) return;
+		var medium = MediaUrls.For(url, MediaSize.Medium);
+		if (gallery.Any(g => string.Equals(g.Medium, medium, StringComparison.OrdinalIgnoreCase)))
+			return;
+		gallery.Add((medium, MediaUrls.For(url, MediaSize.Thumb), MediaUrls.SrcSet(url), alt));
+	}
+
+	AddGallery(item.ImageUrl, altBase);
+	foreach (var image in item.Images.OrderBy(image => image.DisplayOrder))
+		AddGallery(image.ImageUrl, string.IsNullOrWhiteSpace(image.AltText) ? altBase : image.AltText!);
+}
+
+<div class="container shop-page shop-page--detail">
+	@if (TempData["Error"] is string error)
+	{
+		<div class="alert alert-danger">@error</div>
+	}
+	@if (TempData["Message"] is string message)
+	{
+		<div class="alert alert-success">@message</div>
+	}
+	<div asp-validation-summary="All" class="alert alert-danger"></div>
+	@if (TempData["CartAdded"] is not null)
+	{
+		<div class="shop-toast is-visible" data-shop-toast role="status" aria-live="polite">
+			<span class="shop-toast__text">Đã thêm vào giỏ</span>
+			<a class="shop-toast__action" href="/gio-hang">Xem giỏ hàng</a>
+			<button type="button" class="shop-toast__close" data-toast-close aria-label="Đóng">×</button>
+		</div>
+	}
+
+	<nav class="shop-breadcrumb shop-breadcrumb--desk" aria-label="Breadcrumb">
+		<a href="/">Trang chủ</a>
+		<span>/</span>
+		<a href="/san-pham">Sản phẩm</a>
+		<span>/</span>
+		<span>@item.Name</span>
+	</nav>
+
+	<div class="shop-split">
+		<div class="col-sm-6 shop-gallery" data-product-gallery>
+			<div class="shop-gallery__stage">
+				<a class="shop-detail-back"
+				   href="/san-pham"
+				   data-detail-back
+				   aria-label="Quay lại">
+					<i class="fa fa-angle-left" aria-hidden="true"></i>
+				</a>
+				@if (gallery.Count > 0)
+				{
+					<div class="shop-gallery__viewport" data-gallery-viewport>
+						<div class="shop-gallery__track">
+							@for (var i = 0; i < gallery.Count; i++)
+							{
+								var slide = gallery[i];
+								<div class="shop-gallery__slide" data-gallery-slide="@i">
+									<img class="shop-gallery__photo"
+									     src="@slide.Medium"
+									     srcset="@slide.SrcSet"
+									     sizes="(max-width: 767px) 100vw, (max-width: 991px) 50vw, min(560px, 50vw)"
+									     alt="@slide.Alt"
+									     width="960"
+									     height="960"
+									     fetchpriority="@(i == 0 ? "high" : "auto")"
+									     loading="@(i == 0 ? "eager" : "lazy")"
+									     decoding="async" />
+								</div>
+							}
+						</div>
+					</div>
+				}
+				else
+				{
+					<div class="shop-gallery__viewport">
+						<div class="shop-gallery__track">
+							<div class="shop-gallery__slide">
+								<div class="shop-gallery__empty" aria-hidden="true"></div>
+							</div>
+						</div>
+					</div>
+				}
+				@if (gallery.Count > 1)
+				{
+					<div class="shop-gallery__dots" data-gallery-dots role="tablist" aria-label="Ảnh sản phẩm">
+						@for (var i = 0; i < gallery.Count; i++)
+						{
+							<button type="button"
+							        class="shop-gallery__dot @(i == 0 ? "is-active" : null)"
+							        data-gallery-dot="@i"
+							        aria-label="Ảnh @(i + 1)"></button>
+						}
+					</div>
+				}
+			</div>
+			@if (gallery.Count > 1)
+			{
+				<div class="shop-thumbs" data-gallery-thumbs>
+					@for (var i = 0; i < gallery.Count; i++)
+					{
+						var slide = gallery[i];
+						<button type="button"
+						        class="shop-thumbs__btn @(i == 0 ? "is-active" : null)"
+						        data-gallery-thumb="@i"
+						        aria-label="Xem ảnh @(i + 1)">
+							<img class="shop-photo shop-gallery__thumb"
+							     src="@slide.Thumb"
+							     alt=""
+							     width="200"
+							     height="200"
+							     loading="lazy"
+							     decoding="async" />
+						</button>
+					}
+				</div>
+			}
+		</div>
+		<div class="col-sm-6">
+			<div class="shop-detail-buy">
+				<h1>@item.Name</h1>
+				<p class="shop-detail-buy__stock shop-detail-buy__stock--inline @(item.Stock < 1 ? "is-out" : null)">
+					@(item.Stock > 0 ? $"Còn {item.Stock} sản phẩm" : "Hết hàng")
+				</p>
+				<div class="shop-detail-buy__deal shop-detail-buy__deal--desk">
+					<p class="shop-price shop-detail-buy__price">
+						<span class="shop-price__sale">@price.ToString("N0") đ</span>
+						@if (item.DiscountPrice is not null)
+						{
+							<s class="shop-price__was">@item.Price.ToString("N0") đ</s>
+						}
+					</p>
+				</div>
+				@if (!string.IsNullOrWhiteSpace(item.ShortDescription))
+				{
+					<div class="shop-readmore" data-readmore>
+						<div class="shop-readmore__clip shop-detail-buy__short">@item.ShortDescription</div>
+						<button type="button" class="shop-readmore__btn" data-readmore-toggle hidden>Xem thêm</button>
+					</div>
+				}
+				<form method="post" asp-page-handler="Add" class="shop-buy-form" id="product-buy-form">
+					<div class="shop-buy-form__desk">
+						<label class="shop-buy-form__label" for="product-qty">Số lượng</label>
+						<input id="product-qty" class="form-control shop-buy-form__qty" type="number" name="quantity" value="1" min="1" max="@Math.Max(item.Stock, 1)" inputmode="numeric" aria-label="Số lượng" />
+					</div>
+					<div class="shop-buy-form__bar">
+						<div class="shop-buy-form__price">
+							<span class="shop-buy-form__price-label">Giá bán</span>
+							<span class="shop-buy-form__price-value">@price.ToString("N0") đ</span>
+							@if (item.DiscountPrice is not null)
+							{
+								<s class="shop-buy-form__price-was">@item.Price.ToString("N0") đ</s>
+							}
+						</div>
+						<button class="btn btn-primary shop-buy-form__submit" type="submit" @(item.Stock < 1 ? "disabled" : null)>
+							<span>Thêm vào giỏ</span>
+							<span class="shop-buy-form__submit-ico" aria-hidden="true"><i class="fa fa-shopping-cart"></i></span>
+						</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<div class="shop-detail-panels">
+		@if (!string.IsNullOrWhiteSpace(description))
+		{
+			<div class="shop-readmore shop-readmore--block" data-readmore>
+				<h2 class="shop-readmore__heading">Mô tả sản phẩm</h2>
+				<div class="shop-readmore__clip shop-detail-desc">@Html.Raw(description)</div>
+				<button type="button" class="shop-readmore__btn" data-readmore-toggle hidden>Xem thêm</button>
+			</div>
+		}
+		<details class="shop-acc">
+			<summary class="shop-acc__summary">Vận chuyển &amp; đổi trả</summary>
+			<div class="shop-acc__body">
+				<p>Đóng gói chống sốc riêng cho đồ gốm. Giao hàng toàn quốc; thời gian dự kiến 2–5 ngày tùy khu vực.</p>
+				<p>Đổi trả trong 7 ngày nếu lỗi do vận chuyển hoặc sai mẫu — sản phẩm còn nguyên tem/hộp.</p>
+			</div>
+		</details>
+		<details class="shop-acc">
+			<summary class="shop-acc__summary">Nhận xét @(Model.Reviews.Count > 0 ? $"({Model.Reviews.Count})" : "")</summary>
+			<div class="shop-acc__body">
+				@if (Model.Reviews.Count == 0)
+				{
+					<p class="text-muted">Chưa có nhận xét.</p>
+				}
+				@foreach (var review in Model.Reviews)
+				{
+					<blockquote class="shop-review-quote">
+						<p>@review.Comment</p>
+						<small>@review.CustomerName · @review.Rating / 5 sao</small>
+					</blockquote>
+				}
+				<form method="post" asp-page-handler="Review" class="form-horizontal shop-review-form">
+					<h3>Viết nhận xét</h3>
+					<div class="form-group">
+						<label class="col-sm-2 control-label">Tên</label>
+						<div class="col-sm-6"><input asp-for="Review.CustomerName" class="form-control" autocomplete="name" /></div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-2 control-label">Số sao</label>
+						<div class="col-sm-3">
+							<select asp-for="Review.Rating" class="form-control">
+								<option value="5">5</option>
+								<option value="4">4</option>
+								<option value="3">3</option>
+								<option value="2">2</option>
+								<option value="1">1</option>
+							</select>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-2 control-label">Nội dung</label>
+						<div class="col-sm-6"><textarea asp-for="Review.Comment" class="form-control" rows="4"></textarea></div>
+					</div>
+					<div class="form-group">
+						<div class="col-sm-offset-2 col-sm-6">
+							<button class="btn btn-primary" type="submit">Gửi</button>
+						</div>
+					</div>
+				</form>
+			</div>
+		</details>
+	</div>
+
+	@if (Model.RelatedProducts.Count > 0)
+	{
+		<section class="shop-related" aria-labelledby="related-heading">
+			<h2 id="related-heading" class="shop-title">Sản phẩm tương tự <a href="@Model.RelatedCatalogUrl">Xem tất cả</a></h2>
+			<div class="shop-grid shop-grid--related-swipe">
+				<partial name="_ProductCardItems" model="Model.RelatedProducts" />
+			</div>
+		</section>
+	}
+</div>

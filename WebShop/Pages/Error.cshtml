@@ -1,0 +1,18 @@
+﻿@page
+@model WebShop.Pages.ErrorModel
+@{
+	ViewData["Title"] = "Có lỗi xảy ra";
+}
+
+<div class="container shop-page">
+	<h1 class="shop-title">Có lỗi xảy ra</h1>
+	<p>Xin lỗi, hệ thống gặp sự cố khi xử lý yêu cầu. Vui lòng thử lại sau.</p>
+	@if (Model.ShowRequestId)
+	{
+		<p class="text-muted">Mã tham chiếu: <code>@Model.RequestId</code></p>
+	}
+	<p>
+		<a class="btn btn-primary" href="/">Về trang chủ</a>
+		<a class="btn btn-default" href="/san-pham">Xem sản phẩm</a>
+	</p>
+</div>

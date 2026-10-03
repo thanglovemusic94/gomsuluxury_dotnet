@@ -1,0 +1,61 @@
+@using WebShop.Infrastructure
+@{
+	var lcp = ViewData["LcpImage"] as string;
+	var siteName = ViewData["AdsSiteName"] as string ?? "WebShop";
+	var logoUrl = ViewData["AdsLogoUrl"] as string;
+	var hotline = ViewData["AdsHotline"] as string;
+	var hotlineHref = ViewData["AdsHotlineHref"] as string;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>@(ViewData["Title"] ?? siteName)</title>
+	@if (ViewData["Description"] is string description && !string.IsNullOrWhiteSpace(description))
+	{
+		<meta name="description" content="@description" />
+	}
+	<meta name="robots" content="noindex,follow" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600&amp;family=Cormorant+Garamond:wght@600;700&amp;display=swap" />
+	<link rel="stylesheet" href="/ace/assets/font-awesome/4.5.0/css/font-awesome.min.css" />
+	<link rel="stylesheet" href="~/css/shop.css" asp-append-version="true" />
+	@if (!string.IsNullOrWhiteSpace(lcp))
+	{
+		<link rel="preload" as="image" href="@lcp" fetchpriority="high" />
+	}
+</head>
+<body class="shop shop--ads">
+	<header class="shop-ads-bar">
+		<a class="shop-ads-bar__brand" href="/" title="@siteName">
+			@if (!string.IsNullOrWhiteSpace(logoUrl))
+			{
+				<img src="@MediaUrls.For(logoUrl, MediaSize.Medium)"
+				     alt="@siteName"
+				     width="140"
+				     height="40"
+				     decoding="async" />
+			}
+			else
+			{
+				<span class="shop-ads-bar__name">@siteName</span>
+			}
+		</a>
+		@if (!string.IsNullOrWhiteSpace(hotlineHref))
+		{
+			<a class="shop-ads-bar__call" href="@hotlineHref">
+				<i class="fa fa-phone" aria-hidden="true"></i>
+				<span>@hotline</span>
+			</a>
+		}
+	</header>
+	@RenderBody()
+	<footer class="shop-ads-foot">
+		<p class="shop-ads-foot__note">© @siteName</p>
+		<a class="shop-ads-foot__link" href="/">Xem cửa hàng</a>
+	</footer>
+	<script src="~/js/shop-core.js" asp-append-version="true"></script>
+</body>
+</html>

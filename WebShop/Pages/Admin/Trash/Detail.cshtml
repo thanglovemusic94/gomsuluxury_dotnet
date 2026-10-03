@@ -1,0 +1,91 @@
+@page "/Admin/Trash/Detail"
+@model WebShop.Pages.Admin.Trash.DetailModel
+@{
+	ViewData["Title"] = "Chi tiết thùng rác";
+	ViewData["Menu"] = "Trash";
+}
+
+<div class="page-header">
+	<h1>
+		Chi tiết đã xóa
+		<small><i class="ace-icon fa fa-angle-double-right"></i> @AuditEntities.Label(Model.Type) #@Model.Id</small>
+	</h1>
+</div>
+<partial name="_AdminAlerts" />
+
+<div class="row">
+	<div class="col-sm-8">
+		<div class="widget-box">
+			<div class="widget-header">
+				<h4 class="widget-title">@Model.Title</h4>
+			</div>
+			<div class="widget-body"><div class="widget-main">
+				<p class="text-muted" style="margin-top:0;">
+					Xóa lúc: <strong>@(Model.DeletedAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "—")</strong>
+					· Người xóa: <strong>@(Model.DeletedBy ?? "—")</strong>
+				</p>
+				@if (!string.IsNullOrWhiteSpace(Model.PreviewUrl))
+				{
+					<div style="margin-bottom:14px;">
+						<img src="@Model.PreviewUrl" alt="" style="max-width:100%;max-height:220px;border:1px solid #ddd;padding:4px;background:#fafafa;" />
+					</div>
+				}
+				<table class="table table-bordered table-striped">
+					<tbody>
+					@foreach (var field in Model.Fields)
+					{
+						<tr>
+							<th style="width:160px;background:#f9f9f9;">@field.Label</th>
+							<td style="word-break:break-word;white-space:pre-wrap;">@(string.IsNullOrWhiteSpace(field.Value) ? "—" : field.Value)</td>
+						</tr>
+					}
+					</tbody>
+				</table>
+			</div></div>
+		</div>
+	</div>
+	<div class="col-sm-4">
+		<div class="widget-box">
+			<div class="widget-header"><h4 class="widget-title">Thao tác</h4></div>
+			<div class="widget-body"><div class="widget-main">
+				<form method="post" action="/Admin/Trash?handler=Restore" style="margin-bottom:8px;">
+					@Html.AntiForgeryToken()
+					<input type="hidden" name="type" value="@Model.Type" />
+					<input type="hidden" name="id" value="@Model.Id" />
+					<button type="submit" class="btn btn-success btn-block"><i class="fa fa-undo"></i> Khôi phục</button>
+				</form>
+				<form method="post" action="/Admin/Trash?handler=HardDelete" onsubmit="return confirm('Xóa vĩnh viễn? Không hoàn tác được.');" style="margin-bottom:8px;">
+					@Html.AntiForgeryToken()
+					<input type="hidden" name="type" value="@Model.Type" />
+					<input type="hidden" name="id" value="@Model.Id" />
+					<button type="submit" class="btn btn-danger btn-block"><i class="fa fa-times"></i> Xóa cứng</button>
+				</form>
+				<a class="btn btn-default btn-block" href="/Admin/Trash">Quay lại thùng rác</a>
+			</div></div>
+		</div>
+
+		<div class="widget-box">
+			<div class="widget-header"><h4 class="widget-title">Nhật ký liên quan</h4></div>
+			<div class="widget-body"><div class="widget-main" style="max-height:360px;overflow:auto;">
+				@if (Model.RelatedLogs.Count == 0)
+				{
+					<p class="text-muted" style="margin:0;">Chưa có log.</p>
+				}
+				else foreach (var log in Model.RelatedLogs)
+				{
+					<div style="margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #eee;">
+						<div>
+							<span class="label label-info">@AuditActions.Label(log.Action)</span>
+							<small class="text-muted">@log.CreatedAt.ToLocalTime().ToString("dd/MM HH:mm") · @log.Username</small>
+						</div>
+						<div style="margin-top:4px;">@(log.Summary ?? "—")</div>
+						@if (!string.IsNullOrWhiteSpace(log.Details))
+						{
+							<pre style="margin:6px 0 0;font-size:11px;white-space:pre-wrap;background:#f9f9f9;border:1px solid #eee;padding:6px;">@log.Details</pre>
+						}
+					</div>
+				}
+			</div></div>
+		</div>
+	</div>
+</div>

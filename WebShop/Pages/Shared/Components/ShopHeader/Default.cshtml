@@ -1,0 +1,317 @@
+@model WebShop.Infrastructure.ShopSnapshot
+@{
+	var loginError = TempData["LoginError"] as string;
+	var signedIn = User.Identity?.IsAuthenticated == true;
+	var here = Context.Request.PathBase + Context.Request.Path + Context.Request.QueryString;
+	var path = Context.Request.Path.Value ?? "/";
+	var isHome = path == "/" || string.Equals(path, "/Index", StringComparison.OrdinalIgnoreCase);
+	var isProducts = path.StartsWith("/san-pham", StringComparison.OrdinalIgnoreCase);
+	var isBlog = path.StartsWith("/blog", StringComparison.OrdinalIgnoreCase) || path.StartsWith("/tin-tuc", StringComparison.OrdinalIgnoreCase);
+	var isCart = path.StartsWith("/gio-hang", StringComparison.OrdinalIgnoreCase) || path.StartsWith("/thanh-toan", StringComparison.OrdinalIgnoreCase);
+	var hotlineHref = string.IsNullOrWhiteSpace(Model.Hotline) ? null : "tel:" + Model.Hotline.Replace(" ", "");
+	Context.Request.Cookies.TryGetValue(WebShop.Pages.LoginModel.RememberUserCookie, out var rememberedUser);
+	var hasRememberedUser = !string.IsNullOrWhiteSpace(rememberedUser);
+}
+<div class="shop-topbar">
+	<div class="container">
+		<span>@Model.Address</span>
+		<span>08:00 - 17:00</span>
+		@if (!string.IsNullOrWhiteSpace(Model.Hotline))
+		{
+			<a href="@hotlineHref">@Model.Hotline</a>
+		}
+	</div>
+</div>
+<header class="shop-head">
+	<div class="container">
+		<div class="shop-head-row">
+			<button type="button" class="shop-mbar-btn shop-mbar-btn--menu" data-shop-drawer-open aria-label="Mở menu" aria-controls="shop-drawer" aria-expanded="false">
+				<i class="fa fa-bars" aria-hidden="true"></i>
+			</button>
+			<a class="shop-logo" href="/">
+				@if (!string.IsNullOrWhiteSpace(Model.LogoUrl))
+				{
+					<img src="@WebShop.Infrastructure.MediaUrls.For(Model.LogoUrl, WebShop.Infrastructure.MediaSize.Medium)"
+					     alt="@Model.SiteName"
+					     width="180"
+					     height="48"
+					     decoding="async"
+					     onerror="this.removeAttribute('src'); this.alt=''; this.style.display='none'; var n=this.nextElementSibling; if(n) n.hidden=false;" />
+					<span class="shop-logo__text" hidden>@Model.SiteName</span>
+				}
+				else
+				{
+					<span class="shop-logo__text">@Model.SiteName</span>
+				}
+			</a>
+			<div class="shop-tools">
+				<form class="shop-search" method="get" action="/san-pham" data-shop-search>
+					<input class="form-control" type="search" name="q" placeholder="Tìm sản phẩm" value="@Context.Request.Query["q"]" aria-label="Tìm sản phẩm" />
+					<button class="shop-tool-btn" type="button" data-search-toggle title="Tìm kiếm"><i class="fa fa-search"></i></button>
+				</form>
+				@if (signedIn)
+				{
+					<a class="shop-tool-link shop-tool-link--desk" href="/Admin">Quản trị</a>
+					<form method="post" asp-page="/Logout" class="inline shop-tool-link--desk">
+						<button class="shop-tool-link" type="submit">Đăng xuất</button>
+					</form>
+				}
+				else
+				{
+					<button class="shop-tool-link shop-tool-link--desk" type="button" data-open-login>Đăng nhập</button>
+				}
+				<a class="shop-tool-btn shop-tool-btn--cart" href="/gio-hang" title="Giỏ hàng">
+					<i class="fa fa-shopping-bag"></i>
+					<span class="shop-cart-count">@Model.CartCount</span>
+				</a>
+			</div>
+		</div>
+	</div>
+	<nav class="shop-nav shop-nav--desk">
+		<div class="container">
+			<div class="shop-wide-nav">
+				@if (Model.CategoryNav.Count > 0)
+				{
+					<div class="shop-cat-menu @(isHome ? "shop-cat-menu--home" : null)" data-shop-cat-menu>
+						<button type="button" class="shop-cat-toggle" data-shop-cat-toggle @(isHome ? "aria-disabled=true" : null)>
+							<i class="fa fa-bars"></i>
+							<span>Danh mục sản phẩm</span>
+							@if (!isHome)
+							{
+								<i class="fa fa-angle-down shop-cat-caret"></i>
+							}
+						</button>
+						@if (!isHome)
+						{
+							<div class="shop-cat-panel">
+								<ul class="shop-cat-list list-unstyled">
+									@foreach (var item in Model.CategoryNav)
+									{
+										<li>
+											<a href="@item.Url">
+												@if (!string.IsNullOrWhiteSpace(item.IconUrl))
+												{
+													<img class="shop-cat-icon"
+													     src="@WebShop.Infrastructure.MediaUrls.For(item.IconUrl, WebShop.Infrastructure.MediaSize.Icon)"
+													     alt=""
+													     width="34"
+													     height="34"
+													     loading="lazy"
+													     decoding="async" />
+												}
+												<span>@item.Name</span>
+											</a>
+										</li>
+									}
+								</ul>
+							</div>
+						}
+					</div>
+				}
+				<ul class="shop-menu list-unstyled">
+					@foreach (var item in Model.Header)
+					{
+						var isProductRoot = item.Url == "/san-pham" || item.Name.Contains("sản phẩm", StringComparison.OrdinalIgnoreCase);
+						if (isProductRoot && Model.CategoryNav.Count > 0)
+						{
+							<li><a href="@item.Url">@item.Name</a></li>
+						}
+						else if (item.Children.Count > 0)
+						{
+							<li class="dropdown" data-shop-dropdown>
+								<a href="@item.Url" class="dropdown-toggle" data-shop-dropdown-toggle role="button" aria-haspopup="true" aria-expanded="false">@item.Name <span class="caret"></span></a>
+								<ul class="dropdown-menu">
+									@foreach (var child in item.Children)
+									{
+										<li><a href="@child.Url">@child.Name</a></li>
+									}
+								</ul>
+							</li>
+						}
+						else
+						{
+							<li><a href="@item.Url">@item.Name</a></li>
+						}
+					}
+				</ul>
+				@if (!string.IsNullOrWhiteSpace(Model.Hotline))
+				{
+					<div class="shop-nav-extra">
+						<a href="@hotlineHref"><i class="fa fa-phone"></i> @Model.Hotline</a>
+					</div>
+				}
+			</div>
+		</div>
+	</nav>
+</header>
+
+<div class="shop-drawer" id="shop-drawer" data-shop-drawer hidden>
+	<button type="button" class="shop-drawer__backdrop" data-shop-drawer-close aria-label="Đóng menu"></button>
+	<aside class="shop-drawer__panel" role="dialog" aria-modal="true" aria-label="Menu điều hướng">
+		<div class="shop-drawer__head">
+			<span class="shop-drawer__brand">@Model.SiteName</span>
+			<button type="button" class="shop-drawer__close" data-shop-drawer-close aria-label="Đóng">×</button>
+		</div>
+		<nav class="shop-drawer__nav">
+			<p class="shop-drawer__label">Trang chính</p>
+			<ul class="shop-drawer__list">
+				@foreach (var item in Model.Header)
+				{
+					var isProductRoot = item.Url == "/san-pham" || item.Name.Contains("sản phẩm", StringComparison.OrdinalIgnoreCase);
+					<li><a href="@item.Url">@item.Name</a></li>
+					@if (!isProductRoot || Model.CategoryNav.Count == 0)
+					{
+						@foreach (var child in item.Children)
+						{
+							<li class="shop-drawer__child"><a href="@child.Url">@child.Name</a></li>
+						}
+					}
+				}
+			</ul>
+			@if (Model.CategoryNav.Count > 0)
+			{
+				<p class="shop-drawer__label">Danh mục</p>
+				<ul class="shop-drawer__list">
+					@foreach (var item in Model.CategoryNav)
+					{
+						<li>
+							<a href="@item.Url">
+								@if (!string.IsNullOrWhiteSpace(item.IconUrl))
+								{
+									<img class="shop-drawer__icon"
+									     src="@WebShop.Infrastructure.MediaUrls.For(item.IconUrl, WebShop.Infrastructure.MediaSize.Icon)"
+									     alt=""
+									     width="28"
+									     height="28"
+									     loading="lazy"
+									     decoding="async" />
+								}
+								<span>@item.Name</span>
+							</a>
+						</li>
+					}
+				</ul>
+			}
+			<p class="shop-drawer__label">Tài khoản</p>
+			<ul class="shop-drawer__list">
+				@if (signedIn)
+				{
+					<li><a href="/Admin">Quản trị</a></li>
+					<li>
+						<form method="post" asp-page="/Logout">
+							<button type="submit" class="shop-drawer__action">Đăng xuất</button>
+						</form>
+					</li>
+				}
+				else
+				{
+					<li><button type="button" class="shop-drawer__action" data-open-login data-shop-drawer-close>Đăng nhập</button></li>
+				}
+				<li><a href="/gio-hang">Giỏ hàng (@Model.CartCount)</a></li>
+			</ul>
+		</nav>
+	</aside>
+</div>
+
+<nav class="shop-tabbar" aria-label="Điều hướng nhanh">
+	<a class="shop-tabbar__item @(isHome ? "is-active" : null)" href="/">
+		<i class="fa fa-home" aria-hidden="true"></i>
+		<span>Trang chủ</span>
+	</a>
+	<a class="shop-tabbar__item @(isProducts ? "is-active" : null)" href="/san-pham">
+		<i class="fa fa-th-large" aria-hidden="true"></i>
+		<span>Sản phẩm</span>
+	</a>
+	<a class="shop-tabbar__item @(isBlog ? "is-active" : null)" href="/blog">
+		<i class="fa fa-newspaper-o" aria-hidden="true"></i>
+		<span>Tin tức</span>
+	</a>
+	<a class="shop-tabbar__item @(isCart ? "is-active" : null)" href="/gio-hang">
+		<span class="shop-tabbar__icon-wrap">
+			<i class="fa fa-shopping-bag" aria-hidden="true"></i>
+			@if (Model.CartCount > 0)
+			{
+				<em class="shop-tabbar__badge">@(Model.CartCount > 99 ? "99+" : Model.CartCount)</em>
+			}
+		</span>
+		<span>Giỏ hàng</span>
+	</a>
+	@if (hotlineHref is not null)
+	{
+		<a class="shop-tabbar__item" href="@hotlineHref">
+			<i class="fa fa-phone" aria-hidden="true"></i>
+			<span>Hotline</span>
+		</a>
+	}
+	else
+	{
+		<a class="shop-tabbar__item" href="/gioi-thieu">
+			<i class="fa fa-map-marker" aria-hidden="true"></i>
+			<span>Giới thiệu</span>
+		</a>
+	}
+</nav>
+
+<dialog id="login-dialog" class="login-dialog" data-open="@(loginError is null ? "false" : "true")">
+	<div class="login-dialog__card">
+		<button type="button" class="login-dialog__close" data-close-login aria-label="Đóng">×</button>
+		<header class="login-dialog__head">
+			@if (!string.IsNullOrWhiteSpace(Model.LogoUrl))
+			{
+				<img class="login-dialog__logo" src="@WebShop.Infrastructure.MediaUrls.For(Model.LogoUrl, WebShop.Infrastructure.MediaSize.Medium)" alt="" />
+			}
+			<p class="login-dialog__brand">@Model.SiteName</p>
+			<h2 class="login-dialog__title">Đăng nhập</h2>
+			<p class="login-dialog__sub">Tài khoản quản trị cửa hàng</p>
+		</header>
+		@if (loginError is not null)
+		{
+			<div class="login-dialog__alert" role="alert">@loginError</div>
+		}
+		<form class="login-dialog__form" method="post" asp-page="/Login">
+			<input type="hidden" name="Popup" value="true" />
+			<input type="hidden" name="ReturnUrl" value="@here" />
+			<label class="login-dialog__field">
+				<span class="login-dialog__label">Tên đăng nhập</span>
+				<span class="login-dialog__input-wrap">
+					<input name="Input.Username" class="form-control" placeholder="Nhập tên đăng nhập" value="@rememberedUser" autocomplete="username" enterkeyhint="next" autocapitalize="none" spellcheck="false" />
+					<i class="fa fa-user" aria-hidden="true"></i>
+				</span>
+			</label>
+			<label class="login-dialog__field">
+				<span class="login-dialog__label">Mật khẩu</span>
+				<span class="login-dialog__input-wrap">
+					<input name="Input.Password" type="password" class="form-control" placeholder="Nhập mật khẩu" autocomplete="current-password" enterkeyhint="done" />
+					<i class="fa fa-lock" aria-hidden="true"></i>
+				</span>
+			</label>
+			<div class="login-dialog__actions">
+				<label class="login-dialog__remember">
+					<input name="Input.RememberMe" type="checkbox" value="true" @(hasRememberedUser ? "checked" : null) />
+					<span>Ghi nhớ đăng nhập</span>
+				</label>
+				<button type="submit" class="btn btn-primary login-dialog__submit">
+					<i class="fa fa-sign-in" aria-hidden="true"></i>
+					Đăng nhập
+				</button>
+			</div>
+		</form>
+	</div>
+</dialog>
+<script>
+	(() => {
+		const dialog = document.getElementById("login-dialog");
+		if (!dialog) return;
+		document.querySelectorAll("[data-open-login]").forEach((button) => {
+			button.addEventListener("click", (event) => {
+				event.preventDefault();
+				dialog.showModal();
+			});
+		});
+		dialog.querySelector("[data-close-login]")?.addEventListener("click", () => dialog.close());
+		dialog.addEventListener("click", (event) => {
+			if (event.target === dialog) dialog.close();
+		});
+		if (dialog.dataset.open === "true") dialog.showModal();
+	})();
+</script>

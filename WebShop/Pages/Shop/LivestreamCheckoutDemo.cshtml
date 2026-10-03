@@ -1,0 +1,20 @@
+@page "/chot/demo"
+@model WebShop.Pages.Shop.LivestreamCheckoutDemoModel
+@{
+	ViewData["Title"] = "Demo chốt livestream";
+}
+
+<div class="container shop-page">
+	@if (!string.IsNullOrEmpty(Model.Error))
+	{
+		<div class="alert alert-warning">
+			<p>@Model.Error</p>
+			<a class="btn btn-primary" href="/Admin/Products">Quản lý sản phẩm</a>
+			<a class="btn btn-default" href="/">Về trang chủ</a>
+		</div>
+	}
+	else
+	{
+		<p class="text-muted">Đang tạo link giỏ tạm demo…</p>
+	}
+</div>

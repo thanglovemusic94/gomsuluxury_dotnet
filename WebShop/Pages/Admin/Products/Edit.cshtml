@@ -1,0 +1,341 @@
+@page "{id:int?}"
+@model WebShop.Pages.Admin.Products.EditModel
+@{
+    ViewData["Title"] = Model.Input.Id == 0 ? "Thêm sản phẩm" : "Sửa sản phẩm";
+    ViewData["Menu"] = "Products";
+}
+
+<div class="page-header"><h1>@ViewData["Title"]</h1></div>
+<partial name="_AdminAlerts" />
+
+@if (Model.Categories.Count == 0)
+{
+	<div class="alert alert-warning">Hãy tạo danh mục loại Product trước khi thêm sản phẩm.</div>
+}
+
+<form method="post" class="form-horizontal">
+	<input asp-for="Input.Id" type="hidden" />
+	<div class="widget-box">
+		<div class="widget-header"><h4 class="widget-title">Sản phẩm</h4></div>
+		<div class="widget-body"><div class="widget-main">
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Danh mục chính</label>
+				<div class="col-sm-9">
+					<select asp-for="Input.CategoryId" class="form-control">
+						<option value="">Chọn danh mục chính</option>
+						@foreach (var category in Model.Categories)
+						{
+							<option value="@category.Id">@category.Name</option>
+						}
+					</select>
+					<span class="help-block">Dùng cho breadcrumb / SEO. Có thể gắn thêm danh mục phụ bên dưới (vd. Quà biếu).</span>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Thêm danh mục</label>
+				<div class="col-sm-9">
+					@if (Model.Categories.Count == 0)
+					{
+						<span class="help-block">Chưa có danh mục Product.</span>
+					}
+					else
+					{
+						<div class="checkbox-list" style="max-height:180px;overflow:auto;border:1px solid #e5e5e5;padding:8px 12px;">
+							@foreach (var category in Model.Categories)
+							{
+								var checkedExtra = Model.Input.CategoryIds?.Contains(category.Id) == true
+									|| category.Id == Model.Input.CategoryId;
+								<label class="checkbox-inline" style="display:block;margin:4px 0;">
+									<input type="checkbox"
+									       name="Input.CategoryIds"
+									       value="@category.Id"
+									       @(checkedExtra ? "checked" : null) />
+									@category.Name
+								</label>
+							}
+						</div>
+						<span class="help-block">Chọn nhiều mục — sản phẩm hiện ở mọi danh mục đã tick (kể cả danh mục chính).</span>
+					}
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Tên</label>
+				<div class="col-sm-9"><input asp-for="Input.Name" class="form-control" maxlength="200" /></div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Slug</label>
+				<div class="col-sm-9"><input asp-for="Input.Slug" class="form-control" maxlength="255" /></div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Giá bán</label>
+				<div class="col-sm-9"><input asp-for="Input.Price" class="form-control" type="number" min="0" step="0.01" /></div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Giá khuyến mãi</label>
+				<div class="col-sm-9"><input asp-for="Input.DiscountPrice" class="form-control" type="number" min="0" step="0.01" /></div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Giá vốn</label>
+				<div class="col-sm-9"><input asp-for="Input.CostPrice" class="form-control" type="number" min="0" step="0.01" /></div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Tồn kho</label>
+				<div class="col-sm-9"><input asp-for="Input.Stock" class="form-control" type="number" min="0" /></div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Mô tả ngắn</label>
+				<div class="col-sm-9"><textarea asp-for="Input.ShortDescription" class="form-control" maxlength="500" rows="2"></textarea></div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Mô tả</label>
+				<div class="col-sm-9">
+					<textarea asp-for="Input.Description" class="form-control js-ckeditor" rows="10"></textarea>
+					<span class="help-block">Soạn thảo trực quan, nút Source để sửa HTML. Ảnh/file qua Image → Browse Server.</span>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Ảnh đại diện</label>
+				<div class="col-sm-9">
+					<div class="input-group">
+						<input asp-for="Input.ImageUrl" class="form-control" maxlength="500" id="Input_ImageUrl" />
+						<span class="input-group-btn">
+							<button type="button" class="btn btn-info js-media-pick" data-input="Input_ImageUrl" data-size="medium" data-folder="san-pham">
+								<i class="fa fa-folder-open"></i> Thư viện
+							</button>
+						</span>
+					</div>
+					<span class="help-block">Chọn từ Media (lưu bản medium). List sẽ tự dùng thumb.</span>
+					@if (!string.IsNullOrWhiteSpace(Model.Input.ImageUrl))
+					{
+						<img src="@WebShop.Infrastructure.MediaUrls.For(Model.Input.ImageUrl, WebShop.Infrastructure.MediaSize.Thumb)" alt="" style="margin-top:8px;max-height:96px;" />
+					}
+				</div>
+			</div>
+			<div class="form-group">
+				<div class="col-sm-offset-3 col-sm-9">
+					<label><input asp-for="Input.IsVisible" /> Hiển thị trên cửa hàng</label>
+				</div>
+			</div>
+		</div></div>
+	</div>
+	<div class="widget-box">
+		<div class="widget-header">
+			<h4 class="widget-title">SEO</h4>
+			<div class="widget-toolbar">
+				<button type="button" class="btn btn-xs btn-warning" id="btnAiSeo">
+					<i class="fa fa-magic"></i> Đánh giá SEO (Gemini)
+				</button>
+			</div>
+		</div>
+		<div class="widget-body"><div class="widget-main">
+			<partial name="_SeoFields" for="Seo" />
+			<div id="aiSeoBox" class="alert alert-info" style="display:none;margin-top:12px;">
+				<div id="aiSeoStatus" class="text-muted" style="margin-bottom:8px;"></div>
+				<div id="aiSeoBody" style="display:none;">
+					<p><strong>Điểm AI:</strong> <span id="aiSeoScore" class="label label-warning">0</span>
+						<span id="aiSeoSummary" style="margin-left:8px;"></span></p>
+					<div class="row">
+						<div class="col-sm-6">
+							<strong>Vấn đề</strong>
+							<ul id="aiSeoIssues" style="margin-top:6px;"></ul>
+						</div>
+						<div class="col-sm-6">
+							<strong>Gợi ý</strong>
+							<ul id="aiSeoSuggestions" style="margin-top:6px;"></ul>
+						</div>
+					</div>
+					<div id="aiSeoProposed" style="margin-top:8px;"></div>
+					<button type="button" class="btn btn-sm btn-success" id="btnApplyAiSeo" style="display:none;">
+						Áp dụng đề xuất vào form
+					</button>
+				</div>
+			</div>
+			<div class="clearfix form-actions">
+				<div class="col-sm-offset-3 col-sm-9">
+					<button type="submit" class="btn btn-primary"><i class="ace-icon fa fa-check"></i> Lưu</button>
+					<a class="btn btn-default" href="/Admin/Products">Hủy</a>
+				</div>
+			</div>
+		</div></div>
+	</div>
+</form>
+
+@if (Model.Input.Id != 0)
+{
+	<div class="widget-box">
+		<div class="widget-header"><h4 class="widget-title">Album ảnh</h4></div>
+		<div class="widget-body"><div class="widget-main">
+			<table class="table table-bordered">
+				<thead><tr><th>Ảnh</th><th>Alt</th><th>Thứ tự</th><th></th></tr></thead>
+				<tbody>
+				@foreach (var image in Model.Images)
+				{
+					<tr>
+						<td>@image.ImageUrl</td>
+						<td>@image.AltText</td>
+						<td>@image.DisplayOrder</td>
+						<td>
+							<form method="post" asp-page-handler="DeleteImage" asp-route-id="@Model.Input.Id" class="inline">
+								<input type="hidden" name="imageId" value="@image.Id" />
+								<button type="submit" class="btn btn-xs btn-danger">Xóa</button>
+							</form>
+						</td>
+					</tr>
+				}
+				</tbody>
+			</table>
+			<form method="post" asp-page-handler="AddImage" asp-route-id="@Model.Input.Id" class="form-inline">
+				<div class="input-group" style="display:inline-flex;max-width:420px;vertical-align:middle;">
+					<input name="imageUrl" id="Album_ImageUrl" class="form-control" placeholder="URL ảnh (medium)" maxlength="500" />
+					<span class="input-group-btn">
+						<button type="button" class="btn btn-info js-media-pick" data-input="Album_ImageUrl" data-size="medium" data-folder="san-pham">Thư viện</button>
+					</span>
+				</div>
+				<input name="altText" class="form-control" placeholder="Alt text" maxlength="200" />
+				<input name="displayOrder" class="form-control" type="number" value="0" style="width:80px" />
+				<button type="submit" class="btn btn-sm btn-success">Thêm ảnh</button>
+			</form>
+		</div></div>
+	</div>
+
+	<div class="widget-box">
+		<div class="widget-header"><h4 class="widget-title">Đánh giá</h4></div>
+		<div class="widget-body"><div class="widget-main no-padding">
+			<table class="table table-striped table-bordered">
+				<thead><tr><th>Khách</th><th>Sao</th><th>Nội dung</th><th>Duyệt</th><th></th></tr></thead>
+				<tbody>
+				@if (Model.Reviews.Count == 0)
+				{
+					<tr><td colspan="5">Chưa có đánh giá.</td></tr>
+				}
+				@foreach (var review in Model.Reviews)
+				{
+					<tr>
+						<td>@review.CustomerName</td>
+						<td>@review.Rating</td>
+						<td>@review.Comment</td>
+						<td>@(review.IsApproved ? "Hiện" : "Chờ")</td>
+						<td class="text-right">
+							<form method="post" asp-page-handler="ApproveReview" asp-route-id="@Model.Input.Id" class="inline">
+								<input type="hidden" name="reviewId" value="@review.Id" />
+								<button type="submit" class="btn btn-xs btn-info">@(review.IsApproved ? "Ẩn" : "Duyệt")</button>
+							</form>
+							<form method="post" asp-page-handler="DeleteReview" asp-route-id="@Model.Input.Id" class="inline" onsubmit="return confirm('Xóa đánh giá này?');">
+								<input type="hidden" name="reviewId" value="@review.Id" />
+								<button type="submit" class="btn btn-xs btn-danger">Xóa</button>
+							</form>
+						</td>
+					</tr>
+				}
+				</tbody>
+			</table>
+		</div></div>
+	</div>
+}
+
+@section Scripts {
+	<script src="https://cdn.ckeditor.com/4.22.1/full/ckeditor.js"></script>
+	<script src="/js/admin-editor.js"></script>
+	<script>
+		WebShopEditor.replace('.js-ckeditor');
+		WebShopEditor.bindForms();
+		WebShopEditor.bindMediaPickers();
+
+		(function () {
+			var btn = document.getElementById('btnAiSeo');
+			var applyBtn = document.getElementById('btnApplyAiSeo');
+			var box = document.getElementById('aiSeoBox');
+			var statusEl = document.getElementById('aiSeoStatus');
+			var bodyEl = document.getElementById('aiSeoBody');
+			var proposed = null;
+			if (!btn) return;
+
+			function field(name) {
+				var el = document.querySelector('[name="' + name + '"]');
+				return el ? el.value : '';
+			}
+			function setField(name, value) {
+				if (!value) return;
+				var el = document.querySelector('[name="' + name + '"]');
+				if (el) el.value = value;
+			}
+			function descriptionValue() {
+				var el = document.querySelector('[name="Input.Description"]');
+				if (!el) return '';
+				if (window.CKEDITOR && el.id && CKEDITOR.instances[el.id])
+					return CKEDITOR.instances[el.id].getData();
+				return el.value || '';
+			}
+			function token() {
+				var el = document.querySelector('input[name="__RequestVerificationToken"]');
+				return el ? el.value : '';
+			}
+			function listHtml(items) {
+				if (!items || !items.length) return '<li class="text-muted">(không có)</li>';
+				return items.map(function (x) { return '<li>' + String(x).replace(/</g, '&lt;') + '</li>'; }).join('');
+			}
+
+			btn.addEventListener('click', function () {
+				box.style.display = 'block';
+				bodyEl.style.display = 'none';
+				applyBtn.style.display = 'none';
+				statusEl.textContent = 'Đang gọi Gemini...';
+				btn.disabled = true;
+
+				var data = new FormData();
+				data.append('__RequestVerificationToken', token());
+				data.append('Name', field('Input.Name'));
+				data.append('Slug', field('Input.Slug'));
+				data.append('FocusKeyword', field('Seo.SeoFocusKeyword'));
+				data.append('MetaTitle', field('Seo.MetaTitle'));
+				data.append('MetaDescription', field('Seo.MetaDescription'));
+				data.append('ImageUrl', field('Input.ImageUrl'));
+				data.append('SeoImage', field('Seo.SeoImage'));
+				data.append('ShortDescription', field('Input.ShortDescription'));
+				data.append('Description', descriptionValue());
+
+				fetch(window.location.pathname + '?handler=AnalyzeSeo', {
+					method: 'POST',
+					body: data,
+					credentials: 'same-origin'
+				})
+				.then(function (r) { return r.json(); })
+				.then(function (res) {
+					btn.disabled = false;
+					if (!res.ok) {
+						statusEl.textContent = res.error || 'Không đánh giá được.';
+						return;
+					}
+					statusEl.textContent = 'Hoàn tất.';
+					bodyEl.style.display = 'block';
+					document.getElementById('aiSeoScore').textContent = res.score;
+					document.getElementById('aiSeoSummary').textContent = res.summary || '';
+					document.getElementById('aiSeoIssues').innerHTML = listHtml(res.issues);
+					document.getElementById('aiSeoSuggestions').innerHTML = listHtml(res.suggestions);
+					proposed = res;
+					var bits = [];
+					if (res.proposedMetaTitle) bits.push('<div><strong>Meta title đề xuất:</strong> ' + String(res.proposedMetaTitle).replace(/</g, '&lt;') + '</div>');
+					if (res.proposedMetaDescription) bits.push('<div><strong>Meta description đề xuất:</strong> ' + String(res.proposedMetaDescription).replace(/</g, '&lt;') + '</div>');
+					if (res.proposedFocusKeyword) bits.push('<div><strong>Từ khóa đề xuất:</strong> ' + String(res.proposedFocusKeyword).replace(/</g, '&lt;') + '</div>');
+					document.getElementById('aiSeoProposed').innerHTML = bits.join('') || '<div class="text-muted">Không có đề xuất ghi đè form.</div>';
+					if (res.proposedMetaTitle || res.proposedMetaDescription || res.proposedFocusKeyword || typeof res.score === 'number')
+						applyBtn.style.display = 'inline-block';
+				})
+				.catch(function () {
+					btn.disabled = false;
+					statusEl.textContent = 'Lỗi mạng hoặc server khi gọi AI.';
+				});
+			});
+
+			applyBtn.addEventListener('click', function () {
+				if (!proposed) return;
+				setField('Seo.MetaTitle', proposed.proposedMetaTitle);
+				setField('Seo.MetaDescription', proposed.proposedMetaDescription);
+				setField('Seo.SeoFocusKeyword', proposed.proposedFocusKeyword);
+				if (typeof proposed.score === 'number')
+					setField('Seo.SeoScore', String(proposed.score));
+				statusEl.textContent = 'Đã áp dụng vào form — nhớ bấm Lưu.';
+			});
+		})();
+	</script>
+}

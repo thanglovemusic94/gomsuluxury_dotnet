@@ -1,0 +1,88 @@
+@model WebShop.Pages.IndexModel
+@using WebShop.Infrastructure
+@{
+	var cats = Model.Categories;
+	var slides = Model.Slides;
+}
+@if (slides.Count > 0 || cats.Count > 0)
+{
+	<div class="shop-stage">
+		<div class="container">
+			<div class="shop-stage-grid">
+				@if (cats.Count > 0)
+				{
+					<aside class="shop-stage-cats">
+						<ul class="shop-stage-list list-unstyled">
+							@foreach (var item in cats)
+							{
+								<li>
+									<a href="@item.Url">
+										@if (!string.IsNullOrWhiteSpace(item.IconUrl))
+										{
+											<img src="@MediaUrls.For(item.IconUrl, MediaSize.Icon)"
+											     alt=""
+											     width="38"
+											     height="38"
+											     loading="lazy"
+											     decoding="async" />
+										}
+										else
+										{
+											<span class="shop-stage-ico"><i class="fa fa-cube"></i></span>
+										}
+										<span>@item.Name</span>
+									</a>
+								</li>
+							}
+						</ul>
+						@if (!string.IsNullOrWhiteSpace(Model.Hotline))
+						{
+							<div class="shop-stage-cskh">
+								<strong>CSKH</strong>
+								<a href="tel:@Model.Hotline.Replace(" ", "")">@Model.Hotline</a>
+								<span>08:00 - 17:00</span>
+							</div>
+						}
+					</aside>
+				}
+				<div class="shop-stage-main">
+					@if (slides.Count > 0)
+					{
+						<section class="shop-slider" data-shop-slider>
+							<div class="shop-slider__viewport">
+								<div class="shop-slider__track">
+									@{
+										var first = true;
+									}
+									@foreach (var slide in slides)
+									{
+										<div class="shop-slider__slide">
+											<a href="@slide.LinkUrl">
+												<img src="@MediaUrls.For(slide.ImageUrl, MediaSize.Large)"
+												     srcset="@MediaUrls.SrcSetUpTo(slide.ImageUrl, MediaSize.Large)"
+												     sizes="(max-width: 991px) 100vw, min(1200px, calc(100vw - 280px))"
+												     alt="@slide.Alt"
+												     width="1200"
+												     height="675"
+												     loading="@(first ? "eager" : "lazy")"
+												     fetchpriority="@(first ? "high" : "auto")"
+												     decoding="async" />
+											</a>
+										</div>
+										first = false;
+									}
+								</div>
+								@if (slides.Count > 1)
+								{
+									<button type="button" class="shop-slider__nav shop-slider__prev" data-slider-prev aria-label="Ảnh trước"><i class="fa fa-angle-left"></i></button>
+									<button type="button" class="shop-slider__nav shop-slider__next" data-slider-next aria-label="Ảnh sau"><i class="fa fa-angle-right"></i></button>
+									<div class="shop-slider__dots" data-slider-dots></div>
+								}
+							</div>
+						</section>
+					}
+				</div>
+			</div>
+		</div>
+	</div>
+}

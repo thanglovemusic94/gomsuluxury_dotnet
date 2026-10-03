@@ -1,0 +1,74 @@
+@page "/gio-hang"
+@model WebShop.Pages.Shop.CartModel
+@using WebShop.Infrastructure
+@{
+	ViewData["Title"] = "Giỏ hàng";
+}
+
+<div class="container shop-page shop-page--cart">
+	<h1 class="shop-title">Giỏ hàng</h1>
+	@if (Model.Lines.Count == 0)
+	{
+		<div class="shop-cart-empty">
+			<p class="shop-cart-empty__text">Giỏ hàng đang trống.</p>
+			<a class="btn btn-primary" href="/san-pham">Tiếp tục mua</a>
+		</div>
+	}
+	else
+	{
+		<ul class="shop-cart-list">
+			@foreach (var line in Model.Lines)
+			{
+				var thumb = MediaUrls.For(line.ImageUrl, MediaSize.Thumb);
+				var lineTotal = line.UnitPrice * line.Quantity;
+				<li class="shop-cart-item">
+					<a class="shop-cart-item__media" href="/san-pham/@line.Slug" tabindex="-1" aria-hidden="true">
+						@if (!string.IsNullOrWhiteSpace(line.ImageUrl))
+						{
+							<img src="@thumb"
+							     alt=""
+							     width="160"
+							     height="160"
+							     loading="lazy"
+							     decoding="async" />
+						}
+						else
+						{
+							<span class="shop-cart-item__ph" aria-hidden="true"><i class="fa fa-cube"></i></span>
+						}
+					</a>
+					<div class="shop-cart-item__body">
+						<a class="shop-cart-item__name" href="/san-pham/@line.Slug">@line.Name</a>
+						<div class="shop-cart-item__meta">
+							<span class="shop-cart-item__unit">@line.UnitPrice.ToString("N0") đ</span>
+							<strong class="shop-price shop-cart-item__line">@lineTotal.ToString("N0") đ</strong>
+						</div>
+						<div class="shop-cart-item__actions">
+							<form method="post" asp-page-handler="Update" class="shop-cart-qty">
+								<input type="hidden" name="productId" value="@line.ProductId" />
+								<button class="shop-cart-qty__btn" type="submit" name="quantity" value="@(line.Quantity - 1)" aria-label="Giảm số lượng" @(line.Quantity <= 1 ? "disabled" : null)>−</button>
+								<span class="shop-cart-qty__val" aria-label="Số lượng">@line.Quantity</span>
+								<button class="shop-cart-qty__btn" type="submit" name="quantity" value="@(line.Quantity + 1)" aria-label="Tăng số lượng">+</button>
+							</form>
+							<form method="post" asp-page-handler="Remove" class="shop-cart-remove">
+								<input type="hidden" name="productId" value="@line.ProductId" />
+								<button class="shop-cart-remove__btn" type="submit" aria-label="Xóa @line.Name">
+									<i class="fa fa-trash-o" aria-hidden="true"></i>
+									<span>Xóa</span>
+								</button>
+							</form>
+						</div>
+					</div>
+				</li>
+			}
+		</ul>
+
+		<div class="shop-cart-foot">
+			<div class="shop-cart-foot__total">
+				<span class="shop-cart-foot__label">Tổng cộng</span>
+				<strong class="shop-price shop-cart-foot__sum">@Model.Total.ToString("N0") đ</strong>
+			</div>
+			<a class="btn btn-primary shop-cart-foot__cta" href="/thanh-toan">Đặt hàng</a>
+		</div>
+	}
+</div>

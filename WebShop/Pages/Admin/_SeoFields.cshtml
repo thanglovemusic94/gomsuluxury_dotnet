@@ -1,0 +1,21 @@
+@model WebShop.Infrastructure.SeoInput
+<div class="form-group">
+	<label class="col-sm-3 control-label">Meta title</label>
+	<div class="col-sm-9"><input asp-for="MetaTitle" class="form-control" maxlength="100" /></div>
+</div>
+<div class="form-group">
+	<label class="col-sm-3 control-label">Meta description</label>
+	<div class="col-sm-9"><textarea asp-for="MetaDescription" class="form-control" maxlength="255" rows="2"></textarea></div>
+</div>
+<div class="form-group">
+	<label class="col-sm-3 control-label">Ảnh SEO</label>
+	<div class="col-sm-9"><input asp-for="SeoImage" class="form-control" maxlength="500" /></div>
+</div>
+<div class="form-group">
+	<label class="col-sm-3 control-label">Từ khóa</label>
+	<div class="col-sm-9"><input asp-for="SeoFocusKeyword" class="form-control" maxlength="100" /></div>
+</div>
+<div class="form-group">
+	<label class="col-sm-3 control-label">Điểm SEO</label>
+	<div class="col-sm-9"><input asp-for="SeoScore" class="form-control" type="number" min="0" max="100" /></div>
+</div>

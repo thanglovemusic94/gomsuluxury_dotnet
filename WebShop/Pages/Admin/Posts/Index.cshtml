@@ -1,0 +1,123 @@
+@page
+@model WebShop.Pages.Admin.Posts.IndexModel
+@{
+    ViewData["Title"] = "Bài viết";
+    ViewData["Menu"] = "Posts";
+	var pager = Model.Pager(Model.ListUrl);
+}
+
+<div class="page-header">
+	<h1>
+		Bài viết
+		<small><i class="ace-icon fa fa-angle-double-right"></i> blog</small>
+		<a href="/Admin/Posts/Edit" class="btn btn-sm btn-primary pull-right">Thêm bài viết</a>
+	</h1>
+</div>
+<partial name="_AdminAlerts" />
+
+<div class="widget-box">
+	<div class="widget-header"><h4 class="widget-title">Bộ lọc</h4></div>
+	<div class="widget-body"><div class="widget-main">
+		<form method="get" class="form-inline">
+			<input type="hidden" name="PageSize" value="@Model.PageSize" />
+			<input type="text" name="Q" value="@Model.Q" class="form-control input-sm" placeholder="Tiêu đề / slug" style="min-width:180px;" />
+			<select name="CategoryId" class="form-control input-sm">
+				<option value="">Mọi danh mục</option>
+				@foreach (var opt in Model.CategoryOptions)
+				{
+					if (opt.Selected) { <option value="@opt.Value" selected>@opt.Text</option> }
+					else { <option value="@opt.Value">@opt.Text</option> }
+				}
+			</select>
+			<select name="Published" class="form-control input-sm">
+				<option value="">Mọi trạng thái</option>
+				@if (Model.Published == "1") { <option value="1" selected>Đã xuất bản</option> } else { <option value="1">Đã xuất bản</option> }
+				@if (Model.Published == "0") { <option value="0" selected>Nháp</option> } else { <option value="0">Nháp</option> }
+			</select>
+			<button type="submit" class="btn btn-sm btn-primary">Lọc</button>
+			@if (!string.IsNullOrWhiteSpace(Model.Q) || Model.CategoryId is > 0 || !string.IsNullOrWhiteSpace(Model.Published))
+			{
+				<a href="/Admin/Posts?PageSize=@Model.PageSize" class="btn btn-sm btn-link">Xóa lọc</a>
+			}
+		</form>
+	</div></div>
+</div>
+
+<div class="widget-box js-admin-bulk-root">
+	<form method="post" asp-page-handler="BulkDelete" class="js-admin-bulk-form" data-noun="bài viết" id="posts-bulk-form">
+		<input type="hidden" name="mode" value="trash" />
+		<input type="hidden" name="pageNumber" value="@Model.PageNumber" />
+		<input type="hidden" name="pageSize" value="@Model.PageSize" />
+		<input type="hidden" name="q" value="@Model.Q" />
+		<input type="hidden" name="categoryId" value="@Model.CategoryId" />
+		<input type="hidden" name="published" value="@Model.Published" />
+		<div class="admin-bulk-bar">
+			<label class="checkbox-inline" style="margin:0;">
+				<input type="checkbox" class="js-admin-select-all" /> Chọn tất cả trang này
+			</label>
+			<span class="text-muted">Đã chọn: <strong class="js-admin-bulk-count">0</strong></span>
+			<button type="submit" class="btn btn-xs btn-danger js-admin-bulk-delete" disabled>Xóa đã chọn</button>
+		</div>
+	</form>
+	<div class="widget-body">
+		<div class="widget-main no-padding">
+			<table class="table table-striped table-bordered table-hover">
+				<thead>
+					<tr>
+						<th class="admin-check-col"></th>
+						<th class="admin-list-thumb-col">Ảnh</th>
+						<th>Tiêu đề</th>
+						<th>Danh mục</th>
+						<th>Tác giả</th>
+						<th>Xuất bản</th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+				@if (Model.Items.Count == 0)
+				{
+					<tr><td colspan="7">Không có bài viết phù hợp.</td></tr>
+				}
+				@foreach (var post in Model.Items)
+				{
+					<tr>
+						<td class="admin-check-col">
+							<input type="checkbox" class="js-admin-row-check" name="ids" value="@post.Id" form="posts-bulk-form" />
+						</td>
+						<td class="admin-list-thumb-col">
+							@if (!string.IsNullOrWhiteSpace(post.ImageUrl))
+							{
+								<img class="admin-list-thumb" src="@post.ImageUrl" alt="@post.Title" />
+							}
+							else
+							{
+								<span class="admin-list-thumb--empty">—</span>
+							}
+						</td>
+						<td style="vertical-align:middle;">
+							<a href="/Admin/Posts/Edit/@post.Id">@post.Title</a>
+							<div class="text-muted" style="font-size:12px;">/@post.Slug</div>
+						</td>
+						<td style="vertical-align:middle;">@post.Category.Name</td>
+						<td style="vertical-align:middle;">@post.Author.Username</td>
+						<td style="vertical-align:middle;">@(post.IsPublished ? "Có" : "Nháp")</td>
+						<td class="text-right" style="vertical-align:middle;white-space:nowrap;">
+							<a class="btn btn-xs btn-info" href="/Admin/Posts/Edit/@post.Id">Sửa</a>
+							<form method="post" asp-page-handler="Delete" asp-route-id="@post.Id" class="inline js-admin-delete-one" data-noun="bài viết">
+								<input type="hidden" name="mode" value="trash" />
+								<input type="hidden" name="pageNumber" value="@Model.PageNumber" />
+								<input type="hidden" name="pageSize" value="@Model.PageSize" />
+								<input type="hidden" name="q" value="@Model.Q" />
+								<input type="hidden" name="categoryId" value="@Model.CategoryId" />
+								<input type="hidden" name="published" value="@Model.Published" />
+								<button type="submit" class="btn btn-xs btn-danger">Xóa</button>
+							</form>
+						</td>
+					</tr>
+				}
+				</tbody>
+			</table>
+		</div>
+		<partial name="_AdminPager" model="pager" />
+	</div>
+</div>

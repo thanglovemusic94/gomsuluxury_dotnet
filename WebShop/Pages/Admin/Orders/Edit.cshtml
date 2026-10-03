@@ -1,0 +1,105 @@
+@page "{id:int}"
+@model WebShop.Pages.Admin.Orders.EditModel
+@{
+    ViewData["Title"] = Model.Input.OrderCode;
+    ViewData["Menu"] = "Orders";
+}
+
+<div class="page-header">
+	<h1>@Model.Input.OrderCode <small><i class="ace-icon fa fa-angle-double-right"></i> @Model.Input.TotalAmount.ToString("N0")</small></h1>
+</div>
+<partial name="_AdminAlerts" />
+
+<form method="post" class="form-horizontal">
+	<input asp-for="Input.Id" type="hidden" />
+	<div class="widget-box">
+		<div class="widget-header"><h4 class="widget-title">Đơn hàng</h4></div>
+		<div class="widget-body"><div class="widget-main">
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Trạng thái</label>
+				<div class="col-sm-9">
+					<select asp-for="Input.Status" class="form-control">
+						@foreach (var status in CatalogRules.OrderStatuses)
+						{
+							<option value="@status">@status</option>
+						}
+					</select>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Thanh toán</label>
+				<div class="col-sm-9">
+					<select asp-for="Input.PaymentStatus" class="form-control">
+						@foreach (var status in CatalogRules.PaymentStatuses)
+						{
+							<option value="@status">@status</option>
+						}
+					</select>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Phương thức</label>
+				<div class="col-sm-9"><input asp-for="Input.PaymentMethod" class="form-control" maxlength="50" /></div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Khách hàng</label>
+				<div class="col-sm-9"><input asp-for="Input.CustomerName" class="form-control" maxlength="100" /></div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Điện thoại</label>
+				<div class="col-sm-9"><input asp-for="Input.CustomerPhone" class="form-control" maxlength="15" /></div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Địa chỉ</label>
+				<div class="col-sm-9"><textarea asp-for="Input.ShippingAddress" class="form-control" maxlength="500" rows="2"></textarea></div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Ghi chú</label>
+				<div class="col-sm-9"><textarea asp-for="Input.OrderNote" class="form-control" maxlength="500" rows="2"></textarea></div>
+			</div>
+			<div class="clearfix form-actions">
+				<div class="col-sm-offset-3 col-sm-9">
+					<button type="submit" class="btn btn-primary"><i class="ace-icon fa fa-check"></i> Lưu</button>
+					<a class="btn btn-default" href="/Admin/Orders">Quay lại</a>
+				</div>
+			</div>
+		</div></div>
+	</div>
+</form>
+
+<div class="widget-box">
+	<div class="widget-header"><h4 class="widget-title">Chi tiết đã chốt</h4></div>
+	<div class="widget-body"><div class="widget-main no-padding">
+		<table class="table table-bordered">
+			<thead>
+				<tr>
+					<th>Sản phẩm</th>
+					<th class="text-right">SL</th>
+					<th class="text-right">Giá bán</th>
+					<th class="text-right">Giá vốn</th>
+					<th class="text-right">Lãi</th>
+				</tr>
+			</thead>
+			<tbody>
+			@foreach (var item in Model.Items)
+			{
+				<tr>
+					<td>@item.Product.Name</td>
+					<td class="text-right">@item.Quantity</td>
+					<td class="text-right">@item.UnitPrice.ToString("N0")</td>
+					<td class="text-right">@item.OriginalCostPrice.ToString("N0")</td>
+					<td class="text-right">@((item.UnitPrice - item.OriginalCostPrice) * item.Quantity).ToString("N0")</td>
+				</tr>
+			}
+			</tbody>
+			<tfoot>
+				<tr>
+					<th colspan="2">Tổng</th>
+					<th class="text-right">@Model.Revenue.ToString("N0")</th>
+					<th class="text-right">@Model.CostTotal.ToString("N0")</th>
+					<th class="text-right">@((Model.Revenue - Model.CostTotal).ToString("N0"))</th>
+				</tr>
+			</tfoot>
+		</table>
+	</div></div>
+</div>

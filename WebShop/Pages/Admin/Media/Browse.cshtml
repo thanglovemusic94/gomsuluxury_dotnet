@@ -1,0 +1,235 @@
+@page "/Admin/CkFinder/Browse"
+@model WebShop.Pages.Admin.Media.BrowseModel
+@using WebShop.Infrastructure
+@{
+	Layout = null;
+	var isPicker = !string.IsNullOrWhiteSpace(Model.CKEditorFuncNum) || !string.IsNullOrWhiteSpace(Model.InputId);
+	var folder = MediaFolders.Normalize(Model.Folder);
+	var data = Model.PageData;
+	string PickUrl(MediaItem item) => (Model.Size ?? "medium").ToLowerInvariant() switch
+	{
+		"thumb" => item.ThumbUrl,
+		"large" => item.LargeUrl,
+		"original" => item.OriginalUrl,
+		_ => item.MediumUrl
+	};
+	string Link(string f, int p = 1) =>
+		$"/Admin/CkFinder/Browse?Type={Model.Type}&Size={Model.Size}&Folder={Uri.EscapeDataString(f)}&PageNumber={p}&CKEditor={Uri.EscapeDataString(Model.CKEditor ?? "")}&CKEditorFuncNum={Uri.EscapeDataString(Model.CKEditorFuncNum ?? "")}&InputId={Uri.EscapeDataString(Model.InputId ?? "")}";
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Thư viện media</title>
+	<link rel="stylesheet" href="/ace/assets/css/bootstrap.min.css" />
+	<link rel="stylesheet" href="/ace/assets/font-awesome/4.5.0/css/font-awesome.min.css" />
+	<style>
+		body { background: #f3f5f7; margin: 0; font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif; }
+		.ckf-layout { display: grid; grid-template-columns: 210px 1fr; min-height: 100vh; }
+		.ckf-side { background: #fff; border-right: 1px solid #e2e6ea; padding: 14px 12px; }
+		.ckf-side h2 { margin: 0 0 12px; font-size: 15px; }
+		.ckf-side a {
+			display: flex; justify-content: space-between; align-items: center;
+			padding: 9px 10px; color: #444; text-decoration: none; border-radius: 5px; margin-bottom: 3px;
+		}
+		.ckf-side a:hover, .ckf-side a.is-active { background: #eef5fb; color: #337ab7; }
+		.ckf-side a.is-active { font-weight: 600; }
+		.ckf-main { padding: 18px; }
+		.ckf-head { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+		.ckf-title { margin: 0; font-size: 20px; }
+		.ckf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+		.ckf-card {
+			background: #fff; border: 1px solid #e2e6ea; border-radius: 6px; padding: 0; overflow: hidden;
+			cursor: @(isPicker ? "pointer" : "default"); min-height: 180px;
+			transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+			display: flex; flex-direction: column;
+		}
+		.ckf-card:hover { border-color: #5b9bd5; box-shadow: 0 6px 16px rgba(51,122,183,.12); transform: translateY(-1px); }
+		.ckf-thumb {
+			position: relative; height: 110px; display: flex; align-items: center; justify-content: center;
+			background:
+				linear-gradient(45deg, #f0f0f0 25%, transparent 25%),
+				linear-gradient(-45deg, #f0f0f0 25%, transparent 25%),
+				linear-gradient(45deg, transparent 75%, #f0f0f0 75%),
+				linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+			background-size: 14px 14px;
+			background-position: 0 0, 0 7px, 7px -7px, -7px 0;
+			background-color: #fafafa;
+			overflow: hidden;
+		}
+		.ckf-thumb img { max-width: 100%; max-height: 110px; object-fit: contain; transition: transform .2s ease; }
+		.ckf-card:hover .ckf-thumb img { transform: scale(1.04); }
+		.ckf-overlay {
+			position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 6px;
+			background: rgba(20,28,40,.42); opacity: 0; transition: opacity .15s ease;
+		}
+		.ckf-card:hover .ckf-overlay { opacity: 1; }
+		.ckf-overlay .btn { box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+		.ckf-meta { padding: 8px 10px 10px; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+		.ckf-name { font-size: 11px; word-break: break-word; color: #333; min-height: 28px; line-height: 1.35;
+			display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+		.ckf-empty { padding: 48px 20px; text-align: center; color: #888; background: #fff; border: 1px dashed #ccc; border-radius: 6px; }
+		.ckf-pager { margin-top: 16px; }
+		.ckf-pager a { margin-right: 6px; }
+		.ckf-toast {
+			position: fixed; right: 16px; bottom: 16px; z-index: 9999; background: #323232; color: #fff;
+			padding: 10px 14px; border-radius: 6px; font-size: 12px; opacity: 0; transform: translateY(8px);
+			transition: opacity .2s ease, transform .2s ease; max-width: 360px; pointer-events: none;
+		}
+		.ckf-toast.is-show { opacity: 1; transform: translateY(0); }
+		.ckf-toast code { color: #a8d5ff; font-size: 10px; word-break: break-all; }
+		@@media (max-width: 720px) {
+			.ckf-layout { grid-template-columns: 1fr; }
+			.ckf-side { border-right: 0; border-bottom: 1px solid #e2e6ea; }
+		}
+	</style>
+</head>
+<body>
+	<div class="ckf-layout">
+		<aside class="ckf-side">
+			<h2><i class="fa fa-folder-open"></i> Thư mục</h2>
+			<a class="@(folder == MediaFolders.All ? "is-active" : null)" href="@Link("")">
+				<span>Tất cả</span><span>@(data.FolderCounts.GetValueOrDefault(MediaFolders.All))</span>
+			</a>
+			@foreach (var item in MediaFolders.Items)
+			{
+				<a class="@(folder == item.Key ? "is-active" : null)" href="@Link(item.Key)">
+					<span>@item.Label</span><span>@(data.FolderCounts.GetValueOrDefault(item.Key))</span>
+				</a>
+			}
+		</aside>
+		<main class="ckf-main">
+			<div class="ckf-head">
+				<div>
+					<h1 class="ckf-title">@MediaFolders.Label(folder)</h1>
+					<small class="text-muted">@(isPicker ? "Bấm ảnh để chọn" : "Duyệt thư viện · copy URL") · bản <strong>@Model.Size</strong></small>
+				</div>
+				<form method="post" asp-page-handler="Upload" enctype="multipart/form-data" class="form-inline">
+					<input type="hidden" name="Type" value="@Model.Type" />
+					<input type="hidden" name="Size" value="@Model.Size" />
+					<input type="hidden" name="CKEditor" value="@Model.CKEditor" />
+					<input type="hidden" name="CKEditorFuncNum" value="@Model.CKEditorFuncNum" />
+					<input type="hidden" name="InputId" value="@Model.InputId" />
+					<select name="folder" class="form-control input-sm" style="width:auto;display:inline-block;">
+						@foreach (var item in MediaFolders.Items)
+						{
+							<option value="@item.Key" selected="@(folder == item.Key || (folder == MediaFolders.All && item.Key == MediaFolders.Other))">@item.Label</option>
+						}
+					</select>
+					<input type="file" name="file" accept="image/*" required />
+					<button type="submit" class="btn btn-sm btn-primary"><i class="fa fa-upload"></i> Tải lên</button>
+				</form>
+			</div>
+
+			@if (!string.IsNullOrWhiteSpace(Model.Flash))
+			{
+				<div class="alert alert-info">@Model.Flash</div>
+			}
+
+			@if (data.Items.Count == 0)
+			{
+				<div class="ckf-empty">Thư mục trống. Hãy tải lên hoặc chọn “Tất cả”.</div>
+			}
+			else
+			{
+				<div class="ckf-grid">
+					@foreach (var item in data.Items.Where(i => i.IsImage))
+					{
+						var url = PickUrl(item);
+						<div class="ckf-card" data-url="@url" @(isPicker ? "role=button tabindex=0" : null)>
+							<div class="ckf-thumb">
+								<img src="@item.ThumbUrl" alt="@(item.Alt ?? item.Name)" loading="lazy" />
+								<div class="ckf-overlay">
+									@if (isPicker)
+									{
+										<span class="btn btn-xs btn-primary"><i class="fa fa-check"></i> Chọn</span>
+									}
+									else
+									{
+										<button type="button" class="btn btn-xs btn-primary js-copy-url" data-url="@url"><i class="fa fa-link"></i> Copy</button>
+									}
+								</div>
+							</div>
+							<div class="ckf-meta">
+								<div class="ckf-name" title="@item.Name">@(item.Alt ?? item.Name)</div>
+								<small class="text-muted">@MediaFolders.Label(item.Folder)</small>
+							</div>
+						</div>
+					}
+				</div>
+				@if (data.TotalPages > 1)
+				{
+					<div class="ckf-pager">
+						@for (var i = 1; i <= data.TotalPages; i++)
+						{
+							<a class="btn btn-xs @(i == data.Page ? "btn-primary" : "btn-default")" href="@Link(folder, i)">@i</a>
+						}
+					</div>
+				}
+			}
+		</main>
+	</div>
+
+	<div class="ckf-toast" id="ckfToast" role="status" aria-live="polite"></div>
+
+	<script>
+		(function () {
+			var toastEl = document.getElementById('ckfToast');
+			var toastTimer;
+			function showToast(html) {
+				toastEl.innerHTML = html;
+				toastEl.classList.add('is-show');
+				clearTimeout(toastTimer);
+				toastTimer = setTimeout(function () { toastEl.classList.remove('is-show'); }, 2000);
+			}
+			function copyUrl(url) {
+				if (!url) return;
+				var done = function () { showToast('Đã copy URL<br><code>' + url + '</code>'); };
+				if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done);
+				else {
+					var t = document.createElement('input');
+					t.value = url; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t);
+					done();
+				}
+			}
+			document.querySelectorAll('.js-copy-url').forEach(function (btn) {
+				btn.addEventListener('click', function (e) {
+					e.preventDefault();
+					e.stopPropagation();
+					copyUrl(btn.getAttribute('data-url') || '');
+				});
+			});
+
+			@if (isPicker)
+			{
+				<text>
+				var funcNum = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CKEditorFuncNum));
+				var inputId = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.InputId));
+				function pick(url) {
+					if (inputId && window.opener && window.opener.document) {
+						var el = window.opener.document.getElementById(inputId);
+						if (el) {
+							el.value = url;
+							el.dispatchEvent(new Event('change', { bubbles: true }));
+						}
+						window.close();
+						return;
+					}
+					if (funcNum && window.opener && window.opener.CKEDITOR) {
+						window.opener.CKEDITOR.tools.callFunction(funcNum, url);
+						window.close();
+					}
+				}
+				document.querySelectorAll('.ckf-card[data-url]').forEach(function (card) {
+					card.addEventListener('click', function () { pick(card.getAttribute('data-url')); });
+					card.addEventListener('keydown', function (e) {
+						if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(card.getAttribute('data-url')); }
+					});
+				});
+				</text>
+			}
+		})();
+	</script>
+</body>
+</html>

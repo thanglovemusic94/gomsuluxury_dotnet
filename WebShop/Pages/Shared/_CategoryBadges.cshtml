@@ -1,0 +1,28 @@
+@model IReadOnlyList<WebShop.Infrastructure.CategoryBadgeItem>
+@using WebShop.Infrastructure
+@if (Model is { Count: > 0 })
+{
+	<nav class="shop-cat-badges" aria-label="Danh mục sản phẩm">
+		@foreach (var item in Model)
+		{
+			<a class="shop-cat-badges__item @(item.Active ? "is-active" : null)" href="@item.Url">
+				<span class="shop-cat-badges__thumb">
+					@if (!string.IsNullOrWhiteSpace(item.IconUrl))
+					{
+						<img src="@MediaUrls.For(item.IconUrl, MediaSize.Icon)"
+						     alt=""
+						     width="56"
+						     height="56"
+						     loading="lazy"
+						     decoding="async" />
+					}
+					else
+					{
+						<span class="shop-cat-badges__ico" aria-hidden="true"><i class="fa fa-cube"></i></span>
+					}
+				</span>
+				<span class="shop-cat-badges__label">@item.Name</span>
+			</a>
+		}
+	</nav>
+}

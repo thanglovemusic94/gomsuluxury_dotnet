@@ -1,0 +1,87 @@
+@page
+@model WebShop.Pages.Admin.Orders.IndexModel
+@using WebShop.Infrastructure
+@{
+    ViewData["Title"] = "Đơn hàng";
+    ViewData["Menu"] = "Orders";
+	var pager = Model.Pager(Model.ListUrl);
+}
+
+<div class="page-header">
+	<h1>
+		Đơn hàng
+		<small><i class="ace-icon fa fa-angle-double-right"></i> doanh thu và trạng thái</small>
+		<a href="/Admin/Orders/Create" class="btn btn-sm btn-primary pull-right">Tạo đơn</a>
+	</h1>
+</div>
+<partial name="_AdminAlerts" />
+
+<div class="widget-box">
+	<div class="widget-header"><h4 class="widget-title">Bộ lọc</h4></div>
+	<div class="widget-body"><div class="widget-main">
+		<form method="get" class="form-inline">
+			<input type="hidden" name="PageSize" value="@Model.PageSize" />
+			<input type="text" name="Q" value="@Model.Q" class="form-control input-sm" placeholder="Mã / khách / SĐT" style="min-width:180px;" />
+			<select name="Status" class="form-control input-sm">
+				<option value="">Mọi trạng thái</option>
+				@foreach (var status in CatalogRules.OrderStatuses)
+				{
+					if (Model.Status == status) { <option value="@status" selected>@status</option> }
+					else { <option value="@status">@status</option> }
+				}
+			</select>
+			<select name="PaymentStatus" class="form-control input-sm">
+				<option value="">Thanh toán</option>
+				@foreach (var status in CatalogRules.PaymentStatuses)
+				{
+					if (Model.PaymentStatus == status) { <option value="@status" selected>@status</option> }
+					else { <option value="@status">@status</option> }
+				}
+			</select>
+			<button type="submit" class="btn btn-sm btn-primary">Lọc</button>
+			@if (!string.IsNullOrWhiteSpace(Model.Q) || !string.IsNullOrWhiteSpace(Model.Status) || !string.IsNullOrWhiteSpace(Model.PaymentStatus))
+			{
+				<a href="/Admin/Orders?PageSize=@Model.PageSize" class="btn btn-sm btn-link">Xóa lọc</a>
+			}
+		</form>
+	</div></div>
+</div>
+
+<div class="widget-box">
+	<div class="widget-body">
+		<div class="widget-main no-padding">
+			<table class="table table-striped table-bordered table-hover">
+				<thead>
+					<tr>
+						<th>Mã</th>
+						<th>Ngày</th>
+						<th>Khách</th>
+						<th class="text-right">Tổng</th>
+						<th>Trạng thái</th>
+						<th>Thanh toán</th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+				@if (Model.Items.Count == 0)
+				{
+					<tr><td colspan="7">Không có đơn hàng phù hợp.</td></tr>
+				}
+				@foreach (var order in Model.Items)
+				{
+					<tr>
+						<td>@order.OrderCode</td>
+						<td>@order.OrderDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+						<td>@order.CustomerName<br /><small>@order.CustomerPhone</small></td>
+						<td class="text-right">@order.TotalAmount.ToString("N0")</td>
+						<td>@order.Status</td>
+						<td>@order.PaymentStatus</td>
+						<td class="text-right"><a class="btn btn-xs btn-info" href="/Admin/Orders/Edit/@order.Id">Xem</a></td>
+					</tr>
+				}
+				</tbody>
+			</table>
+		</div>
+		<partial name="_AdminPager" model="pager" />
+	</div>
+</div>

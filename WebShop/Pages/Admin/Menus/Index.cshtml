@@ -1,0 +1,77 @@
+@page
+@model WebShop.Pages.Admin.Menus.IndexModel
+@using WebShop.Infrastructure
+@{
+	ViewData["Title"] = "Menu";
+	ViewData["Menu"] = "Menus";
+	string PositionLabel(string position) => position switch
+	{
+		"Header" => "Header (menu trên)",
+		"Footer" => "Footer (chân trang)",
+		_ => position
+	};
+}
+
+<div class="page-header">
+	<h1>
+		Menu
+		<small><i class="ace-icon fa fa-angle-double-right"></i> kéo thả theo bậc</small>
+		<a href="/Admin/Menus/Edit?position=@Model.Position" class="btn btn-sm btn-primary pull-right">Thêm mục</a>
+	</h1>
+</div>
+<partial name="_AdminAlerts" />
+
+<div class="widget-box">
+	<div class="widget-header">
+		<h4 class="widget-title">Vùng hiển thị</h4>
+	</div>
+	<div class="widget-body"><div class="widget-main">
+		<form method="get" class="form-inline" id="menu-position-filter">
+			<label class="control-label" style="margin-right:8px;">Chọn vùng</label>
+			<select name="Position" class="form-control" onchange="this.form.submit()">
+				@foreach (var position in CatalogRules.MenuPositions)
+				{
+					if (Model.Position == position)
+					{
+						<option value="@position" selected>@PositionLabel(position)</option>
+					}
+					else
+					{
+						<option value="@position">@PositionLabel(position)</option>
+					}
+				}
+			</select>
+			<span class="text-muted" style="margin-left:12px;">Kéo icon <i class="fa fa-bars"></i> để đổi thứ tự / thả vào mục khác để tạo menu con (tối đa 3 cấp).</span>
+		</form>
+	</div></div>
+</div>
+
+<div class="widget-box">
+	<div class="widget-header">
+		<h4 class="widget-title">@PositionLabel(Model.Position)</h4>
+	</div>
+	<div class="widget-body">
+		<div class="widget-main">
+			@if (Model.Tree.Count == 0)
+			{
+				<p class="text-muted" style="margin:0;">Chưa có mục nào trong vùng này. <a href="/Admin/Menus/Edit?position=@Model.Position">Thêm mục mới</a>.</p>
+			}
+			else
+			{
+				<div id="menu-tree-status" class="menu-tree-status" hidden></div>
+				<ul class="menu-tree" id="menu-tree-root" data-position="@Model.Position">
+					@foreach (var node in Model.Tree)
+					{
+						@await Html.PartialAsync("_MenuTreeNode", node)
+					}
+				</ul>
+				<form method="post" id="menu-reorder-af" style="display:none;">@Html.AntiForgeryToken()</form>
+			}
+		</div>
+	</div>
+</div>
+
+@section Scripts {
+	<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+	<script src="~/js/admin-menus.js" asp-append-version="true"></script>
+}

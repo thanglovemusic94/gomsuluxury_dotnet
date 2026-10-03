@@ -1,0 +1,30 @@
+@model WebShop.Pages.Admin.Menus.IndexModel.MenuTreeNode
+@{
+	var menu = Model.Menu;
+}
+<li class="menu-tree__item" data-id="@menu.Id">
+	<div class="menu-tree__row @(menu.IsActive ? "" : "is-inactive")">
+		<span class="menu-tree__handle" title="Kéo để sắp xếp"><i class="fa fa-bars"></i></span>
+		<div class="menu-tree__meta">
+			<strong class="menu-tree__name">@menu.Name</strong>
+			<span class="menu-tree__url text-muted">@menu.Url</span>
+			@if (!menu.IsActive)
+			{
+				<span class="label label-default">Ẩn</span>
+			}
+		</div>
+		<div class="menu-tree__actions">
+			<a class="btn btn-xs btn-info" href="/Admin/Menus/Edit/@menu.Id">Sửa</a>
+			<form method="post" asp-page-handler="Delete" asp-route-id="@menu.Id" class="inline" onsubmit="return confirm('Xóa menu này? Menu con (nếu có) cần xử lý riêng.');">
+				<input type="hidden" name="position" value="@menu.Position" />
+				<button type="submit" class="btn btn-xs btn-danger">Xóa</button>
+			</form>
+		</div>
+	</div>
+	<ul class="menu-tree__children">
+		@foreach (var child in Model.Children)
+		{
+			@await Html.PartialAsync("_MenuTreeNode", child)
+		}
+	</ul>
+</li>

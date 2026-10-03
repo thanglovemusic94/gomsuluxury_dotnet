@@ -1,0 +1,996 @@
+@page "/Admin/Media"
+@model WebShop.Pages.Admin.Media.IndexModel
+@using WebShop.Infrastructure
+@{
+	ViewData["Title"] = "Thư viện media";
+	ViewData["Menu"] = "Media";
+	var data = Model.PageData;
+	var folder = MediaFolders.Normalize(Model.Folder);
+	string SizeLabel(long bytes) => bytes < 1024 * 1024
+		? $"{bytes / 1024.0:0.#} KB"
+		: $"{bytes / (1024.0 * 1024):0.##} MB";
+	var pageSize = AdminPaging.NormalizeSize(Model.PageSize);
+	string PageUrl(int n, int size = 0) =>
+		AdminPaging.BuildUrl("/Admin/Media", n, size > 0 ? size : pageSize,
+			("Type", Model.Type),
+			("Folder", folder),
+			("Q", Model.Q));
+}
+
+<style>
+	.media-lib .media-side .nav-list > li > a { padding: 10px 12px; }
+	.media-lib .media-side .nav-list > li.active > a { background: #eef5fb; color: #337ab7; font-weight: 600; }
+	.media-lib .media-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+		gap: 14px;
+	}
+	.media-card {
+		background: #fff;
+		border: 1px solid #e3e3e3;
+		border-radius: 6px;
+		overflow: hidden;
+		display: flex;
+		flex-direction: column;
+		transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+	}
+	.media-card:hover {
+		border-color: #5b9bd5;
+		box-shadow: 0 6px 18px rgba(51, 122, 183, .12);
+		transform: translateY(-1px);
+	}
+	.media-card__preview {
+		position: relative;
+		height: 160px;
+		background:
+			linear-gradient(45deg, #f0f0f0 25%, transparent 25%),
+			linear-gradient(-45deg, #f0f0f0 25%, transparent 25%),
+			linear-gradient(45deg, transparent 75%, #f0f0f0 75%),
+			linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+		background-size: 16px 16px;
+		background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+		background-color: #fafafa;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		overflow: hidden;
+	}
+	.media-card__preview img {
+		max-width: 100%;
+		max-height: 100%;
+		width: auto;
+		height: auto;
+		object-fit: contain;
+		transition: transform .2s ease;
+	}
+	.media-card:hover .media-card__preview img { transform: scale(1.03); }
+	.media-card__overlay {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		background: rgba(20, 28, 40, .45);
+		opacity: 0;
+		transition: opacity .15s ease;
+	}
+	.media-card:hover .media-card__overlay,
+	.media-card__overlay:focus-within { opacity: 1; }
+	.media-card__overlay .btn {
+		min-width: 36px;
+		box-shadow: 0 2px 8px rgba(0,0,0,.2);
+	}
+	.media-card__body { padding: 10px 12px 12px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+	.media-card__name {
+		font-size: 12px;
+		font-weight: 600;
+		color: #393939;
+		line-height: 1.35;
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+		min-height: 32px;
+		word-break: break-word;
+	}
+	.media-card__meta {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 6px;
+		font-size: 11px;
+		color: #888;
+	}
+	.media-card__meta .label { font-weight: normal; }
+	.media-card__url {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		background: #f7f9fb;
+		border: 1px solid #e8eef4;
+		border-radius: 4px;
+		padding: 4px 6px;
+	}
+	.media-card__url code {
+		flex: 1;
+		font-size: 10px;
+		color: #555;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		background: transparent;
+		border: 0;
+		padding: 0;
+	}
+	.media-card__sizes {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 4px;
+	}
+	.media-card__sizes .btn {
+		padding: 4px 0;
+		font-size: 11px;
+		line-height: 1.2;
+	}
+	.media-card__sizes .btn.is-copied,
+	.media-card__url .btn.is-copied {
+		background: #87b87f !important;
+		border-color: #87b87f !important;
+		color: #fff !important;
+	}
+	.media-card__tools { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; }
+	.media-card__tools form { display: inline; margin: 0; }
+	.media-card__usage {
+		font-size: 11px;
+		color: #666;
+		background: #f7f9fb;
+		border: 1px solid #e8eef4;
+		border-radius: 4px;
+		padding: 6px 8px;
+		display: none;
+	}
+	.media-card__usage.is-open { display: block; }
+	.media-card__usage ul { margin: 4px 0 0; padding-left: 16px; }
+	.media-card__usage li { margin: 2px 0; }
+	.media-card__usage-badge {
+		display: inline-block;
+		font-size: 10px;
+		padding: 1px 6px;
+		border-radius: 10px;
+		background: #fff3cd;
+		color: #856404;
+		border: 1px solid #ffeeba;
+	}
+	.media-card__usage-badge.is-free {
+		background: #e8f5e9;
+		color: #2e7d32;
+		border-color: #c8e6c9;
+	}
+	.media-toast {
+		position: fixed;
+		right: 20px;
+		bottom: 20px;
+		z-index: 9999;
+		background: #323232;
+		color: #fff;
+		padding: 10px 16px;
+		border-radius: 6px;
+		font-size: 13px;
+		box-shadow: 0 8px 24px rgba(0,0,0,.2);
+		opacity: 0;
+		transform: translateY(8px);
+		pointer-events: none;
+		transition: opacity .2s ease, transform .2s ease;
+		max-width: min(420px, calc(100vw - 40px));
+	}
+	.media-toast.is-show { opacity: 1; transform: translateY(0); }
+	.media-toast code { color: #a8d5ff; font-size: 11px; word-break: break-all; }
+	.media-lightbox {
+		position: fixed;
+		inset: 0;
+		z-index: 10000;
+		background: rgba(10, 14, 20, .82);
+		display: none;
+		align-items: center;
+		justify-content: center;
+		padding: 24px;
+	}
+	.media-lightbox.is-open { display: flex; }
+	.media-lightbox__panel {
+		background: #fff;
+		border-radius: 8px;
+		max-width: min(920px, 100%);
+		width: 100%;
+		max-height: 90vh;
+		overflow: auto;
+		box-shadow: 0 16px 48px rgba(0,0,0,.35);
+	}
+	.media-lightbox__head {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 12px;
+		padding: 14px 16px;
+		border-bottom: 1px solid #eee;
+	}
+	.media-lightbox__head h3 { margin: 0; font-size: 16px; word-break: break-word; }
+	.media-lightbox__body {
+		padding: 16px;
+		background:
+			linear-gradient(45deg, #f0f0f0 25%, transparent 25%),
+			linear-gradient(-45deg, #f0f0f0 25%, transparent 25%),
+			linear-gradient(45deg, transparent 75%, #f0f0f0 75%),
+			linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+		background-size: 20px 20px;
+		background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+		background-color: #fafafa;
+		text-align: center;
+		min-height: 220px;
+	}
+	.media-lightbox__body img { max-width: 100%; max-height: 60vh; }
+	.media-lightbox__foot {
+		padding: 12px 16px 16px;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+		align-items: center;
+		border-top: 1px solid #eee;
+	}
+	.media-lightbox__foot code {
+		flex: 1;
+		min-width: 180px;
+		font-size: 11px;
+		word-break: break-all;
+		background: #f7f9fb;
+		padding: 6px 8px;
+		border-radius: 4px;
+		border: 1px solid #e8eef4;
+	}
+	.media-empty {
+		padding: 48px 20px;
+		text-align: center;
+		color: #888;
+		border: 1px dashed #d5d5d5;
+		border-radius: 6px;
+		background: #fafafa;
+	}
+	.media-bulk {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 10px;
+		margin-bottom: 14px;
+		padding: 10px 12px;
+		background: #f7f9fb;
+		border: 1px solid #e4eaf0;
+		border-radius: 6px;
+	}
+	.media-bulk__count { font-size: 12px; color: #666; min-width: 90px; }
+	.media-card__check {
+		position: absolute;
+		top: 8px;
+		left: 8px;
+		z-index: 2;
+		margin: 0;
+		width: 18px;
+		height: 18px;
+		cursor: pointer;
+	}
+	.media-card.is-selected { border-color: #5b9bd5; box-shadow: 0 0 0 2px rgba(91,155,213,.25); }
+	.media-seo-modal {
+		position: fixed;
+		inset: 0;
+		z-index: 10020;
+		background: rgba(10, 14, 20, .55);
+		display: none;
+		align-items: center;
+		justify-content: center;
+		padding: 20px;
+	}
+	.media-seo-modal.is-open { display: flex; }
+	.media-seo-modal__panel {
+		background: #fff;
+		border-radius: 8px;
+		width: min(960px, 100%);
+		max-height: 90vh;
+		overflow: hidden;
+		display: flex;
+		flex-direction: column;
+		box-shadow: 0 16px 48px rgba(0,0,0,.3);
+	}
+	.media-seo-modal__head, .media-seo-modal__foot {
+		padding: 12px 16px;
+		border-bottom: 1px solid #eee;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 10px;
+	}
+	.media-seo-modal__foot { border-bottom: 0; border-top: 1px solid #eee; }
+	.media-seo-modal__body { padding: 0; overflow: auto; }
+	.media-seo-table { width: 100%; margin: 0; }
+	.media-seo-table th, .media-seo-table td { vertical-align: middle !important; font-size: 12px; }
+	.media-seo-table img { width: 48px; height: 48px; object-fit: contain; background: #fafafa; border-radius: 4px; }
+	.media-seo-table input[type=text] { width: 100%; font-size: 12px; }
+	.media-seo-arrow { color: #888; }
+</style>
+
+<div class="page-header">
+	<h1>
+		Thư viện media
+		<small><i class="ace-icon fa fa-angle-double-right"></i> thư mục · tối ưu SEO · copy URL</small>
+	</h1>
+</div>
+<form method="post" accept-charset="utf-8" style="display:none" aria-hidden="true">@Html.AntiForgeryToken()</form>
+<partial name="_AdminAlerts" />
+
+<div class="row media-lib">
+	<div class="col-sm-3 media-side">
+		<div class="widget-box">
+			<div class="widget-header"><h4 class="widget-title">Thư mục</h4></div>
+			<div class="widget-body"><div class="widget-main" style="padding:8px 0;">
+				<ul class="nav nav-list" style="margin:0;">
+					<li class="@(folder == MediaFolders.All ? "active" : null)">
+						<a href="@AdminPaging.BuildUrl("/Admin/Media", 1, pageSize, ("Type", Model.Type), ("Folder", ""), ("Q", Model.Q))">
+							<i class="menu-icon fa fa-folder-open-o"></i>
+							Tất cả
+							<span class="badge badge-info pull-right">@(data.FolderCounts.GetValueOrDefault(MediaFolders.All))</span>
+						</a>
+					</li>
+					@foreach (var item in MediaFolders.Items)
+					{
+						<li class="@(folder == item.Key ? "active" : null)">
+							<a href="@AdminPaging.BuildUrl("/Admin/Media", 1, pageSize, ("Type", Model.Type), ("Folder", item.Key), ("Q", Model.Q))">
+								<i class="menu-icon fa fa-folder-o"></i>
+								@item.Label
+								<span class="badge pull-right">@(data.FolderCounts.GetValueOrDefault(item.Key))</span>
+							</a>
+						</li>
+					}
+				</ul>
+			</div></div>
+		</div>
+	</div>
+
+	<div class="col-sm-9">
+		<div class="widget-box">
+			<div class="widget-header"><h4 class="widget-title">Tải lên → @MediaFolders.Label(folder == MediaFolders.All ? MediaFolders.Other : folder)</h4></div>
+			<div class="widget-body"><div class="widget-main">
+				<form method="post" asp-page-handler="Upload" enctype="multipart/form-data" class="form-horizontal">
+					<input type="hidden" name="Type" value="@Model.Type" />
+					<input type="hidden" name="PageSize" value="@pageSize" />
+					<input type="hidden" name="Q" value="@Model.Q" />
+					<div class="form-group">
+						<label class="col-sm-2 control-label">Thư mục</label>
+						<div class="col-sm-6">
+							<select name="folder" class="form-control">
+								@foreach (var item in MediaFolders.Items)
+								{
+									var selected = folder == item.Key || (folder == MediaFolders.All && item.Key == MediaFolders.Other);
+									if (selected)
+									{
+										<option value="@item.Key" selected>@item.Label</option>
+									}
+									else
+									{
+										<option value="@item.Key">@item.Label</option>
+									}
+								}
+							</select>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-2 control-label">File</label>
+						<div class="col-sm-6"><input type="file" name="file" class="form-control" accept="image/*,.pdf,.zip,.doc,.docx" required /></div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-2 control-label">Alt (SEO)</label>
+						<div class="col-sm-6"><input type="text" name="alt" class="form-control" maxlength="255" placeholder="Mô tả ảnh" /></div>
+					</div>
+					<div class="form-group">
+						<div class="col-sm-offset-2 col-sm-6">
+							<button type="submit" class="btn btn-primary"><i class="ace-icon fa fa-upload"></i> Tải lên</button>
+							<span class="help-inline text-muted">Lưu theo thư mục trên đĩa · WebP thumb/medium/large</span>
+						</div>
+					</div>
+				</form>
+			</div></div>
+		</div>
+
+		<div class="widget-box">
+			<div class="widget-header">
+				<h4 class="widget-title">
+					@MediaFolders.Label(folder)
+					<span class="badge badge-info">@data.TotalCount</span>
+				</h4>
+				<div class="widget-toolbar">
+					<a class="btn btn-xs @(Model.Type == "Files" ? "btn-primary" : "btn-default")" href="@AdminPaging.BuildUrl("/Admin/Media", 1, pageSize, ("Type", "Files"), ("Folder", folder), ("Q", Model.Q))">Tất cả loại</a>
+					<a class="btn btn-xs @(Model.Type == "Images" ? "btn-primary" : "btn-default")" href="@AdminPaging.BuildUrl("/Admin/Media", 1, pageSize, ("Type", "Images"), ("Folder", folder), ("Q", Model.Q))">Ảnh</a>
+					<form method="post" asp-page-handler="RegenerateAll" class="inline" style="display:inline" onsubmit="return confirm('Tạo lại tối ưu cho mọi ảnh?');">
+						<input type="hidden" name="Type" value="@Model.Type" />
+						<input type="hidden" name="Folder" value="@folder" />
+						<input type="hidden" name="PageNumber" value="@data.Page" />
+						<input type="hidden" name="PageSize" value="@pageSize" />
+						<input type="hidden" name="Q" value="@Model.Q" />
+						<button type="submit" class="btn btn-xs btn-warning">Tạo lại tất cả tối ưu</button>
+					</form>
+				</div>
+			</div>
+			<div class="widget-body"><div class="widget-main">
+				<form method="get" class="form-inline" style="margin-bottom:12px;">
+					<input type="hidden" name="Type" value="@Model.Type" />
+					<input type="hidden" name="Folder" value="@folder" />
+					<input type="hidden" name="PageSize" value="@pageSize" />
+					<input type="text" name="Q" value="@Model.Q" class="form-control input-sm" placeholder="Tìm tên file / alt" style="min-width:220px;" />
+					<button type="submit" class="btn btn-sm btn-primary">Tìm</button>
+					@if (!string.IsNullOrWhiteSpace(Model.Q))
+					{
+						<a class="btn btn-sm btn-link" href="@AdminPaging.BuildUrl("/Admin/Media", 1, pageSize, ("Type", Model.Type), ("Folder", folder))">Xóa tìm</a>
+					}
+				</form>
+				@{
+					var mediaPager = new AdminPagerModel {
+						PageNumber = data.Page,
+						PageSize = data.PageSize,
+						TotalCount = data.TotalCount,
+						TotalPages = data.TotalPages,
+						PageUrl = PageUrl
+					};
+				}
+				<partial name="_AdminPager" model="mediaPager" />
+				@if (data.Items.Count == 0)
+				{
+					<div class="media-empty">
+						<i class="fa fa-picture-o fa-2x" style="margin-bottom:8px;display:block;opacity:.5;"></i>
+						Thư mục trống. Hãy tải ảnh lên hoặc chọn “Tất cả”.
+					</div>
+				}
+				else
+				{
+					<div class="media-bulk">
+						<label class="checkbox-inline" style="margin:0;">
+							<input type="checkbox" id="mediaSelectPage" /> Chọn trang này
+						</label>
+						<span class="media-bulk__count" id="mediaSelectedCount">0 đã chọn</span>
+						<button type="button" class="btn btn-sm btn-success" id="mediaSeoBtn" disabled>
+							<i class="fa fa-magic"></i> Tối ưu SEO
+						</button>
+						<span class="help-inline text-muted">Đổi tên + alt theo SP/bài viết · xem trước trước khi áp dụng</span>
+					</div>
+					<div class="media-grid">
+						@foreach (var item in data.Items)
+						{
+							var previewUrl = item.IsImage ? (item.MediumUrl ?? item.ThumbUrl ?? item.OriginalUrl) : "";
+							var copyDefault = item.IsImage ? (item.MediumUrl ?? item.OriginalUrl) : item.OriginalUrl;
+							<div class="media-card"
+								 data-id="@item.Id"
+								 data-name="@(item.Alt ?? item.Name)"
+								 data-thumb="@item.ThumbUrl"
+								 data-medium="@item.MediumUrl"
+								 data-large="@item.LargeUrl"
+								 data-original="@item.OriginalUrl"
+								 data-preview="@previewUrl">
+								<div class="media-card__preview">
+									@if (item.Id > 0 && item.IsImage)
+									{
+										<input type="checkbox" class="media-card__check js-media-pick" value="@item.Id" aria-label="Chọn ảnh" />
+									}
+									@if (item.IsImage)
+									{
+										<img src="@(item.ThumbUrl ?? item.OriginalUrl)" alt="@(item.Alt ?? item.Name)" loading="lazy" />
+										<div class="media-card__overlay">
+											<button type="button" class="btn btn-sm btn-white js-media-preview" title="Xem lớn">
+												<i class="fa fa-search-plus"></i>
+											</button>
+											<button type="button" class="btn btn-sm btn-primary js-copy-url" data-url="@copyDefault" data-label="Medium" title="Copy URL medium">
+												<i class="fa fa-link"></i>
+											</button>
+										</div>
+									}
+									else
+									{
+										<i class="fa fa-file-o fa-3x text-muted"></i>
+									}
+								</div>
+								<div class="media-card__body">
+									<div class="media-card__name" title="@item.Name">@(string.IsNullOrWhiteSpace(item.Alt) ? item.Name : item.Alt)</div>
+									@{
+										var useCount = item.Id > 0 && Model.UsageCounts.TryGetValue(item.Id, out var uc) ? uc : 0;
+									}
+									<div class="media-card__meta">
+										<span class="label label-info">@MediaFolders.Label(item.Folder)</span>
+										<span>@SizeLabel(item.Size)</span>
+										@if (item.Id > 0)
+										{
+											<span class="media-card__usage-badge @(useCount == 0 ? "is-free" : null)">
+												@(useCount == 0 ? "Chưa dùng" : $"Đang dùng: {useCount}")
+											</span>
+										}
+									</div>
+
+									<div class="media-card__url">
+										<code title="@copyDefault">@copyDefault</code>
+										<button type="button" class="btn btn-xs btn-default js-copy-url" data-url="@copyDefault" data-label="URL" title="Copy URL">
+											<i class="fa fa-clipboard"></i>
+										</button>
+									</div>
+
+									@if (item.IsImage)
+									{
+										<div class="media-card__sizes">
+											<button type="button" class="btn btn-default js-copy-url" data-url="@item.ThumbUrl" data-label="Thumb" title="@item.ThumbUrl">Thumb</button>
+											<button type="button" class="btn btn-default js-copy-url" data-url="@item.MediumUrl" data-label="Medium" title="@item.MediumUrl">Med</button>
+											<button type="button" class="btn btn-default js-copy-url" data-url="@item.LargeUrl" data-label="Large" title="@item.LargeUrl">Large</button>
+											<button type="button" class="btn btn-default js-copy-url" data-url="@item.OriginalUrl" data-label="Gốc" title="@item.OriginalUrl">Gốc</button>
+											@{
+												var dynUrl = MediaDynamicUrls.For(item.OriginalUrl, 800);
+											}
+											<button type="button" class="btn btn-default js-copy-url" data-url="@dynUrl" data-label="On-the-fly 800" title="@dynUrl">OTF 800</button>
+										</div>
+									}
+
+									@if (item.Id > 0)
+									{
+										<form method="post" asp-page-handler="Alt">
+											<input type="hidden" name="Type" value="@Model.Type" />
+											<input type="hidden" name="Folder" value="@folder" />
+											<input type="hidden" name="PageNumber" value="@data.Page" />
+											<input type="hidden" name="PageSize" value="@pageSize" />
+											<input type="hidden" name="Q" value="@Model.Q" />
+											<input type="hidden" name="id" value="@item.Id" />
+											<div class="input-group input-group-sm">
+												<input type="text" name="alt" class="form-control" value="@item.Alt" placeholder="Alt SEO" maxlength="255" />
+												<span class="input-group-btn"><button type="submit" class="btn btn-default">Alt</button></span>
+											</div>
+										</form>
+										<form method="post" asp-page-handler="Folder">
+											<input type="hidden" name="Type" value="@Model.Type" />
+											<input type="hidden" name="Folder" value="@folder" />
+											<input type="hidden" name="PageNumber" value="@data.Page" />
+											<input type="hidden" name="PageSize" value="@pageSize" />
+											<input type="hidden" name="Q" value="@Model.Q" />
+											<input type="hidden" name="id" value="@item.Id" />
+											<div class="input-group input-group-sm">
+												<select name="folder" class="form-control">
+													@foreach (var f in MediaFolders.Items)
+													{
+														if (item.Folder == f.Key)
+														{
+															<option value="@f.Key" selected>@f.Label</option>
+														}
+														else
+														{
+															<option value="@f.Key">@f.Label</option>
+														}
+													}
+												</select>
+												<span class="input-group-btn"><button type="submit" class="btn btn-default">Đổi</button></span>
+											</div>
+										</form>
+									}
+
+									@if (item.Id > 0)
+									{
+										<div class="media-card__usage js-media-usage" data-id="@item.Id" id="usage-@item.Id"></div>
+									}
+									<div class="media-card__tools">
+										@if (item.Id > 0)
+										{
+											<button type="button" class="btn btn-xs btn-default js-media-usage-toggle" data-id="@item.Id" data-loaded="0">
+												Đang dùng ở đâu?
+											</button>
+										}
+										@if (item.Id > 0 && item.IsImage)
+										{
+											<form method="post" asp-page-handler="Regenerate">
+												<input type="hidden" name="Type" value="@Model.Type" />
+												<input type="hidden" name="Folder" value="@folder" />
+												<input type="hidden" name="PageNumber" value="@data.Page" />
+											<input type="hidden" name="PageSize" value="@pageSize" />
+											<input type="hidden" name="Q" value="@Model.Q" />
+												<input type="hidden" name="id" value="@item.Id" />
+												<button type="submit" class="btn btn-xs btn-warning">Tạo lại tối ưu</button>
+											</form>
+										}
+										@{
+											var deleteConfirm = useCount > 0
+												? $"Ảnh đang được dùng tại {useCount} chỗ. Vẫn chuyển vào thùng rác?"
+												: "Chuyển ảnh vào thùng rác?";
+										}
+										<form method="post" asp-page-handler="Delete" onsubmit="return confirm('@deleteConfirm');">
+											<input type="hidden" name="Type" value="@Model.Type" />
+											<input type="hidden" name="Folder" value="@folder" />
+											<input type="hidden" name="PageNumber" value="@data.Page" />
+											<input type="hidden" name="PageSize" value="@pageSize" />
+											<input type="hidden" name="Q" value="@Model.Q" />
+											<input type="hidden" name="id" value="@item.Id" />
+											<input type="hidden" name="fileName" value="@item.Name" />
+											<button type="submit" class="btn btn-xs btn-danger">Xóa</button>
+										</form>
+									</div>
+								</div>
+							</div>
+						}
+					</div>
+				}
+			</div></div>
+		</div>
+	</div>
+</div>
+
+<div class="media-toast" id="mediaToast" role="status" aria-live="polite"></div>
+<div class="media-seo-modal" id="mediaSeoModal" aria-hidden="true">
+	<div class="media-seo-modal__panel" role="dialog" aria-modal="true" aria-labelledby="mediaSeoTitle">
+		<div class="media-seo-modal__head">
+			<div>
+				<h3 id="mediaSeoTitle" style="margin:0;font-size:16px;">Xem trước tối ưu SEO</h3>
+				<small class="text-muted">Sửa tên/alt nếu cần, bỏ tick ảnh không muốn đổi</small>
+			</div>
+			<button type="button" class="btn btn-sm btn-default js-seo-close"><i class="fa fa-times"></i></button>
+		</div>
+		<div class="media-seo-modal__body">
+			<table class="table table-striped media-seo-table">
+				<thead>
+					<tr>
+						<th style="width:36px;">
+							<input type="checkbox" id="mediaSeoSelectAll" title="Chọn tất cả" checked />
+						</th>
+						<th style="width:60px;">Ảnh</th>
+						<th>Tên cũ → mới</th>
+						<th>Alt mới</th>
+						<th style="width:90px;">Nguồn</th>
+					</tr>
+				</thead>
+				<tbody id="mediaSeoRows"></tbody>
+			</table>
+		</div>
+		<div class="media-seo-modal__foot">
+			<span class="text-muted" id="mediaSeoStatus"></span>
+			<div>
+				<button type="button" class="btn btn-default js-seo-close">Hủy</button>
+				<button type="button" class="btn btn-success" id="mediaSeoApply"><i class="fa fa-check"></i> Áp dụng</button>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="media-lightbox" id="mediaLightbox" aria-hidden="true">
+	<div class="media-lightbox__panel" role="dialog" aria-modal="true" aria-labelledby="mediaLightboxTitle">
+		<div class="media-lightbox__head">
+			<div>
+				<h3 id="mediaLightboxTitle">Xem ảnh</h3>
+				<small class="text-muted" id="mediaLightboxMeta"></small>
+			</div>
+			<button type="button" class="btn btn-sm btn-default js-lightbox-close" title="Đóng"><i class="fa fa-times"></i></button>
+		</div>
+		<div class="media-lightbox__body">
+			<img id="mediaLightboxImg" src="" alt="" />
+		</div>
+		<div class="media-lightbox__foot">
+			<code id="mediaLightboxUrl"></code>
+			<button type="button" class="btn btn-sm btn-primary js-lightbox-copy"><i class="fa fa-clipboard"></i> Copy URL</button>
+			<button type="button" class="btn btn-sm btn-default js-lightbox-close">Đóng</button>
+		</div>
+	</div>
+</div>
+
+@section Scripts {
+	<script>
+		(function () {
+			var toastEl = document.getElementById('mediaToast');
+			var lightbox = document.getElementById('mediaLightbox');
+			var lbImg = document.getElementById('mediaLightboxImg');
+			var lbTitle = document.getElementById('mediaLightboxTitle');
+			var lbMeta = document.getElementById('mediaLightboxMeta');
+			var lbUrl = document.getElementById('mediaLightboxUrl');
+			var toastTimer;
+			var seoModal = document.getElementById('mediaSeoModal');
+			var seoRows = document.getElementById('mediaSeoRows');
+			var seoStatus = document.getElementById('mediaSeoStatus');
+			var seoBtn = document.getElementById('mediaSeoBtn');
+			var selectPage = document.getElementById('mediaSelectPage');
+			var selectedCount = document.getElementById('mediaSelectedCount');
+			var token = document.querySelector('input[name="__RequestVerificationToken"]');
+			token = token ? token.value : '';
+
+			function showToast(html) {
+				toastEl.innerHTML = html;
+				toastEl.classList.add('is-show');
+				clearTimeout(toastTimer);
+				toastTimer = setTimeout(function () { toastEl.classList.remove('is-show'); }, 2200);
+			}
+
+			function copyText(url, label, btn) {
+				if (!url) {
+					showToast('Không có URL để copy.');
+					return;
+				}
+				var done = function () {
+					if (btn) {
+						btn.classList.add('is-copied');
+						setTimeout(function () { btn.classList.remove('is-copied'); }, 900);
+					}
+					showToast('Đã copy <strong>' + (label || 'URL') + '</strong><br><code>' + url + '</code>');
+				};
+				if (navigator.clipboard && navigator.clipboard.writeText) {
+					navigator.clipboard.writeText(url).then(done).catch(function () {
+						fallbackCopy(url); done();
+					});
+				} else {
+					fallbackCopy(url); done();
+				}
+			}
+
+			function fallbackCopy(url) {
+				var t = document.createElement('input');
+				t.value = url;
+				document.body.appendChild(t);
+				t.select();
+				document.execCommand('copy');
+				document.body.removeChild(t);
+			}
+
+			document.querySelectorAll('.js-copy-url').forEach(function (btn) {
+				btn.addEventListener('click', function (e) {
+					e.preventDefault();
+					e.stopPropagation();
+					copyText(btn.getAttribute('data-url') || '', btn.getAttribute('data-label') || 'URL', btn);
+				});
+			});
+
+			document.querySelectorAll('.js-media-usage-toggle').forEach(function (btn) {
+				btn.addEventListener('click', function () {
+					var id = btn.getAttribute('data-id');
+					var panel = document.getElementById('usage-' + id);
+					if (!panel) return;
+					if (panel.classList.contains('is-open') && btn.getAttribute('data-loaded') === '1') {
+						panel.classList.remove('is-open');
+						return;
+					}
+					panel.classList.add('is-open');
+					if (btn.getAttribute('data-loaded') === '1') return;
+					panel.innerHTML = 'Đang tải…';
+					fetch('/Admin/Media?handler=Usage&id=' + encodeURIComponent(id), {
+						headers: { 'Accept': 'application/json', 'RequestVerificationToken': token }
+					})
+						.then(function (r) { return r.json(); })
+						.then(function (items) {
+							btn.setAttribute('data-loaded', '1');
+							if (!items || !items.length) {
+								panel.innerHTML = 'Không thấy tham chiếu trong nội dung (logo/slider/SP/bài viết…).';
+								return;
+							}
+							var html = '<strong>' + items.length + ' chỗ:</strong><ul>';
+							items.forEach(function (u) {
+								var label = (u.kind || '') + ': ' + (u.label || '');
+								if (u.link) {
+									html += '<li><a href="' + u.link + '">' + label + '</a></li>';
+								} else {
+									html += '<li>' + label + '</li>';
+								}
+							});
+							html += '</ul>';
+							panel.innerHTML = html;
+						})
+						.catch(function () {
+							panel.innerHTML = 'Không tải được danh sách sử dụng.';
+						});
+				});
+			});
+
+			function openLightbox(card) {
+				var name = card.getAttribute('data-name') || 'Ảnh';
+				var preview = card.getAttribute('data-preview') || card.getAttribute('data-medium') || card.getAttribute('data-original') || '';
+				var large = card.getAttribute('data-large') || preview;
+				lbTitle.textContent = name;
+				lbMeta.textContent = 'Thumb · Medium · Large · Gốc';
+				lbImg.src = large || preview;
+				lbImg.alt = name;
+				lbUrl.textContent = preview;
+				lbUrl.setAttribute('data-url', preview);
+				lightbox.classList.add('is-open');
+				lightbox.setAttribute('aria-hidden', 'false');
+			}
+
+			function closeLightbox() {
+				lightbox.classList.remove('is-open');
+				lightbox.setAttribute('aria-hidden', 'true');
+				lbImg.src = '';
+			}
+
+			document.querySelectorAll('.js-media-preview').forEach(function (btn) {
+				btn.addEventListener('click', function (e) {
+					e.preventDefault();
+					e.stopPropagation();
+					var card = btn.closest('.media-card');
+					if (card) openLightbox(card);
+				});
+			});
+
+			lightbox.querySelectorAll('.js-lightbox-close').forEach(function (btn) {
+				btn.addEventListener('click', closeLightbox);
+			});
+			lightbox.addEventListener('click', function (e) {
+				if (e.target === lightbox) closeLightbox();
+			});
+			document.querySelector('.js-lightbox-copy').addEventListener('click', function () {
+				copyText(lbUrl.getAttribute('data-url') || lbUrl.textContent || '', 'URL', this);
+			});
+
+			function syncSelection() {
+				var boxes = document.querySelectorAll('.js-media-pick');
+				var checked = document.querySelectorAll('.js-media-pick:checked');
+				selectedCount.textContent = checked.length + ' đã chọn';
+				seoBtn.disabled = checked.length === 0;
+				if (selectPage) selectPage.checked = boxes.length > 0 && checked.length === boxes.length;
+				boxes.forEach(function (box) {
+					var card = box.closest('.media-card');
+					if (card) card.classList.toggle('is-selected', box.checked);
+				});
+			}
+
+			document.querySelectorAll('.js-media-pick').forEach(function (box) {
+				box.addEventListener('click', function (e) { e.stopPropagation(); });
+				box.addEventListener('change', syncSelection);
+			});
+			if (selectPage) {
+				selectPage.addEventListener('change', function () {
+					document.querySelectorAll('.js-media-pick').forEach(function (box) {
+						box.checked = selectPage.checked;
+					});
+					syncSelection();
+				});
+			}
+
+			function closeSeo() {
+				seoModal.classList.remove('is-open');
+				seoModal.setAttribute('aria-hidden', 'true');
+			}
+			document.querySelectorAll('.js-seo-close').forEach(function (btn) {
+				btn.addEventListener('click', closeSeo);
+			});
+			seoModal.addEventListener('click', function (e) {
+				if (e.target === seoModal) closeSeo();
+			});
+			document.addEventListener('keydown', function (e) {
+				if (e.key === 'Escape') {
+					if (seoModal.classList.contains('is-open')) closeSeo();
+					else if (lightbox.classList.contains('is-open')) closeLightbox();
+				}
+			});
+
+			function esc(s) {
+				return String(s == null ? '' : s)
+					.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+					.replace(/"/g, '&quot;');
+			}
+
+			function baseFromFileName(name) {
+				var n = String(name || '');
+				n = n.replace(/\.[^.]+$/, '');
+				n = n.replace(/-\d{14}$/, '');
+				return n;
+			}
+
+			seoBtn.addEventListener('click', function () {
+				var ids = Array.prototype.map.call(document.querySelectorAll('.js-media-pick:checked'), function (box) {
+					return box.value;
+				});
+				if (!ids.length) return;
+				seoBtn.disabled = true;
+				seoStatus.textContent = 'Đang phân tích...';
+				var body = new URLSearchParams();
+				body.append('__RequestVerificationToken', token);
+				ids.forEach(function (id) { body.append('ids', id); });
+				fetch('/Admin/Media?handler=PreviewSeo', {
+					method: 'POST',
+					headers: { 'RequestVerificationToken': token },
+					body: body
+				}).then(function (r) { return r.json(); }).then(function (rows) {
+					seoRows.innerHTML = '';
+					if (!rows || !rows.length) {
+						seoStatus.textContent = 'Không có ảnh hợp lệ để tối ưu.';
+						seoBtn.disabled = false;
+						return;
+					}
+					rows.forEach(function (row) {
+						var tr = document.createElement('tr');
+						var willRename = row.willRename ?? row.WillRename;
+						var willUpdateAlt = row.willUpdateAlt ?? row.WillUpdateAlt;
+						var newName = row.newName || row.NewName || '';
+						var oldName = row.oldName || row.OldName || '';
+						var newAlt = row.newAlt || row.NewAlt || '';
+						var oldAlt = row.oldAlt || row.OldAlt || '';
+						var thumbUrl = row.thumbUrl || row.ThumbUrl || '';
+						var source = row.source || row.Source || '';
+						var note = row.note || row.Note || '';
+						var id = row.id || row.Id;
+						var checked = (willRename || willUpdateAlt) ? ' checked' : '';
+						var base = baseFromFileName(newName);
+						tr.innerHTML =
+							'<td><input type="checkbox" class="js-seo-row"' + checked +
+							' data-id="' + id + '"></td>' +
+							'<td><img src="' + esc(thumbUrl) + '" alt=""></td>' +
+							'<td><div class="text-muted">' + esc(oldName) + '</div>' +
+							'<div><span class="media-seo-arrow">→</span> ' +
+							'<input type="text" class="form-control input-sm js-seo-base" value="' + esc(base) + '" maxlength="60"></div>' +
+							(note ? '<small class="text-muted">' + esc(note) + '</small>' : '') +
+							'</td>' +
+							'<td><input type="text" class="form-control input-sm js-seo-alt" value="' + esc(newAlt) + '" maxlength="255">' +
+							'<small class="text-muted">Alt cũ: ' + esc(oldAlt || '(trống)') + '</small></td>' +
+							'<td><span class="label label-info">' + esc(source) + '</span></td>';
+						seoRows.appendChild(tr);
+					});
+					seoRows.querySelectorAll('.js-seo-row').forEach(function (box) {
+						box.addEventListener('change', syncSeoSelectAll);
+					});
+					syncSeoSelectAll();
+					seoStatus.textContent = rows.length + ' ảnh · tick header để chọn/bỏ tất cả';
+					seoModal.classList.add('is-open');
+					seoModal.setAttribute('aria-hidden', 'false');
+				}).catch(function () {
+					showToast('Không xem trước được. Thử lại.');
+				}).finally(function () {
+					syncSelection();
+				});
+			});
+
+			function syncSeoSelectAll() {
+				var boxes = seoRows.querySelectorAll('.js-seo-row');
+				var checked = seoRows.querySelectorAll('.js-seo-row:checked');
+				var all = document.getElementById('mediaSeoSelectAll');
+				if (!all) return;
+				all.checked = boxes.length > 0 && checked.length === boxes.length;
+				all.indeterminate = checked.length > 0 && checked.length < boxes.length;
+				seoStatus.textContent = checked.length + '/' + boxes.length + ' ảnh sẽ áp dụng';
+			}
+
+			document.getElementById('mediaSeoSelectAll').addEventListener('change', function () {
+				var on = this.checked;
+				seoRows.querySelectorAll('.js-seo-row').forEach(function (box) {
+					box.checked = on;
+				});
+				this.indeterminate = false;
+				syncSeoSelectAll();
+			});
+
+			document.getElementById('mediaSeoApply').addEventListener('click', function () {
+				var applyBtn = this;
+				var payload = [];
+				seoRows.querySelectorAll('tr').forEach(function (tr) {
+					var box = tr.querySelector('.js-seo-row');
+					if (!box || !box.checked) return;
+					payload.push({
+						id: parseInt(box.getAttribute('data-id'), 10),
+						newBaseName: (tr.querySelector('.js-seo-base').value || '').trim(),
+						newAlt: (tr.querySelector('.js-seo-alt').value || '').trim()
+					});
+				});
+				if (!payload.length) {
+					showToast('Chưa chọn ảnh nào trong bảng xem trước.');
+					return;
+				}
+				applyBtn.disabled = true;
+				seoStatus.textContent = 'Đang áp dụng...';
+				var body = new URLSearchParams();
+				body.append('__RequestVerificationToken', token);
+				body.append('payload', JSON.stringify(payload));
+				fetch('/Admin/Media?handler=ApplySeo', {
+					method: 'POST',
+					headers: { 'RequestVerificationToken': token },
+					body: body
+				}).then(function (r) { return r.json(); }).then(function (result) {
+					showToast(esc(result.message || 'Đã xong.'));
+					closeSeo();
+					setTimeout(function () { window.location.reload(); }, 700);
+				}).catch(function () {
+					showToast('Áp dụng thất bại. Thử lại.');
+				}).finally(function () {
+					applyBtn.disabled = false;
+				});
+			});
+
+			syncSelection();
+		})();
+	</script>
+}

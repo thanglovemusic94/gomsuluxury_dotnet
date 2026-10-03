@@ -1,0 +1,46 @@
+@{
+	var assets = (ViewData["ShopAssets"] as string ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+	bool Has(string key) => assets.Contains(key, StringComparer.OrdinalIgnoreCase);
+	var lcp = ViewData["LcpImage"] as string;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>@(ViewData["Title"] ?? "WebShop")</title>
+	@if (ViewData["Description"] is string description && !string.IsNullOrWhiteSpace(description))
+	{
+		<meta name="description" content="@description" />
+	}
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600&amp;family=Cormorant+Garamond:wght@600;700&amp;display=swap" />
+	<link rel="stylesheet" href="/ace/assets/font-awesome/4.5.0/css/font-awesome.min.css" />
+	<link rel="stylesheet" href="~/css/shop.css" asp-append-version="true" />
+	@if (!string.IsNullOrWhiteSpace(lcp))
+	{
+		<link rel="preload" as="image" href="@lcp" fetchpriority="high" />
+	}
+	@await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="shop@(ViewData["ImmersiveDetail"] is true ? " shop--detail-immersive" : null)">
+	@await Component.InvokeAsync("ShopHeader")
+	@RenderBody()
+	@await Component.InvokeAsync("ShopFooter")
+	<script src="~/js/shop-core.js" asp-append-version="true"></script>
+	@if (Has("home"))
+	{
+		<script src="~/js/shop-home.js" asp-append-version="true"></script>
+	}
+	@if (Has("detail"))
+	{
+		<script src="~/js/shop-detail.js" asp-append-version="true"></script>
+	}
+	@if (Has("catalog"))
+	{
+		<script src="~/js/shop-catalog.js" asp-append-version="true"></script>
+	}
+	@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

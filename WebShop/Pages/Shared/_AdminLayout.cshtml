@@ -1,0 +1,225 @@
+@using WebShop.Infrastructure
+@{
+	var isAdmin = AppRoles.IsAdmin(User);
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>@ViewData["Title"] - WebShop</title>
+	<link rel="stylesheet" href="/ace/assets/css/bootstrap.min.css" />
+	<link rel="stylesheet" href="/ace/assets/font-awesome/4.5.0/css/font-awesome.min.css" />
+	<link rel="stylesheet" href="/ace/assets/css/fonts.googleapis.com.css" />
+	<link rel="stylesheet" href="/ace/assets/css/ace.min.css" />
+	<link rel="stylesheet" href="/ace/assets/css/ace-skins.min.css" />
+	<link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+	@await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="no-skin" data-admin-can-hard-delete="@(isAdmin ? "1" : "0")">
+	<div id="navbar" class="navbar navbar-default">
+		<div class="navbar-container" id="navbar-container">
+			<div class="navbar-header pull-left">
+				<a href="/Admin" class="navbar-brand">
+					<small><i class="fa fa-leaf"></i> WebShop</small>
+				</a>
+			</div>
+			<div class="navbar-buttons navbar-header pull-right" role="navigation">
+				<ul class="admin-top-actions">
+					<li>
+						<a href="/" class="admin-top-btn admin-top-btn--site" target="_blank" rel="noopener" title="Xem website">
+							<i class="fa fa-external-link"></i>
+							<span class="admin-top-btn__text">Xem website</span>
+						</a>
+					</li>
+					<li>
+						@if (isAdmin)
+						{
+							<a href="/Admin/Users" class="admin-top-btn admin-top-btn--user" title="Tài khoản">
+								<i class="fa fa-user"></i>
+								<span class="admin-top-btn__text">@User.Identity?.Name</span>
+							</a>
+						}
+						else
+						{
+							<a href="/Admin" class="admin-top-btn admin-top-btn--user" title="Tài khoản">
+								<i class="fa fa-user"></i>
+								<span class="admin-top-btn__text">@User.Identity?.Name <small>(Staff)</small></span>
+							</a>
+						}
+					</li>
+					<li>
+						<form method="post" asp-page="/Logout">
+							<button type="submit" class="admin-top-btn admin-top-btn--logout" title="Đăng xuất">
+								<i class="fa fa-sign-out"></i>
+								<span class="admin-top-btn__text">Đăng xuất</span>
+							</button>
+						</form>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+
+	<div class="main-container" id="main-container">
+		<div id="sidebar" class="sidebar responsive">
+			<ul class="nav nav-list">
+				<li class="@(IsActive("Dashboard") ? "active" : null)">
+					<a href="/Admin">
+						<i class="menu-icon fa fa-tachometer"></i>
+						<span class="menu-text"> Dashboard </span>
+					</a>
+					<b class="arrow"></b>
+				</li>
+				@if (isAdmin)
+				{
+					<li class="@(IsActive("Users") ? "active" : null)">
+						<a href="/Admin/Users">
+							<i class="menu-icon fa fa-users"></i>
+							<span class="menu-text"> Thành viên </span>
+						</a>
+						<b class="arrow"></b>
+					</li>
+					<li class="@(IsActive("Roles") ? "active" : null)">
+						<a href="/Admin/Roles">
+							<i class="menu-icon fa fa-key"></i>
+							<span class="menu-text"> Phân quyền </span>
+						</a>
+						<b class="arrow"></b>
+					</li>
+				}
+				<li class="@(IsActive("Categories") ? "active" : null)">
+					<a href="/Admin/Categories">
+						<i class="menu-icon fa fa-list"></i>
+						<span class="menu-text"> Danh mục </span>
+					</a>
+					<b class="arrow"></b>
+				</li>
+				<li class="@(IsActive("Products") ? "active" : null)">
+					<a href="/Admin/Products">
+						<i class="menu-icon fa fa-cube"></i>
+						<span class="menu-text"> Sản phẩm </span>
+					</a>
+					<b class="arrow"></b>
+				</li>
+				<li class="@(IsActive("Orders") ? "active" : null)">
+					<a href="/Admin/Orders">
+						<i class="menu-icon fa fa-shopping-cart"></i>
+						<span class="menu-text"> Đơn hàng </span>
+					</a>
+					<b class="arrow"></b>
+				</li>
+				<li class="@(IsActive("Posts") ? "active" : null)">
+					<a href="/Admin/Posts">
+						<i class="menu-icon fa fa-pencil"></i>
+						<span class="menu-text"> Bài viết </span>
+					</a>
+					<b class="arrow"></b>
+				</li>
+				<li class="@(IsActive("Pages") ? "active" : null)">
+					<a href="/Admin/Pages">
+						<i class="menu-icon fa fa-file-text-o"></i>
+						<span class="menu-text"> Trang tĩnh </span>
+					</a>
+					<b class="arrow"></b>
+				</li>
+				<li class="@(IsActive("Media") ? "active" : null)">
+					<a href="/Admin/Media">
+						<i class="menu-icon fa fa-picture-o"></i>
+						<span class="menu-text"> Thư viện media </span>
+					</a>
+					<b class="arrow"></b>
+				</li>
+				<li class="@(IsActive("Blocks") ? "active" : null)">
+					<a href="/Admin/Blocks">
+						<i class="menu-icon fa fa-code"></i>
+						<span class="menu-text"> HTML Blocks </span>
+					</a>
+					<b class="arrow"></b>
+				</li>
+				@if (isAdmin)
+				{
+					<li class="@(IsActive("Trash") ? "active" : null)">
+						<a href="/Admin/Trash">
+							<i class="menu-icon fa fa-trash"></i>
+							<span class="menu-text"> Thùng rác </span>
+						</a>
+						<b class="arrow"></b>
+					</li>
+					<li class="@(IsActive("AuditLogs") ? "active" : null)">
+						<a href="/Admin/AuditLogs">
+							<i class="menu-icon fa fa-history"></i>
+							<span class="menu-text"> Nhật ký </span>
+						</a>
+						<b class="arrow"></b>
+					</li>
+					<li class="@(IsActive("Menus") ? "active" : null)">
+						<a href="/Admin/Menus">
+							<i class="menu-icon fa fa-bars"></i>
+							<span class="menu-text"> Menu </span>
+						</a>
+						<b class="arrow"></b>
+					</li>
+					<li class="@(IsActive("Settings") ? "active" : null)">
+						<a href="/Admin/Settings">
+							<i class="menu-icon fa fa-cog"></i>
+							<span class="menu-text"> Cấu hình </span>
+						</a>
+						<b class="arrow"></b>
+					</li>
+				}
+			</ul>
+			<div class="sidebar-toggle sidebar-collapse" id="sidebar-collapse">
+				<i class="ace-icon fa fa-angle-double-left"></i>
+			</div>
+		</div>
+
+		<div class="main-content">
+			<div class="main-content-inner">
+				<div class="breadcrumbs" id="breadcrumbs">
+					<ul class="breadcrumb">
+						<li><i class="ace-icon fa fa-home home-icon"></i> <a href="/Admin">Home</a></li>
+						<li class="active">@ViewData["Title"]</li>
+					</ul>
+				</div>
+				<div class="page-content">
+					@RenderBody()
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="admin-delete-modal" tabindex="-1" role="dialog" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Đóng"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title">Xóa nội dung</h4>
+				</div>
+				<div class="modal-body">
+					<p>Bạn muốn xử lý <strong class="js-admin-delete-count">0 mục</strong> thế nào?</p>
+					<ul class="list-unstyled" style="margin:12px 0 0;line-height:1.7;">
+						<li><i class="fa fa-trash text-warning"></i> <strong>Thùng rác</strong> — có thể khôi phục sau.</li>
+						<li class="js-admin-delete-hard"><i class="fa fa-times-circle text-danger"></i> <strong>Xóa vĩnh viễn</strong> — không hoàn tác được.</li>
+					</ul>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Hủy</button>
+					<button type="button" class="btn btn-warning" data-delete-mode="trash">Đưa vào thùng rác</button>
+					<button type="button" class="btn btn-danger js-admin-delete-hard" data-delete-mode="hard">Xóa vĩnh viễn</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script src="/ace/assets/js/jquery-2.1.4.min.js"></script>
+	<script src="/ace/assets/js/bootstrap.min.js"></script>
+	<script src="~/js/admin-bulk.js" asp-append-version="true"></script>
+	@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
+
+@functions {
+	bool IsActive(string key) => string.Equals(ViewData["Menu"] as string, key, StringComparison.Ordinal);
+}

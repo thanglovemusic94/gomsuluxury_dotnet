@@ -1,0 +1,166 @@
+@page "/san-pham"
+@model WebShop.Pages.Shop.CatalogModel
+@{
+	ViewData["Title"] = Model.Title;
+	ViewData["ShopAssets"] = "catalog";
+	var sort = Model.Sort?.Trim().ToLowerInvariant() ?? "newest";
+}
+<div class="container shop-page">
+	<nav class="shop-breadcrumb" aria-label="Breadcrumb">
+		<a href="/">Trang chủ</a>
+		<span>/</span>
+		<span>@Model.Title</span>
+	</nav>
+
+	<div class="shop-catalog">
+		<div class="shop-catalog-main">
+			@if (Model.CategoryBadges.Count > 0)
+			{
+				<partial name="_CategoryBadges" model="Model.CategoryBadges" />
+			}
+			<div class="shop-catalog-toolbar">
+				<p class="shop-catalog-count">
+					@if (Model.TotalCount == 0)
+					{
+						<span>Không có sản phẩm phù hợp.</span>
+					}
+					else
+					{
+						<span>Hiển thị @Model.FromItem–@Model.ToItem của @Model.TotalCount kết quả</span>
+					}
+				</p>
+				<form class="shop-catalog-sort" method="get" action="/san-pham">
+					@if (!string.IsNullOrWhiteSpace(Model.Q))
+					{
+						<input type="hidden" name="q" value="@Model.Q" />
+					}
+					@if (!string.IsNullOrWhiteSpace(Model.Cat))
+					{
+						<input type="hidden" name="cat" value="@Model.Cat" />
+					}
+					<label>
+						<span class="sr-only">Sắp xếp</span>
+						<select name="sort" class="form-control" onchange="this.form.submit()">
+							@if (sort is "newest" or "")
+							{
+								<option value="newest" selected>Sắp xếp mặc định</option>
+							}
+							else
+							{
+								<option value="newest">Sắp xếp mặc định</option>
+							}
+							@if (sort == "price-asc")
+							{
+								<option value="price-asc" selected>Giá tăng dần</option>
+							}
+							else
+							{
+								<option value="price-asc">Giá tăng dần</option>
+							}
+							@if (sort == "price-desc")
+							{
+								<option value="price-desc" selected>Giá giảm dần</option>
+							}
+							else
+							{
+								<option value="price-desc">Giá giảm dần</option>
+							}
+							@if (sort == "name")
+							{
+								<option value="name" selected>Tên A-Z</option>
+							}
+							else
+							{
+								<option value="name">Tên A-Z</option>
+							}
+						</select>
+					</label>
+				</form>
+			</div>
+
+			@if (Model.Products.Count == 0)
+			{
+				<div class="alert alert-warning">Không có sản phẩm phù hợp.</div>
+			}
+			else
+			{
+				<partial name="_ProductCards" model="Model.Products" />
+			}
+
+			@if (Model.PageNumber < Model.TotalPages)
+			{
+				<div class="shop-load-more">
+					<a class="btn btn-default shop-load-more__btn"
+					   href="@Model.PageUrl(Model.PageNumber + 1)"
+					   data-shop-load-more
+					   data-cards-url="@Model.CardsUrl(Model.PageNumber + 1)"
+					   data-next-page="@(Model.PageNumber + 1)"
+					   data-total-pages="@Model.TotalPages">
+						Xem thêm sản phẩm
+					</a>
+				</div>
+			}
+			@if (Model.TotalPages > 1)
+			{
+				<nav class="shop-pager shop-pager--numbered" aria-label="Phân trang">
+					@if (Model.PageNumber > 1)
+					{
+						<a class="shop-pager__btn" href="@Model.PageUrl(Model.PageNumber - 1)">‹</a>
+					}
+					@for (var pageIndex = 1; pageIndex <= Model.TotalPages; pageIndex++)
+					{
+						if (pageIndex == 1 || pageIndex == Model.TotalPages || Math.Abs(pageIndex - Model.PageNumber) <= 2)
+						{
+							<a class="shop-pager__btn @(pageIndex == Model.PageNumber ? "is-active" : null)" href="@Model.PageUrl(pageIndex)">@pageIndex</a>
+						}
+						else if (Math.Abs(pageIndex - Model.PageNumber) == 3)
+						{
+							<span class="shop-pager__gap">…</span>
+						}
+					}
+					@if (Model.PageNumber < Model.TotalPages)
+					{
+						<a class="shop-pager__btn" href="@Model.PageUrl(Model.PageNumber + 1)">›</a>
+					}
+				</nav>
+			}
+		</div>
+
+		<aside class="shop-catalog-side">
+			<form class="shop-side-search" method="get" action="/san-pham">
+				@if (!string.IsNullOrWhiteSpace(Model.Cat))
+				{
+					<input type="hidden" name="cat" value="@Model.Cat" />
+				}
+				@if (!string.IsNullOrWhiteSpace(Model.Sort) && !string.Equals(Model.Sort, "newest", StringComparison.OrdinalIgnoreCase))
+				{
+					<input type="hidden" name="sort" value="@Model.Sort" />
+				}
+				<div class="shop-side-search__row">
+					<input class="form-control" type="search" name="q" value="@Model.Q" placeholder="Tìm sản phẩm" />
+					<button type="submit" class="btn btn-primary" title="Tìm kiếm"><i class="fa fa-search"></i></button>
+				</div>
+			</form>
+
+			<div class="shop-side-box">
+				<h3>Danh mục sản phẩm</h3>
+				<ul class="shop-side-cats list-unstyled">
+					<li>
+						<a class="@(string.IsNullOrWhiteSpace(Model.Cat) ? "is-active" : null)" href="/san-pham">
+							<span>Tất cả sản phẩm</span>
+						</a>
+					</li>
+					@foreach (var item in Model.Categories)
+					{
+						<li>
+							<a class="@(item.Active ? "is-active" : null)" href="/san-pham?cat=@Uri.EscapeDataString(item.Slug)">
+								<span>@item.Name</span>
+								<em>@item.Count</em>
+							</a>
+						</li>
+					}
+				</ul>
+			</div>
+		</aside>
+	</div>
+</div>

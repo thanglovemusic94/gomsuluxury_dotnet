@@ -1,0 +1,47 @@
+@page
+@model WebShop.Pages.Admin.Settings.IndexModel
+@{
+    ViewData["Title"] = "Cấu hình";
+    ViewData["Menu"] = "Settings";
+}
+
+<div class="page-header">
+	<h1>
+		Cấu hình
+		<small><i class="ace-icon fa fa-angle-double-right"></i> thông tin hệ thống</small>
+		<a href="/Admin/Settings/Edit" class="btn btn-sm btn-primary pull-right">Thêm cấu hình</a>
+	</h1>
+</div>
+<partial name="_AdminAlerts" />
+
+<div class="widget-box">
+	<div class="widget-body">
+		<div class="widget-main no-padding">
+			<table class="table table-striped table-bordered table-hover">
+				<thead>
+					<tr><th>Khóa</th><th>Giá trị</th><th>Mô tả</th><th></th></tr>
+				</thead>
+				<tbody>
+				@if (Model.Items.Count == 0)
+				{
+					<tr><td colspan="4">Chưa có cấu hình.</td></tr>
+				}
+				@foreach (var setting in Model.Items)
+				{
+					<tr>
+						<td>@setting.Key</td>
+						<td>@(setting.Value is { Length: > 80 } ? setting.Value[..80] + "…" : setting.Value)</td>
+						<td>@setting.Description</td>
+						<td class="text-right">
+							<a class="btn btn-xs btn-info" href="/Admin/Settings/Edit/@setting.Id">Sửa</a>
+							<form method="post" asp-page-handler="Delete" asp-route-id="@setting.Id" class="inline" onsubmit="return confirm('Xóa cấu hình này?');">
+								<button type="submit" class="btn btn-xs btn-danger">Xóa</button>
+							</form>
+						</td>
+					</tr>
+				}
+				</tbody>
+			</table>
+		</div>
+</div>
+</div>

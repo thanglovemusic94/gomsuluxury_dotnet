@@ -1,0 +1,30 @@
+@page "/blog/{slug}"
+@model WebShop.Pages.Shop.PostPageModel
+@inject WebShop.Infrastructure.HtmlBlockService Blocks
+@{
+    var item = Model.Post!;
+    var body = await Blocks.ExpandAsync(item.Content);
+}
+
+<div class="container shop-page">
+	<p class="text-muted">@item.Category.Name · @item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</p>
+	<h1 class="shop-title">@item.Title</h1>
+	@if (!string.IsNullOrWhiteSpace(item.ImageUrl))
+	{
+		<div class="shop-frame shop-frame--corners shop-frame--wan shop-frame--media" style="margin-bottom:16px;max-width:720px">
+			<img class="shop-photo"
+			     src="@WebShop.Infrastructure.MediaUrls.For(item.ImageUrl, WebShop.Infrastructure.MediaSize.Medium)"
+			     srcset="@WebShop.Infrastructure.MediaUrls.SrcSetUpTo(item.ImageUrl, WebShop.Infrastructure.MediaSize.Medium)"
+			     sizes="(max-width: 767px) 100vw, 720px"
+			     alt="@item.Title"
+			     width="960"
+			     height="600"
+			     decoding="async" />
+		</div>
+	}
+	@if (!string.IsNullOrWhiteSpace(item.Summary))
+	{
+		<p><strong>@item.Summary</strong></p>
+	}
+	<div>@Html.Raw(body)</div>
+</div>

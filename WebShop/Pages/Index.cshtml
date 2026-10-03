@@ -1,0 +1,117 @@
+@page
+@using WebShop.Infrastructure
+@model WebShop.Pages.IndexModel
+@{
+    ViewData["Title"] = Model.SiteName;
+    ViewData["HomeStage"] = true;
+    ViewData["ShopAssets"] = "home";
+	var homeBadges = Model.Categories
+		.Select(item => new CategoryBadgeItem
+		{
+			Name = item.Name,
+			Url = item.Url,
+			IconUrl = item.IconUrl
+		})
+		.ToList();
+}
+
+<partial name="_ShopHomeStage" model="Model" />
+
+<div class="container shop-page">
+	@if (homeBadges.Count > 0)
+	{
+		<div class="shop-cat-badges-wrap shop-cat-badges-wrap--home">
+			<partial name="_CategoryBadges" model="homeBadges" />
+		</div>
+	}
+	<h2 class="shop-title">Sản phẩm nổi bật <a href="/san-pham">Tất cả</a></h2>
+	@if (Model.Products.Count == 0)
+	{
+		<div class="alert alert-warning">Chưa có sản phẩm đang hiển thị.</div>
+	}
+	else
+	{
+		<partial name="_ProductCards" model="Model.Products" />
+	}
+
+	<div class="shop-promo">
+		@await Component.InvokeAsync("HtmlBlock", new { key = "home-promo" })
+	</div>
+
+	@if (Model.GiftProducts.Count > 0)
+	{
+		<section class="shop-gift-teaser" data-reveal aria-labelledby="home-gift-heading">
+			<div class="shop-gift-teaser__visual">
+				@if (!string.IsNullOrWhiteSpace(Model.GiftTeaserImage))
+				{
+					<img src="@Model.GiftTeaserImage"
+					     alt=""
+					     width="800"
+					     height="600"
+					     loading="lazy"
+					     decoding="async" />
+				}
+			</div>
+			<div class="shop-gift-teaser__copy">
+				<p class="shop-gift-teaser__eyebrow">@Model.SiteName</p>
+				<div class="shop-gift-teaser__lead">
+					@await Component.InvokeAsync("HtmlBlock", new { key = "home-gift" })
+				</div>
+				<a class="btn btn-primary shop-gift-teaser__cta" href="/qua-bieu">Xem bộ quà</a>
+				<ul class="shop-gift-teaser__thumbs" aria-label="Gợi ý quà">
+					@foreach (var item in Model.GiftProducts)
+					{
+						<li>
+							<a href="/san-pham/@item.Slug" title="@item.Name">
+								<img src="@MediaUrls.For(item.ImageUrl, MediaSize.Thumb)"
+								     alt="@item.Name"
+								     width="96"
+								     height="96"
+								     loading="lazy"
+								     decoding="async" />
+							</a>
+						</li>
+					}
+				</ul>
+			</div>
+		</section>
+	}
+
+	<div class="shop-youtube-wrap" data-reveal>
+		@await Component.InvokeAsync("HtmlBlock", new { key = "home-youtube" })
+	</div>
+
+	@if (Model.Posts.Count > 0)
+	{
+		<section class="shop-posts-section" aria-labelledby="home-posts-heading">
+			<h2 id="home-posts-heading" class="shop-title">Bài viết <a href="/blog">Xem blog</a></h2>
+			<div class="shop-posts shop-posts--swipe" data-posts-swipe>
+				@foreach (var item in Model.Posts)
+				{
+					<article class="shop-post-card">
+						@if (!string.IsNullOrWhiteSpace(item.ImageUrl))
+						{
+							<a href="/blog/@item.Slug" class="shop-post-card__media">
+								<img src="@MediaUrls.For(item.ImageUrl, MediaSize.Thumb)"
+								     alt="@item.Title"
+								     width="400"
+								     height="250"
+								     srcset="@MediaUrls.SrcSetUpTo(item.ImageUrl, MediaSize.Medium)"
+								     sizes="(max-width: 767px) 85vw, 360px"
+								     loading="lazy"
+								     decoding="async" />
+							</a>
+						}
+						<div class="shop-post-card__body">
+							<h3 class="shop-post-card__title"><a href="/blog/@item.Slug">@item.Title</a></h3>
+							@if (!string.IsNullOrWhiteSpace(item.Summary))
+							{
+								<p class="shop-post-card__summary">@item.Summary</p>
+							}
+						</div>
+					</article>
+				}
+			</div>
+		</section>
+	}
+</div>

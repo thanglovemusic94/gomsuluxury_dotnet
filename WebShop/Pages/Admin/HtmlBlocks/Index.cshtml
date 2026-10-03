@@ -1,0 +1,85 @@
+@page "/Admin/Blocks"
+@model WebShop.Pages.Admin.HtmlBlocks.IndexModel
+@using System.Text.RegularExpressions
+@{
+	ViewData["Title"] = "HTML Blocks";
+	ViewData["Menu"] = "Blocks";
+	string Plain(string? html, int max = 120)
+	{
+		if (string.IsNullOrWhiteSpace(html)) return "";
+		var text = Regex.Replace(html, "<script[\\s\\S]*?</script>", " ", RegexOptions.IgnoreCase);
+		text = Regex.Replace(text, "<style[\\s\\S]*?</style>", " ", RegexOptions.IgnoreCase);
+		text = Regex.Replace(text, "<[^>]+>", " ");
+		text = Regex.Replace(System.Net.WebUtility.HtmlDecode(text), "\\s+", " ").Trim();
+		if (text.Length <= max) return text;
+		return text[..max] + "…";
+	}
+}
+
+<div class="page-header">
+	<h1>
+		HTML Blocks
+		<small><i class="ace-icon fa fa-angle-double-right"></i> đoạn HTML gắn vào layout</small>
+		<a href="/Admin/Blocks/Edit" class="btn btn-sm btn-primary pull-right">Thêm block</a>
+	</h1>
+</div>
+<partial name="_AdminAlerts" />
+
+<div class="alert alert-info">
+	Gắn bằng ViewComponent theo key, hoặc shortcode <code>{{block:ten-key}}</code>.
+	CSS/JS viết trong Content (<code>&lt;style&gt;</code> / <code>&lt;script&gt;</code>).
+</div>
+
+<div class="widget-box">
+	<div class="widget-body">
+		<div class="widget-main no-padding">
+			<table class="table table-striped table-bordered table-hover">
+				<thead>
+					<tr>
+						<th style="width:140px;">Key</th>
+						<th style="width:160px;">Tiêu đề</th>
+						<th>Mô tả</th>
+						<th style="width:60px;">Bật</th>
+						<th style="width:180px;"></th>
+					</tr>
+				</thead>
+				<tbody>
+				@if (Model.Items.Count == 0)
+				{
+					<tr><td colspan="5">Chưa có block.</td></tr>
+				}
+				@foreach (var item in Model.Items)
+				{
+					var excerpt = Plain(item.Content);
+					<tr>
+						<td><code>@item.Key</code></td>
+						<td>@item.Title</td>
+						<td>
+							@if (!string.IsNullOrWhiteSpace(item.Note))
+							{
+								<div>@item.Note</div>
+							}
+							@if (!string.IsNullOrWhiteSpace(excerpt))
+							{
+								<div class="text-muted" style="font-size:12px;margin-top:4px;">@excerpt</div>
+							}
+							@if (string.IsNullOrWhiteSpace(item.Note) && string.IsNullOrWhiteSpace(excerpt))
+							{
+								<span class="text-muted">—</span>
+							}
+						</td>
+						<td>@(item.IsActive ? "Có" : "Ẩn")</td>
+						<td class="text-right" style="white-space:nowrap;">
+							<a class="btn btn-xs btn-success" href="/Admin/Blocks/Detail/@item.Id">Chi tiết</a>
+							<a class="btn btn-xs btn-info" href="/Admin/Blocks/Edit/@item.Id">Sửa</a>
+							<form method="post" asp-page-handler="Delete" asp-route-id="@item.Id" class="inline" onsubmit="return confirm('Xóa block này?');">
+								<button type="submit" class="btn btn-xs btn-danger">Xóa</button>
+							</form>
+						</td>
+					</tr>
+				}
+				</tbody>
+			</table>
+		</div>
+	</div>
+</div>

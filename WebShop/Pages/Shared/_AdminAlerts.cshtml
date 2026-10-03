@@ -1,0 +1,22 @@
+@if (TempData["Message"] is string message)
+{
+	<div class="alert alert-success">@message</div>
+}
+@if (TempData["Error"] is string error)
+{
+	<div class="alert alert-danger">@error</div>
+}
+@{
+	var errors = ModelMessages.Visible(ViewData.ModelState);
+}
+@if (errors.Count > 0)
+{
+	<div class="alert alert-danger">
+		<ul class="list-unstyled" style="margin:0">
+			@foreach (var item in errors)
+			{
+				<li>@item</li>
+			}
+		</ul>
+	</div>
+}

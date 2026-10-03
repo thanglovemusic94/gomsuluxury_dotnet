@@ -1,0 +1,37 @@
+@model IEnumerable<WebShop.Models.Product>
+@using WebShop.Infrastructure
+@foreach (var item in Model)
+{
+	var price = item.DiscountPrice ?? item.Price;
+	var image = MediaUrls.For(item.ImageUrl, MediaSize.Thumb);
+	var srcset = MediaUrls.SrcSetUpTo(item.ImageUrl, MediaSize.Thumb);
+	var alt = item.Name?.Trim() ?? "";
+	if (!string.IsNullOrEmpty(alt) &&
+	    alt.IndexOf("gốm", StringComparison.OrdinalIgnoreCase) < 0 &&
+	    alt.IndexOf("gom", StringComparison.OrdinalIgnoreCase) < 0)
+	{
+		alt += " Gốm sứ";
+	}
+	<article class="shop-card">
+		<a href="/san-pham/@item.Slug">
+			<span class="shop-card__media shop-media-skel">
+				<img src="@image"
+				     alt="@alt"
+				     width="400"
+				     height="400"
+				     srcset="@srcset"
+				     sizes="(max-width: 575px) 50vw, 220px"
+				     loading="lazy"
+				     decoding="async" />
+			</span>
+			<h3 class="shop-card__title">@item.Name</h3>
+		</a>
+		<div class="shop-price">
+			<span class="shop-price__sale">@price.ToString("N0") đ</span>
+			@if (item.DiscountPrice is not null)
+			{
+				<s class="shop-price__was">@item.Price.ToString("N0") đ</s>
+			}
+		</div>
+	</article>
+}

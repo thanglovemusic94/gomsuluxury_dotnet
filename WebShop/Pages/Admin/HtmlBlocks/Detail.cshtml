@@ -1,0 +1,63 @@
+@page "/Admin/Blocks/Detail/{id:int}"
+@model WebShop.Pages.Admin.HtmlBlocks.DetailModel
+@{
+	ViewData["Title"] = "Chi tiết block";
+	ViewData["Menu"] = "Blocks";
+	var item = Model.Item;
+}
+
+<div class="page-header">
+	<h1>
+		@item.Title
+		<small><i class="ace-icon fa fa-angle-double-right"></i> <code>@item.Key</code></small>
+		<a class="btn btn-sm btn-info pull-right" href="/Admin/Blocks/Edit/@item.Id" style="margin-left:8px;">Sửa</a>
+		<a class="btn btn-sm btn-default pull-right" href="/Admin/Blocks">Danh sách</a>
+	</h1>
+</div>
+
+<div class="row">
+	<div class="col-sm-4">
+		<div class="widget-box">
+			<div class="widget-header"><h4 class="widget-title">Thông tin</h4></div>
+			<div class="widget-body"><div class="widget-main">
+				<p><strong>Key:</strong> <code>@item.Key</code></p>
+				<p><strong>Shortcode:</strong> <code>{{block:@item.Key}}</code></p>
+				<p><strong>Trạng thái:</strong> @(item.IsActive ? "Đang bật" : "Ẩn")</p>
+				<p><strong>Mô tả:</strong> @(item.Note ?? "—")</p>
+				<p><strong>Cập nhật:</strong> @item.UpdatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</p>
+				<p class="help-block">CSS/JS nằm trong Content (<code>&lt;style&gt;</code> / <code>&lt;script&gt;</code>).</p>
+			</div></div>
+		</div>
+		<div class="widget-box">
+			<div class="widget-header"><h4 class="widget-title">Nguồn HTML</h4></div>
+			<div class="widget-body"><div class="widget-main" style="padding:0;">
+				<pre style="margin:0;max-height:360px;overflow:auto;padding:12px;font-size:12px;white-space:pre-wrap;word-break:break-word;background:#f9f9f9;border:0;">@item.Content</pre>
+			</div></div>
+		</div>
+	</div>
+	<div class="col-sm-8">
+		<div class="widget-box">
+			<div class="widget-header"><h4 class="widget-title">Xem trước (review)</h4></div>
+			<div class="widget-body">
+				<div class="widget-main" style="padding:8px;">
+					<iframe id="blockPreview"
+							title="Preview HTML block"
+							sandbox="allow-scripts allow-same-origin allow-forms"
+							style="width:100%;height:640px;border:1px solid #ddd;background:#fff;"></iframe>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+@section Scripts {
+	<script src="/js/admin-editor.js?v=2"></script>
+	<script>
+		(function () {
+			var html = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.Content));
+			var frame = document.getElementById('blockPreview');
+			if (frame && window.WebShopEditor)
+				WebShopEditor.writePreview(frame, html);
+		})();
+	</script>
+}

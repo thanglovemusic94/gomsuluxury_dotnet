@@ -1,0 +1,184 @@
+@model WebShop.Infrastructure.ShopSnapshot
+@{
+	var year = DateTime.Now.Year;
+	var products = Model.CategoryNav.Take(6).ToList();
+	var policies = Model.Footer.ToList();
+	if (policies.Count == 0)
+	{
+		policies =
+		[
+			new WebShop.Infrastructure.MenuNode { Name = "Giới thiệu", Url = "/gioi-thieu" },
+			new WebShop.Infrastructure.MenuNode { Name = "Chính sách giao hàng", Url = "/chinh-sach-giao-hang" },
+			new WebShop.Infrastructure.MenuNode { Name = "Chính sách đổi trả", Url = "/chinh-sach-doi-tra" }
+		];
+	}
+}
+<footer class="shop-foot">
+	<div class="shop-foot-wave" aria-hidden="true">
+		<svg class="shop-foot-waves" xmlns="http://www.w3.org/2000/svg" viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto" focusable="false">
+			<defs>
+				<path id="shop-gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z" />
+			</defs>
+			<g class="shop-foot-waves__parallax">
+				<g class="shop-foot-waves__item shop-foot-waves__item--1">
+					<use href="#shop-gentle-wave" x="48" y="0" fill="rgba(255, 226, 214, 0.7)" />
+				</g>
+				<g class="shop-foot-waves__item shop-foot-waves__item--2">
+					<use href="#shop-gentle-wave" x="48" y="3" fill="rgba(240, 150, 130, 0.45)" />
+				</g>
+				<g class="shop-foot-waves__item shop-foot-waves__item--3">
+					<use href="#shop-gentle-wave" x="48" y="5" fill="rgba(196, 70, 58, 0.5)" />
+				</g>
+				<g class="shop-foot-waves__item shop-foot-waves__item--4">
+					<use href="#shop-gentle-wave" x="48" y="7" fill="#9c2f24" />
+				</g>
+			</g>
+		</svg>
+	</div>
+
+	<div class="shop-foot-body">
+		<div class="container">
+			<div class="shop-foot-grid">
+				<div class="shop-foot-brand">
+					<a class="shop-foot-logo" href="/">
+						@if (!string.IsNullOrWhiteSpace(Model.LogoUrl))
+						{
+							<img src="@WebShop.Infrastructure.MediaUrls.For(Model.LogoUrl, WebShop.Infrastructure.MediaSize.Medium)"
+							     alt="@Model.SiteName"
+							     width="200"
+							     height="54"
+							     loading="lazy"
+							     decoding="async" />
+						}
+						else
+						{
+							<span>@Model.SiteName</span>
+						}
+					</a>
+					<p class="shop-foot-lead">
+						Cửa hàng gốm sứ cao cấp — ấm chén, khay trà, lư trầm và linh vật tinh xảo cho không gian trà đạo.
+					</p>
+					@await Component.InvokeAsync("HtmlBlock", new { key = "footer-note" })
+					@if (!string.IsNullOrWhiteSpace(Model.Address))
+					{
+						<p class="shop-foot-meta"><i class="fa fa-map-marker" aria-hidden="true"></i> @Model.Address</p>
+					}
+					@if (!string.IsNullOrWhiteSpace(Model.Hotline))
+					{
+						<p class="shop-foot-meta">
+							<i class="fa fa-phone" aria-hidden="true"></i>
+							<a href="tel:@Model.Hotline.Replace(" ", "")">@Model.Hotline</a>
+						</p>
+					}
+				</div>
+
+				<div class="shop-foot-col">
+					<h4>Sản phẩm</h4>
+					<ul class="shop-foot-list">
+						@if (products.Count == 0)
+						{
+							<li><a href="/san-pham">Tất cả sản phẩm</a></li>
+						}
+						else
+						{
+							@foreach (var item in products)
+							{
+								<li><a href="@item.Url">@item.Name</a></li>
+							}
+						}
+					</ul>
+				</div>
+
+				<div class="shop-foot-col">
+					<h4>Chính sách</h4>
+					<ul class="shop-foot-list shop-foot-list--arrow">
+						@foreach (var item in policies)
+						{
+							<li><a href="@item.Url">@item.Name</a></li>
+						}
+						<li><a href="/Admin">Quản trị</a></li>
+					</ul>
+				</div>
+
+				<div class="shop-foot-col shop-foot-connect">
+					<h4>Kết nối</h4>
+					<p>Theo dõi cửa hàng để xem sản phẩm mới và ưu đãi mỗi tuần.</p>
+					<div class="shop-foot-social">
+						@if (!string.IsNullOrWhiteSpace(Model.Hotline))
+						{
+							<a class="shop-foot-social__btn" href="tel:@Model.Hotline.Replace(" ", "")" title="Gọi điện">
+								<i class="fa fa-phone" aria-hidden="true"></i>
+								<span>Hotline</span>
+							</a>
+						}
+						@if (!string.IsNullOrWhiteSpace(Model.ZaloUrl))
+						{
+							<a class="shop-foot-social__btn" href="@Model.ZaloUrl" target="_blank" rel="noopener noreferrer" title="Zalo">
+								<i class="fa fa-commenting" aria-hidden="true"></i>
+								<span>Zalo</span>
+							</a>
+						}
+						@if (!string.IsNullOrWhiteSpace(Model.FacebookUrl))
+						{
+							<a class="shop-foot-social__btn" href="@Model.FacebookUrl" target="_blank" rel="noopener noreferrer" title="Facebook">
+								<i class="fa fa-facebook" aria-hidden="true"></i>
+								<span>Facebook</span>
+							</a>
+						}
+						@if (!string.IsNullOrWhiteSpace(Model.TikTokUrl))
+						{
+							<a class="shop-foot-social__btn" href="@Model.TikTokUrl" target="_blank" rel="noopener noreferrer" title="TikTok">
+								<i class="fa fa-music" aria-hidden="true"></i>
+								<span>TikTok</span>
+							</a>
+						}
+						<a class="shop-foot-social__btn" href="/blog" title="Tin tức">
+							<i class="fa fa-newspaper-o" aria-hidden="true"></i>
+							<span>Tin tức</span>
+						</a>
+					</div>
+					@if (!string.IsNullOrWhiteSpace(Model.HotlineAlt))
+					{
+						<p class="shop-foot-meta">
+							<i class="fa fa-phone" aria-hidden="true"></i>
+							<a href="tel:@Model.HotlineAlt.Replace(" ", "")">@Model.HotlineAlt</a>
+							<span style="opacity:.7"> (phụ)</span>
+						</p>
+					}
+					<div class="shop-foot-hours">
+						<strong>Giờ mở cửa</strong>
+						<span>08:00 - 17:00 · Tất cả các ngày</span>
+					</div>
+					@if (!string.IsNullOrWhiteSpace(Model.BctNote))
+					{
+						<p class="shop-foot-bct">@Model.BctNote</p>
+					}
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="shop-foot-copy">
+		<div class="container">
+			<span>Copyright @year © @Model.SiteName</span>
+		</div>
+	</div>
+</footer>
+
+<div class="shop-float" aria-label="Liên hệ nhanh">
+	@if (!string.IsNullOrWhiteSpace(Model.ZaloUrl))
+	{
+		<a class="shop-float__btn shop-float__btn--zalo" href="@Model.ZaloUrl" target="_blank" rel="noopener noreferrer" title="Chat Zalo">
+			<i class="fa fa-commenting" aria-hidden="true"></i>
+		</a>
+	}
+	@if (!string.IsNullOrWhiteSpace(Model.Hotline))
+	{
+		<a class="shop-float__btn shop-float__btn--phone" href="tel:@Model.Hotline.Replace(" ", "")" title="Gọi hotline">
+			<i class="fa fa-phone" aria-hidden="true"></i>
+		</a>
+	}
+	<button type="button" class="shop-float__btn shop-float__btn--top" data-back-top title="Lên đầu trang" aria-label="Lên đầu trang">
+		<i class="fa fa-angle-up" aria-hidden="true"></i>
+	</button>
+</div>

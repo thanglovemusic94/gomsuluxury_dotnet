@@ -1,0 +1,136 @@
+@page
+@model WebShop.Pages.Admin.Products.IndexModel
+@{
+    ViewData["Title"] = "Sản phẩm";
+    ViewData["Menu"] = "Products";
+	var pager = Model.Pager(Model.ListUrl);
+}
+
+<div class="page-header">
+	<h1>
+		Sản phẩm
+		<small><i class="ace-icon fa fa-angle-double-right"></i> giá bán, giá vốn, tồn kho</small>
+		<a href="/Admin/Products/Edit" class="btn btn-sm btn-primary pull-right">Thêm sản phẩm</a>
+	</h1>
+</div>
+<partial name="_AdminAlerts" />
+
+<div class="widget-box">
+	<div class="widget-header"><h4 class="widget-title">Bộ lọc</h4></div>
+	<div class="widget-body"><div class="widget-main">
+		<form method="get" class="form-inline">
+			<input type="hidden" name="PageSize" value="@Model.PageSize" />
+			<input type="text" name="Q" value="@Model.Q" class="form-control input-sm" placeholder="Tên / slug" style="min-width:180px;" />
+			<select name="CategoryId" class="form-control input-sm">
+				<option value="">Mọi danh mục</option>
+				@foreach (var opt in Model.CategoryOptions)
+				{
+					if (opt.Selected) { <option value="@opt.Value" selected>@opt.Text</option> }
+					else { <option value="@opt.Value">@opt.Text</option> }
+				}
+			</select>
+			<select name="Visible" class="form-control input-sm">
+				<option value="">Mọi trạng thái</option>
+				@if (Model.Visible == "1") { <option value="1" selected>Đang hiện</option> } else { <option value="1">Đang hiện</option> }
+				@if (Model.Visible == "0") { <option value="0" selected>Đang ẩn</option> } else { <option value="0">Đang ẩn</option> }
+			</select>
+			<button type="submit" class="btn btn-sm btn-primary">Lọc</button>
+			@if (!string.IsNullOrWhiteSpace(Model.Q) || Model.CategoryId is > 0 || !string.IsNullOrWhiteSpace(Model.Visible))
+			{
+				<a href="/Admin/Products?PageSize=@Model.PageSize" class="btn btn-sm btn-link">Xóa lọc</a>
+			}
+		</form>
+	</div></div>
+</div>
+
+<div class="widget-box js-admin-bulk-root">
+	<form method="post" asp-page-handler="BulkDelete" class="js-admin-bulk-form" data-noun="sản phẩm" id="products-bulk-form">
+		<input type="hidden" name="mode" value="trash" />
+		<input type="hidden" name="pageNumber" value="@Model.PageNumber" />
+		<input type="hidden" name="pageSize" value="@Model.PageSize" />
+		<input type="hidden" name="q" value="@Model.Q" />
+		<input type="hidden" name="categoryId" value="@Model.CategoryId" />
+		<input type="hidden" name="visible" value="@Model.Visible" />
+		<div class="widget-header widget-header-flat">
+			<h5 class="widget-title">
+				Danh sách
+				<small class="text-muted">— @Model.TotalCount sản phẩm</small>
+			</h5>
+		</div>
+		<div class="admin-bulk-bar">
+			<label class="checkbox-inline" style="margin:0;">
+				<input type="checkbox" class="js-admin-select-all" /> Chọn tất cả trang này
+			</label>
+			<span class="text-muted">Đã chọn: <strong class="js-admin-bulk-count">0</strong></span>
+			<button type="submit" class="btn btn-xs btn-danger js-admin-bulk-delete" disabled>Xóa đã chọn</button>
+		</div>
+	</form>
+	<div class="widget-body">
+		<div class="widget-main no-padding">
+			<table class="table table-striped table-bordered table-hover">
+				<thead>
+					<tr>
+						<th class="admin-check-col"></th>
+						<th class="admin-list-thumb-col">Ảnh</th>
+						<th>Tên</th>
+						<th>Danh mục</th>
+						<th class="text-right">Giá bán</th>
+						<th class="text-right">Giá vốn</th>
+						<th class="text-right">Tồn</th>
+						<th>Hiện</th>
+						<th style="width:220px;"></th>
+					</tr>
+				</thead>
+				<tbody>
+				@if (Model.Items.Count == 0)
+				{
+					<tr><td colspan="9">Không có sản phẩm phù hợp.</td></tr>
+				}
+				@foreach (var product in Model.Items)
+				{
+					<tr>
+						<td class="admin-check-col">
+							<input type="checkbox" class="js-admin-row-check" name="ids" value="@product.Id" form="products-bulk-form" />
+						</td>
+						<td class="admin-list-thumb-col">
+							@if (!string.IsNullOrWhiteSpace(product.ImageUrl))
+							{
+								<a href="/san-pham/@product.Slug" target="_blank" rel="noopener" title="Xem chi tiết">
+									<img class="admin-list-thumb" src="@product.ImageUrl" alt="@product.Name" />
+								</a>
+							}
+							else
+							{
+								<span class="admin-list-thumb--empty">—</span>
+							}
+						</td>
+						<td style="vertical-align:middle;">
+							<a href="/Admin/Products/Edit/@product.Id">@product.Name</a>
+							<div class="text-muted" style="font-size:12px;">/@product.Slug</div>
+						</td>
+						<td style="vertical-align:middle;">@product.Category.Name</td>
+						<td class="text-right" style="vertical-align:middle;">@product.Price.ToString("N0")</td>
+						<td class="text-right" style="vertical-align:middle;">@product.CostPrice.ToString("N0")</td>
+						<td class="text-right" style="vertical-align:middle;">@product.Stock</td>
+						<td style="vertical-align:middle;">@(product.IsVisible ? "Có" : "Ẩn")</td>
+						<td class="text-right" style="vertical-align:middle;white-space:nowrap;">
+							<a class="btn btn-xs btn-success" href="/san-pham/@product.Slug" target="_blank" rel="noopener"><i class="fa fa-external-link"></i> Chi tiết</a>
+							<a class="btn btn-xs btn-info" href="/Admin/Products/Edit/@product.Id">Sửa</a>
+							<form method="post" asp-page-handler="Delete" asp-route-id="@product.Id" class="inline js-admin-delete-one" data-noun="sản phẩm">
+								<input type="hidden" name="mode" value="trash" />
+								<input type="hidden" name="pageNumber" value="@Model.PageNumber" />
+								<input type="hidden" name="pageSize" value="@Model.PageSize" />
+								<input type="hidden" name="q" value="@Model.Q" />
+								<input type="hidden" name="categoryId" value="@Model.CategoryId" />
+								<input type="hidden" name="visible" value="@Model.Visible" />
+								<button type="submit" class="btn btn-xs btn-danger">Xóa</button>
+							</form>
+						</td>
+					</tr>
+				}
+				</tbody>
+			</table>
+		</div>
+		<partial name="_AdminPager" model="pager" />
+	</div>
+</div>

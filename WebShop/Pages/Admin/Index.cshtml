@@ -1,0 +1,71 @@
+@page "/Admin"
+@model WebShop.Pages.Admin.IndexModel
+@{
+    ViewData["Title"] = "Dashboard";
+    ViewData["Menu"] = "Dashboard";
+}
+
+<div class="page-header">
+	<h1>Dashboard <small><i class="ace-icon fa fa-angle-double-right"></i> tổng quan</small></h1>
+</div>
+<partial name="_AdminAlerts" />
+
+<div class="row">
+	<div class="col-sm-6 col-md-4">
+		<a href="/Admin/Users" class="infobox infobox-blue">
+			<div class="infobox-icon"><i class="ace-icon fa fa-users"></i></div>
+			<div class="infobox-data">
+				<span class="infobox-data-number">@Model.UserCount</span>
+				<div class="infobox-content">Thành viên</div>
+			</div>
+		</a>
+	</div>
+	<div class="col-sm-6 col-md-4">
+		<a href="/Admin/Products" class="infobox infobox-green">
+			<div class="infobox-icon"><i class="ace-icon fa fa-cube"></i></div>
+			<div class="infobox-data">
+				<span class="infobox-data-number">@Model.ProductCount</span>
+				<div class="infobox-content">Sản phẩm</div>
+			</div>
+		</a>
+	</div>
+	<div class="col-sm-6 col-md-4">
+		<a href="/Admin/Orders" class="infobox infobox-orange">
+			<div class="infobox-icon"><i class="ace-icon fa fa-shopping-cart"></i></div>
+			<div class="infobox-data">
+				<span class="infobox-data-number">@Model.OrderCount</span>
+				<div class="infobox-content">Đơn hàng (@Model.PendingOrderCount chờ xử lý)</div>
+			</div>
+		</a>
+	</div>
+</div>
+<div class="space-12"></div>
+<div class="row">
+	<div class="col-sm-6 col-md-4">
+		<a href="/Admin/Posts" class="infobox infobox-pink">
+			<div class="infobox-icon"><i class="ace-icon fa fa-pencil"></i></div>
+			<div class="infobox-data">
+				<span class="infobox-data-number">@Model.PostCount</span>
+				<div class="infobox-content">Bài viết</div>
+			</div>
+		</a>
+	</div>
+	<div class="col-sm-6 col-md-4">
+		<a href="/Admin/Categories" class="infobox infobox-blue2">
+			<div class="infobox-icon"><i class="ace-icon fa fa-list"></i></div>
+			<div class="infobox-data">
+				<span class="infobox-data-number">@Model.CategoryCount</span>
+				<div class="infobox-content">Danh mục</div>
+			</div>
+		</a>
+	</div>
+	<div class="col-sm-6 col-md-4">
+		<a href="/Admin/Settings" class="infobox infobox-grey">
+			<div class="infobox-icon"><i class="ace-icon fa fa-cog"></i></div>
+			<div class="infobox-data">
+				<span class="infobox-data-number">@Model.SettingCount</span>
+				<div class="infobox-content">Cấu hình</div>
+			</div>
+		</a>
+	</div>
+</div>

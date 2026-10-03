@@ -1,0 +1,57 @@
+@model WebShop.Infrastructure.AdminPagerModel
+@using WebShop.Infrastructure
+@{
+	var from = Model.TotalCount == 0 ? 0 : (Model.PageNumber - 1) * Model.PageSize + 1;
+	var to = Math.Min(Model.PageNumber * Model.PageSize, Model.TotalCount);
+}
+<div class="widget-toolbox padding-8 clearfix admin-pager">
+	<div class="pull-left" style="line-height:34px;">
+		<span class="text-muted">Hiển thị</span>
+		<select class="form-control input-sm" style="display:inline-block;width:auto;margin:0 6px;vertical-align:middle;"
+				onchange="location.href=this.value;" aria-label="Số dòng mỗi trang">
+			@foreach (var size in AdminPaging.PageSizes)
+			{
+				var url = Model.PageUrl(1, size);
+				if (size == Model.PageSize)
+				{
+					<option value="@url" selected>@size</option>
+				}
+				else
+				{
+					<option value="@url">@size</option>
+				}
+			}
+		</select>
+		<span class="text-muted">dòng / trang</span>
+		@if (Model.TotalCount > 0)
+		{
+			<span class="text-muted" style="margin-left:12px;">@from–@to / @Model.TotalCount</span>
+		}
+	</div>
+	@if (Model.TotalPages > 1)
+	{
+		<ul class="pagination pull-right" style="margin:0;">
+			@if (Model.PageNumber > 1)
+			{
+				<li><a href="@Model.PageUrl(Model.PageNumber - 1, Model.PageSize)">‹</a></li>
+			}
+			@for (var i = 1; i <= Model.TotalPages; i++)
+			{
+				if (i == 1 || i == Model.TotalPages || Math.Abs(i - Model.PageNumber) <= 2)
+				{
+					<li class="@(i == Model.PageNumber ? "active" : null)">
+						<a href="@Model.PageUrl(i, Model.PageSize)">@i</a>
+					</li>
+				}
+				else if (Math.Abs(i - Model.PageNumber) == 3)
+				{
+					<li class="disabled"><span>…</span></li>
+				}
+			}
+			@if (Model.PageNumber < Model.TotalPages)
+			{
+				<li><a href="@Model.PageUrl(Model.PageNumber + 1, Model.PageSize)">›</a></li>
+			}
+		</ul>
+	}
+</div>

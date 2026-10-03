@@ -1,0 +1,92 @@
+@page
+@model WebShop.Pages.Admin.Users.IndexModel
+@using WebShop.Infrastructure
+@{
+    ViewData["Title"] = "Thành viên";
+    ViewData["Menu"] = "Users";
+	var pager = Model.Pager(Model.ListUrl);
+}
+
+<div class="page-header">
+	<h1>
+		Thành viên
+		<small><i class="ace-icon fa fa-angle-double-right"></i> tài khoản và vai trò</small>
+		<a href="/Admin/Users/Edit" class="btn btn-sm btn-primary pull-right">Thêm thành viên</a>
+	</h1>
+</div>
+<partial name="_AdminAlerts" />
+
+<div class="widget-box">
+	<div class="widget-header"><h4 class="widget-title">Bộ lọc</h4></div>
+	<div class="widget-body"><div class="widget-main">
+		<form method="get" class="form-inline">
+			<input type="hidden" name="PageSize" value="@Model.PageSize" />
+			<input type="text" name="Q" value="@Model.Q" class="form-control input-sm" placeholder="Username / họ tên / email" style="min-width:200px;" />
+			<select name="Role" class="form-control input-sm">
+				<option value="">Mọi vai trò</option>
+				@foreach (var role in new[] { AppRoles.Admin, AppRoles.Staff, AppRoles.Customer })
+				{
+					if (Model.Role == role) { <option value="@role" selected>@role</option> }
+					else { <option value="@role">@role</option> }
+				}
+			</select>
+			<select name="Active" class="form-control input-sm">
+				<option value="">Mọi trạng thái</option>
+				@if (Model.Active == "1") { <option value="1" selected>Hoạt động</option> } else { <option value="1">Hoạt động</option> }
+				@if (Model.Active == "0") { <option value="0" selected>Khóa</option> } else { <option value="0">Khóa</option> }
+			</select>
+			<button type="submit" class="btn btn-sm btn-primary">Lọc</button>
+			@if (!string.IsNullOrWhiteSpace(Model.Q) || !string.IsNullOrWhiteSpace(Model.Active) || !string.IsNullOrWhiteSpace(Model.Role))
+			{
+				<a href="/Admin/Users?PageSize=@Model.PageSize" class="btn btn-sm btn-link">Xóa lọc</a>
+			}
+		</form>
+	</div></div>
+</div>
+
+<div class="widget-box">
+	<div class="widget-body">
+		<div class="widget-main no-padding">
+			<table class="table table-striped table-bordered table-hover">
+				<thead>
+					<tr>
+						<th>Tên đăng nhập</th>
+						<th>Họ tên</th>
+						<th>Email</th>
+						<th>Vai trò</th>
+						<th>Trạng thái</th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+				@if (Model.Items.Count == 0)
+				{
+					<tr><td colspan="6">Không có thành viên phù hợp.</td></tr>
+				}
+				@foreach (var user in Model.Items)
+				{
+					<tr>
+						<td>@user.Username</td>
+						<td>@user.FullName</td>
+						<td>@user.Email</td>
+						<td>@string.Join(", ", user.Roles.Select(role => role.Name))</td>
+						<td>@(user.IsActive ? "Hoạt động" : "Khóa")</td>
+						<td class="text-right">
+							<a class="btn btn-xs btn-info" href="/Admin/Users/Edit/@user.Id">Sửa</a>
+							<form method="post" asp-page-handler="Delete" asp-route-id="@user.Id" class="inline" onsubmit="return confirm('Xóa thành viên này?');">
+								<input type="hidden" name="pageNumber" value="@Model.PageNumber" />
+								<input type="hidden" name="pageSize" value="@Model.PageSize" />
+								<input type="hidden" name="q" value="@Model.Q" />
+								<input type="hidden" name="active" value="@Model.Active" />
+								<input type="hidden" name="role" value="@Model.Role" />
+								<button type="submit" class="btn btn-xs btn-danger">Xóa</button>
+							</form>
+						</td>
+					</tr>
+				}
+				</tbody>
+			</table>
+		</div>
+		<partial name="_AdminPager" model="pager" />
+	</div>
+</div>

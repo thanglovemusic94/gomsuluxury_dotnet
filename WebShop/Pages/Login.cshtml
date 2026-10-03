@@ -1,0 +1,105 @@
+@page
+@model LoginModel
+@{
+    Layout = null;
+    ViewData["Title"] = "Đăng nhập";
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Đăng nhập - WebShop</title>
+	<link rel="stylesheet" href="/ace/assets/css/bootstrap.min.css" />
+	<link rel="stylesheet" href="/ace/assets/font-awesome/4.5.0/css/font-awesome.min.css" />
+	<link rel="stylesheet" href="/ace/assets/css/fonts.googleapis.com.css" />
+	<link rel="stylesheet" href="/ace/assets/css/ace.min.css" />
+	<style>
+		.login-remember {
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+			margin: 0;
+			font-weight: normal;
+			cursor: pointer;
+			user-select: none;
+			color: #478fca;
+		}
+		.login-remember input {
+			width: 16px;
+			height: 16px;
+			margin: 0;
+			accent-color: #428bca;
+		}
+	</style>
+</head>
+<body class="login-layout">
+	<div class="main-container">
+		<div class="main-content">
+			<div class="row">
+				<div class="col-sm-10 col-sm-offset-1">
+					<div class="login-container">
+						<div class="center">
+							<h1>
+								<i class="ace-icon fa fa-leaf green"></i>
+								<span class="red">Web</span>
+								<span class="white">Shop</span>
+							</h1>
+							<h4 class="blue">Quản trị</h4>
+						</div>
+						<div class="space-6"></div>
+						<div class="position-relative">
+							<div class="login-box visible widget-box no-border">
+								<div class="widget-body">
+									<div class="widget-main">
+										<h4 class="header blue lighter bigger">
+											<i class="ace-icon fa fa-coffee green"></i>
+											Đăng nhập
+										</h4>
+										<div class="space-6"></div>
+										@if (!ViewData.ModelState.IsValid)
+										{
+											<div asp-validation-summary="All" class="alert alert-danger"></div>
+										}
+										<form method="post" autocomplete="on">
+											<input type="hidden" asp-for="ReturnUrl" />
+											<fieldset>
+												<label class="block clearfix">
+													<span class="block input-icon input-icon-right">
+														<input asp-for="Input.Username" class="form-control" placeholder="Tên đăng nhập" autocomplete="username" autocapitalize="none" spellcheck="false" autofocus />
+														<i class="ace-icon fa fa-user"></i>
+													</span>
+												</label>
+												<label class="block clearfix">
+													<span class="block input-icon input-icon-right">
+														<input asp-for="Input.Password" type="password" class="form-control" placeholder="Mật khẩu" autocomplete="current-password" />
+														<i class="ace-icon fa fa-lock"></i>
+													</span>
+												</label>
+												<div class="space"></div>
+												<div class="clearfix">
+													<label class="login-remember inline">
+														<input asp-for="Input.RememberMe" />
+														<span>Ghi nhớ đăng nhập</span>
+													</label>
+													<button type="submit" class="width-35 pull-right btn btn-sm btn-primary">
+														<i class="ace-icon fa fa-key"></i>
+														<span class="bigger-110">Đăng nhập</span>
+													</button>
+												</div>
+												<p class="help-block" style="margin:12px 0 0;font-size:12px;color:#999;">
+													Giữ phiên đăng nhập trên máy này (không lưu mật khẩu). Mật khẩu do trình duyệt quản lý nếu bạn chọn Lưu.
+												</p>
+											</fieldset>
+										</form>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>
