@@ -2,6 +2,9 @@
 	var assets = (ViewData["ShopAssets"] as string ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 	bool Has(string key) => assets.Contains(key, StringComparer.OrdinalIgnoreCase);
 	var lcp = ViewData["LcpImage"] as string;
+	var lcpSrcSet = ViewData["LcpImageSrcSet"] as string;
+	var lcpSizes = ViewData["LcpImageSizes"] as string ?? "100vw";
+	var isHome = Has("home");
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -15,12 +18,29 @@
 	}
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
-	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600&amp;family=Cormorant+Garamond:wght@600;700&amp;display=swap" />
-	<link rel="stylesheet" href="/ace/assets/font-awesome/4.5.0/css/font-awesome.min.css" />
+	@* Body font: keep in critical path (small). Display font + FA: non-blocking. *@
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600&amp;display=swap" />
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&amp;display=swap" media="print" onload="this.media='all'" />
+	<link rel="stylesheet" href="/ace/assets/font-awesome/4.5.0/css/font-awesome.min.css" media="print" onload="this.media='all'" />
+	<noscript>
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&amp;display=swap" />
+		<link rel="stylesheet" href="/ace/assets/font-awesome/4.5.0/css/font-awesome.min.css" />
+	</noscript>
+	@if (isHome)
+	{
+		<link rel="preload" href="~/css/shop.css" as="style" asp-append-version="true" />
+	}
 	<link rel="stylesheet" href="~/css/shop.css" asp-append-version="true" />
 	@if (!string.IsNullOrWhiteSpace(lcp))
 	{
-		<link rel="preload" as="image" href="@lcp" fetchpriority="high" />
+		if (!string.IsNullOrWhiteSpace(lcpSrcSet))
+		{
+			<link rel="preload" as="image" href="@lcp" imagesrcset="@lcpSrcSet" imagesizes="@lcpSizes" fetchpriority="high" />
+		}
+		else
+		{
+			<link rel="preload" as="image" href="@lcp" fetchpriority="high" />
+		}
 	}
 	@await RenderSectionAsync("Styles", required: false)
 </head>
@@ -28,18 +48,18 @@
 	@await Component.InvokeAsync("ShopHeader")
 	@RenderBody()
 	@await Component.InvokeAsync("ShopFooter")
-	<script src="~/js/shop-core.js" asp-append-version="true"></script>
+	<script src="~/js/shop-core.js" asp-append-version="true" defer></script>
 	@if (Has("home"))
 	{
-		<script src="~/js/shop-home.js" asp-append-version="true"></script>
+		<script src="~/js/shop-home.js" asp-append-version="true" defer></script>
 	}
 	@if (Has("detail"))
 	{
-		<script src="~/js/shop-detail.js" asp-append-version="true"></script>
+		<script src="~/js/shop-detail.js" asp-append-version="true" defer></script>
 	}
 	@if (Has("catalog"))
 	{
-		<script src="~/js/shop-catalog.js" asp-append-version="true"></script>
+		<script src="~/js/shop-catalog.js" asp-append-version="true" defer></script>
 	}
 	@await RenderSectionAsync("Scripts", required: false)
 </body>

@@ -32,7 +32,12 @@ public class IndexModel(AppDbContext db, ShopStore shop) : PageModel
         Categories = snap.CategoryNav;
         Slides = await ShopSlides.LoadAsync(db);
         if (Slides.Count > 0)
-            ViewData["LcpImage"] = MediaUrls.For(Slides[0].ImageUrl, MediaSize.Large);
+        {
+            // Mobile LCP: preload Medium; browser picks Large via imagesrcset when needed.
+            ViewData["LcpImage"] = MediaUrls.For(Slides[0].ImageUrl, MediaSize.Medium);
+            ViewData["LcpImageSrcSet"] = MediaUrls.SrcSetUpTo(Slides[0].ImageUrl, MediaSize.Large);
+            ViewData["LcpImageSizes"] = "(max-width: 991px) 100vw, min(1200px, calc(100vw - 280px))";
+        }
 
         Products = await db.Products.AsNoTracking()
             .Where(item => item.IsVisible)

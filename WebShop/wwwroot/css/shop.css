@@ -302,8 +302,7 @@ body.shop .shop-side-search__row .btn-primary::before { display: none !important
 .shop-head {
 	background-color: var(--shop-wine-deep);
 	background-image:
-		linear-gradient(180deg, rgba(40, 8, 8, 0.55), rgba(60, 12, 12, 0.72)),
-		url("/img/header-bg.jpg");
+		linear-gradient(180deg, rgba(40, 8, 8, 0.55), rgba(60, 12, 12, 0.72));
 	background-size: cover;
 	background-position: center top;
 	border-bottom: 0;
@@ -673,8 +672,7 @@ body.shop .shop-menu .dropdown-menu > li > a:active {
 
 .shop-stage {
 	background:
-		linear-gradient(180deg, rgba(58, 12, 12, 0.92), rgba(28, 8, 8, 0.96)),
-		url("/img/header-bg.jpg");
+		linear-gradient(180deg, rgba(58, 12, 12, 0.92), rgba(28, 8, 8, 0.96));
 	background-size: cover;
 	background-position: center top;
 	padding: 0 0 18px;
@@ -1940,9 +1938,8 @@ body.shop .shop-drawer .text-muted {
 	background-image:
 		radial-gradient(circle at 18% 30%, rgba(255, 220, 180, 0.08), transparent 28%),
 		radial-gradient(circle at 82% 70%, rgba(255, 220, 180, 0.07), transparent 26%),
-		linear-gradient(180deg, rgba(120, 28, 22, 0.2), rgba(90, 18, 14, 0.45)),
-		url("/img/header-bg.jpg");
-	background-size: auto, auto, auto, cover;
+		linear-gradient(180deg, rgba(120, 28, 22, 0.2), rgba(90, 18, 14, 0.45));
+	background-size: auto, auto, cover;
 	background-position: center;
 	border-top: 0;
 	overflow: hidden;
@@ -4107,5 +4104,14 @@ body.shop .shop-gift-teaser__lead p { margin: 0; color: inherit; }
 	body.shop .shop-grid .shop-card h5 { font-size: 13px; }
 	body.shop .shop-tabbar__item { font-size: 10.5px; }
 	.shop-tool-link { letter-spacing: 0.04em; padding: 0 8px; }
+}
+
+/* Below-fold home: defer layout/paint until near viewport */
+.shop-promo,
+.shop-gift-teaser,
+.shop-youtube-wrap,
+.shop-posts-section {
+	content-visibility: auto;
+	contain-intrinsic-size: 1px 520px;
 }
 

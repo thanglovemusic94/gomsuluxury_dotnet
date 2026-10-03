@@ -15,6 +15,9 @@ alwaysApply: false
 
 - Mobile-first; giữ sticky buy-bar / tabbar.
 - Tôn trọng `prefers-reduced-motion` với hover/animation (desktop hover OK khi cho phép motion).
+- Slider: ảnh LCP dùng Medium + `imagesrcset`/`sizes`; slide đầu `fetchpriority=high`.
+- Font: Be Vietnam Pro critical; Cormorant + Font Awesome load không chặn (`media=print` → `onload`).
+- JS shop: `defer`. Below-fold home: `content-visibility: auto`.
 - Slider sản phẩm: fit media bằng contain / đúng tỷ lệ — không kéo giãn full bừa.
 - HtmlBlock (`Component.InvokeAsync("HtmlBlock", …)`): HTML/CSS/JS sửa được trong DB; style scoped nằm trong block khi Admin cần chỉnh (vd. YouTube facade).
 

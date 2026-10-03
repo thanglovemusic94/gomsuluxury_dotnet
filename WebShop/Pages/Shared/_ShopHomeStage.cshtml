@@ -56,9 +56,10 @@
 									}
 									@foreach (var slide in slides)
 									{
+										var slideSrc = MediaUrls.For(slide.ImageUrl, first ? MediaSize.Medium : MediaSize.Large);
 										<div class="shop-slider__slide">
 											<a href="@slide.LinkUrl">
-												<img src="@MediaUrls.For(slide.ImageUrl, MediaSize.Large)"
+												<img src="@slideSrc"
 												     srcset="@MediaUrls.SrcSetUpTo(slide.ImageUrl, MediaSize.Large)"
 												     sizes="(max-width: 991px) 100vw, min(1200px, calc(100vw - 280px))"
 												     alt="@slide.Alt"
@@ -66,7 +67,7 @@
 												     height="675"
 												     loading="@(first ? "eager" : "lazy")"
 												     fetchpriority="@(first ? "high" : "auto")"
-												     decoding="async" />
+												     decoding="@(first ? "sync" : "async")" />
 											</a>
 										</div>
 										first = false;
