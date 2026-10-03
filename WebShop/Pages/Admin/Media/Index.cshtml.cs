@@ -1,11 +1,12 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Options;
 using WebShop.Infrastructure;
 
 namespace WebShop.Pages.Admin.Media;
 
-public class IndexModel(MediaStorage media, MediaUsageService usage, AuditService audit) : PageModel
+public class IndexModel(MediaStorage media, MediaUsageService usage, AuditService audit, IOptions<MediaOptions> mediaOptions) : PageModel
 {
     [BindProperty(SupportsGet = true)]
     public string Type { get; set; } = "Images";
@@ -22,10 +23,14 @@ public class IndexModel(MediaStorage media, MediaUsageService usage, AuditServic
     [BindProperty(SupportsGet = true)]
     public string? Q { get; set; }
 
+    [BindProperty(SupportsGet = true)]
+    public bool MissingAlt { get; set; }
+
     public MediaPageResult PageData { get; private set; } = new();
 
-    /// <summary>assetId → số chỗ đang dùng (trang hiện tại).</summary>
     public Dictionary<int, int> UsageCounts { get; private set; } = new();
+
+    public long MaxUploadBytes => mediaOptions.Value.MaxUploadBytes;
 
     public async Task OnGetAsync(CancellationToken ct)
     {
@@ -35,6 +40,7 @@ public class IndexModel(MediaStorage media, MediaUsageService usage, AuditServic
             Type = Type,
             Folder = Folder,
             Q = Q,
+            MissingAlt = MissingAlt,
             Page = PageNumber,
             PageSize = PageSize
         }, ct);
@@ -51,7 +57,8 @@ public class IndexModel(MediaStorage media, MediaUsageService usage, AuditServic
         Folder = folder ?? Folder,
         PageNumber = pageNumber ?? PageNumber,
         PageSize,
-        Q
+        Q,
+        MissingAlt = MissingAlt ? "true" : null
     };
 
     public async Task<IActionResult> OnGetUsageAsync(int id, CancellationToken ct)
@@ -73,21 +80,34 @@ public class IndexModel(MediaStorage media, MediaUsageService usage, AuditServic
             TempData["Error"] = "Chọn file để tải lên.";
         else
         {
-            var (ok, url, error, asset) = await media.SaveAsync(file, Type, alt, targetFolder, ct);
-            if (ok && asset is not null && !string.IsNullOrWhiteSpace(asset.ContentHash))
-            {
-                // Dedupe returns existing asset; message stays clear either way.
-                TempData["Message"] = $"Đã tải lên ({MediaFolders.Label(targetFolder)}): {url}";
-            }
-            else
-            {
-                TempData[ok ? "Message" : "Error"] = ok
-                    ? $"Đã tải lên ({MediaFolders.Label(targetFolder)}): {url}"
-                    : error;
-            }
+            var (ok, url, error, _) = await media.SaveAsync(file, Type, alt, targetFolder, ct);
+            TempData[ok ? "Message" : "Error"] = ok
+                ? $"Đã tải lên ({MediaFolders.Label(targetFolder)}): {url}"
+                : error;
         }
 
         return RedirectToPage(KeepList(1, targetFolder));
+    }
+
+    public async Task<IActionResult> OnPostUploadAjaxAsync(IFormFile? file, string? alt, string? folder, CancellationToken ct)
+    {
+        var targetFolder = MediaFolders.Normalize(folder);
+        if (targetFolder == MediaFolders.All)
+            targetFolder = MediaFolders.Other;
+
+        if (file is null || file.Length == 0)
+            return new JsonResult(new { ok = false, error = "File trống." }, SeoJsonOptions);
+
+        var (ok, url, error, asset) = await media.SaveAsync(file, Type, alt, targetFolder, ct);
+        return new JsonResult(new
+        {
+            ok,
+            url,
+            error,
+            id = asset?.Id ?? 0,
+            name = asset?.FileName,
+            folder = targetFolder
+        }, SeoJsonOptions);
     }
 
     public async Task<IActionResult> OnPostAltAsync(int id, string? alt, CancellationToken ct)
@@ -101,6 +121,51 @@ public class IndexModel(MediaStorage media, MediaUsageService usage, AuditServic
     {
         var (ok, error) = await media.UpdateFolderAsync(id, folder, ct);
         TempData[ok ? "Message" : "Error"] = ok ? "Đã đổi thư mục." : error;
+        return RedirectToPage(KeepList());
+    }
+
+    public async Task<IActionResult> OnPostBulkFolderAsync(int[]? ids, string? folder, CancellationToken ct)
+    {
+        ids ??= [];
+        if (ids.Length == 0)
+        {
+            TempData["Error"] = "Chưa chọn ảnh.";
+            return RedirectToPage(KeepList());
+        }
+
+        var okCount = 0;
+        foreach (var id in ids.Distinct())
+        {
+            var (ok, _) = await media.UpdateFolderAsync(id, folder, ct);
+            if (ok) okCount++;
+        }
+
+        TempData["Message"] = $"Đã chuyển {okCount}/{ids.Length} ảnh sang «{MediaFolders.Label(folder)}».";
+        return RedirectToPage(KeepList(1, folder));
+    }
+
+    public async Task<IActionResult> OnPostBulkDeleteAsync(int[]? ids, CancellationToken ct)
+    {
+        ids ??= [];
+        if (ids.Length == 0)
+        {
+            TempData["Error"] = "Chưa chọn ảnh.";
+            return RedirectToPage(KeepList());
+        }
+
+        var okCount = 0;
+        foreach (var id in ids.Distinct())
+        {
+            var usages = await usage.GetUsagesAsync(id, ct);
+            var ok = await media.DeleteAsync(id, User.Identity?.Name, ct);
+            if (!ok) continue;
+            okCount++;
+            await audit.LogAsync(AuditActions.SoftDelete, AuditEntities.Media, id, null,
+                "Đưa vào thùng rác (bulk)",
+                usages.Count > 0 ? $"Còn {usages.Count} tham chiếu" : null, ct);
+        }
+
+        TempData["Message"] = $"Đã chuyển {okCount}/{ids.Length} ảnh vào thùng rác.";
         return RedirectToPage(KeepList());
     }
 

@@ -61,6 +61,18 @@ public class ShopSnapshot
 
     public string ZaloUrl { get; init; } = string.Empty;
 
+    public string YoutubeUrl { get; init; } = string.Empty;
+
+    public string Email { get; init; } = string.Empty;
+
+    public string OpeningHours { get; init; } = string.Empty;
+
+    /// <summary>Schema.org @type for org graph, e.g. Organization, Store, LocalBusiness.</summary>
+    public string OrgType { get; init; } = "Organization";
+
+    /// <summary>Optional "lat, lng" for Schema GeoCoordinates (paste from Google Maps).</summary>
+    public string GeoCoordinates { get; init; } = string.Empty;
+
     public string HotlineAlt { get; init; } = string.Empty;
 
     public string BctNote { get; init; } = string.Empty;
@@ -118,6 +130,11 @@ public class ShopStore(AppDbContext db, CartService cart)
             FacebookUrl = Value("FacebookUrl"),
             TikTokUrl = Value("TikTokUrl"),
             ZaloUrl = Value("ZaloUrl"),
+            YoutubeUrl = Value("YoutubeUrl"),
+            Email = Value("Email"),
+            OpeningHours = Value("OpeningHours"),
+            OrgType = string.IsNullOrWhiteSpace(Value("OrgType")) ? "Organization" : Value("OrgType"),
+            GeoCoordinates = ResolveGeoCoordinates(Value("GeoCoordinates"), Value("GeoLatitude"), Value("GeoLongitude")),
             HotlineAlt = Value("HotlineAlt"),
             BctNote = Value("BctNote"),
             CartCount = cart.Count
@@ -150,6 +167,18 @@ public class ShopStore(AppDbContext db, CartService cart)
             return value;
 
         return "/" + value;
+    }
+
+    private static string ResolveGeoCoordinates(string combined, string legacyLat, string legacyLng)
+    {
+        var fromCombined = SchemaOrg.NormalizePair(combined);
+        if (!string.IsNullOrEmpty(fromCombined))
+            return fromCombined;
+
+        if (string.IsNullOrWhiteSpace(legacyLat) || string.IsNullOrWhiteSpace(legacyLng))
+            return string.Empty;
+
+        return SchemaOrg.NormalizePair($"{legacyLat.Trim()}, {legacyLng.Trim()}");
     }
 
     private async Task<List<CategoryNavItem>> BuildCategoryNavAsync(IReadOnlyList<MenuNode> children)

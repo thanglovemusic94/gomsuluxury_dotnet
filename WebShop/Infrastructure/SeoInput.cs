@@ -24,7 +24,11 @@ public class SeoInput
         if (SeoImage?.Length > 500)
             modelState.AddModelError("Seo.SeoImage", "Ảnh SEO tối đa 500 ký tự.");
         if (SeoFocusKeyword?.Length > 100)
-            modelState.AddModelError("Seo.SeoFocusKeyword", "Từ khóa tối đa 100 ký tự.");
+            modelState.AddModelError("Seo.SeoFocusKeyword", "Từ khóa (các cụm cách nhau bằng dấu phẩy) tối đa 100 ký tự.");
+        else if (!string.IsNullOrWhiteSpace(SeoFocusKeyword))
+            SeoFocusKeyword = SeoScoreCalculator.JoinKeywords(SeoScoreCalculator.ParseKeywords(SeoFocusKeyword));
+        if (SeoFocusKeyword?.Length > 100)
+            modelState.AddModelError("Seo.SeoFocusKeyword", "Từ khóa quá dài sau khi chuẩn hóa — bớt cụm hoặc rút ngắn.");
         if (SeoScore is < 0 or > 100)
             modelState.AddModelError("Seo.SeoScore", "Điểm SEO từ 0 đến 100.");
     }

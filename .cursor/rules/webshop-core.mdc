@@ -15,6 +15,7 @@ Stack: ASP.NET Core 8 Razor Pages + EF Core SQLite. Thư mục app: `WebShop/`. 
 - Đổi schema/seed: dùng `Ensure*Async` / `*Schema.EnsureAsync` idempotent gọi từ `Program.cs` lúc startup — không chỉ dựa vào EF migration.
 - SEO index toàn site: khóa DB `Seo.AllowIndexing` chỉnh tại **Admin → Cấu hình** (checkbox). Config `Seo:AllowIndexing` chỉ là mặc định seed khi chưa có dòng DB. Tắt → `robots.txt` Disallow + `noindex`. Meta SEO từng trang vẫn qua `_SeoFields` / `SeoInput`.
 - Favicon / share link: layout dùng `LogoUrl` (hoặc `FaviconUrl` / `OgImageUrl`); fallback `wwwroot/favicon.svg`. OG meta qua `ViewData["OgImage"]` + `SiteSocial`.
+- Schema.org JSON-LD: `SchemaOrg` tự sinh Organization (mọi trang), WebSite+SearchAction (trang chủ), Product/BlogPosting từ DB; logo/image absolute qua `SiteSocial.Absolute`; tọa độ 1 ô `GeoCoordinates` (`lat, lng`, dán từ Maps); cấu hình org + link Rich Results Test tại Admin → Cấu hình.
 - Cờ `Seed` trong config (`appsettings.json` / `appsettings.Local.json`): `DemoCatalog`, `LuxuryCatalog`, `SourceSiteSync`, `RemoteImageImport`. Local mặc định tắt sync/seed demo. `AdminSeed` luôn chạy nhưng **không** ghi đè mật khẩu nếu đã có user `admin`.
 
 ## URL công khai

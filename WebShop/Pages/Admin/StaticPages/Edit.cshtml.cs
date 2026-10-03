@@ -72,6 +72,17 @@ public class EditModel(AppDbContext db, AuditService audit) : PageModel
         pageEntity.Slug = slug;
         pageEntity.Content = Input.Content;
         pageEntity.IsPublished = Input.IsPublished;
+        Seo.SeoScore = SeoScoreCalculator.Compute(new SeoScoreCalculator.Request(
+            Title: pageEntity.Title,
+            Slug: pageEntity.Slug,
+            FocusKeyword: Seo.SeoFocusKeyword,
+            MetaTitle: Seo.MetaTitle,
+            MetaDescription: Seo.MetaDescription,
+            SeoImage: Seo.SeoImage,
+            ImageUrl: null,
+            ShortText: null,
+            HtmlBody: pageEntity.Content,
+            ImageAlts: null));
         Seo.Apply(pageEntity);
         if (!await DbSave.TrySaveAsync(db, ModelState))
             return Page();

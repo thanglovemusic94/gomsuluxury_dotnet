@@ -84,6 +84,26 @@ public class EditModel(AppDbContext db, AuditService audit, GeminiSeoService gem
         }
 
         Input.Apply(product, slug);
+        IReadOnlyList<string>? alts = null;
+        if (product.Id != 0)
+        {
+            alts = await db.ProductImages.AsNoTracking()
+                .Where(item => item.ProductId == product.Id && item.AltText != null && item.AltText != "")
+                .Select(item => item.AltText!)
+                .ToListAsync();
+        }
+
+        Seo.SeoScore = SeoScoreCalculator.Compute(new SeoScoreCalculator.Request(
+            Title: product.Name,
+            Slug: product.Slug,
+            FocusKeyword: Seo.SeoFocusKeyword,
+            MetaTitle: Seo.MetaTitle,
+            MetaDescription: Seo.MetaDescription,
+            SeoImage: Seo.SeoImage,
+            ImageUrl: product.ImageUrl,
+            ShortText: product.ShortDescription,
+            HtmlBody: product.Description,
+            ImageAlts: alts));
         Seo.Apply(product);
         if (!await DbSave.TrySaveAsync(db, ModelState))
         {

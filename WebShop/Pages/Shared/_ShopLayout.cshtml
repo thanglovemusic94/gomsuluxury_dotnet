@@ -64,6 +64,29 @@
 	}
 	<meta name="twitter:title" content="@pageTitle" />
 	<meta name="twitter:description" content="@description" />
+	@{
+		var jsonLd = new List<string>();
+		if (request is not null)
+		{
+			jsonLd.Add(SchemaOrg.Serialize(SchemaOrg.Organization(snap, request)));
+			if (isHome)
+				jsonLd.Add(SchemaOrg.Serialize(SchemaOrg.WebSite(snap, request)));
+			if (ViewData["JsonLd"] is string one && !string.IsNullOrWhiteSpace(one))
+				jsonLd.Add(one);
+			else if (ViewData["JsonLd"] is IEnumerable<string> many)
+			{
+				foreach (var item in many)
+				{
+					if (!string.IsNullOrWhiteSpace(item))
+						jsonLd.Add(item);
+				}
+			}
+		}
+	}
+	@foreach (var block in jsonLd)
+	{
+		<script type="application/ld+json">@Html.Raw(block)</script>
+	}
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
 	@* Body font: keep in critical path (small). Display font + FA: non-blocking. *@

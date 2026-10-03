@@ -42,6 +42,7 @@ public sealed class MediaQuery
     public string Type { get; init; } = "Images";
     public string Folder { get; init; } = MediaFolders.All;
     public string? Q { get; init; }
+    public bool MissingAlt { get; init; }
     public int Page { get; init; } = 1;
     public int PageSize { get; init; } = MediaFolders.PageSize;
 }

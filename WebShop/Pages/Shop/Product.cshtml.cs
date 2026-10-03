@@ -122,6 +122,11 @@ public class ProductModel(AppDbContext db, CartService cart) : PageModel
         ViewData["OgImage"] = SiteSocial.PickImage(Product.SeoImage, Product.ImageUrl);
         ViewData["ImmersiveDetail"] = true;
         ViewData["ShopAssets"] = "detail";
+        if (HttpContext.Request is { } req)
+        {
+            var url = SiteSocial.Absolute(req, "/san-pham/" + Product.Slug);
+            ViewData["JsonLd"] = SchemaOrg.Serialize(SchemaOrg.Product(req, Product, Reviews, url));
+        }
         return true;
     }
 

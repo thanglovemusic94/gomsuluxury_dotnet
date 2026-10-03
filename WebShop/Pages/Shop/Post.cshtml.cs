@@ -24,6 +24,15 @@ public class PostPageModel(AppDbContext db) : PageModel
         ViewData["Description"] = Post.MetaDescription ?? Post.Summary;
         ViewData["OgType"] = "article";
         ViewData["OgImage"] = SiteSocial.PickImage(Post.SeoImage, Post.ImageUrl);
+        if (HttpContext.Request is { } req)
+        {
+            var snapName = await db.SystemSettings.AsNoTracking()
+                .Where(item => item.Key == "SiteName")
+                .Select(item => item.Value)
+                .FirstOrDefaultAsync() ?? "WebShop";
+            var url = SiteSocial.Absolute(req, "/blog/" + Post.Slug);
+            ViewData["JsonLd"] = SchemaOrg.Serialize(SchemaOrg.BlogPosting(req, Post, snapName, url));
+        }
         return Page();
     }
 }

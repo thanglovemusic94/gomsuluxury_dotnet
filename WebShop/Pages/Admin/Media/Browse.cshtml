@@ -79,6 +79,35 @@
 		}
 		.ckf-toast.is-show { opacity: 1; transform: translateY(0); }
 		.ckf-toast code { color: #a8d5ff; font-size: 10px; word-break: break-all; }
+		.ckf-card.is-picked {
+			border-color: #337ab7;
+			box-shadow: 0 0 0 3px rgba(51,122,183,.4);
+			position: relative;
+		}
+		.ckf-card.is-picked::after {
+			content: "\f00c";
+			font-family: FontAwesome;
+			position: absolute;
+			top: 8px;
+			right: 8px;
+			z-index: 3;
+			width: 22px;
+			height: 22px;
+			line-height: 22px;
+			text-align: center;
+			border-radius: 50%;
+			background: #337ab7;
+			color: #fff;
+			font-size: 11px;
+		}
+		.ckf-pick-bar {
+			position: sticky; bottom: 0; margin-top: 16px; padding: 12px 14px;
+			background: #fff; border: 1px solid #e2e6ea; border-radius: 6px;
+			display: none; align-items: center; justify-content: space-between; gap: 12px;
+			box-shadow: 0 -4px 16px rgba(0,0,0,.06);
+		}
+		.ckf-pick-bar.is-on { display: flex; }
+		.ckf-pick-bar__url { font-size: 11px; color: #666; word-break: break-all; flex: 1; }
 		@@media (max-width: 720px) {
 			.ckf-layout { grid-template-columns: 1fr; }
 			.ckf-side { border-right: 0; border-bottom: 1px solid #e2e6ea; }
@@ -103,7 +132,7 @@
 			<div class="ckf-head">
 				<div>
 					<h1 class="ckf-title">@MediaFolders.Label(folder)</h1>
-					<small class="text-muted">@(isPicker ? "Bấm ảnh để chọn" : "Duyệt thư viện · copy URL") · bản <strong>@Model.Size</strong></small>
+					<small class="text-muted">@(isPicker ? "Bấm đúp ảnh để chọn ngay · hoặc bấm một lần rồi Xác nhận" : "Duyệt thư viện · copy URL") · bản <strong>@Model.Size</strong></small>
 				</div>
 				<form method="post" asp-page-handler="Upload" enctype="multipart/form-data" class="form-inline">
 					<input type="hidden" name="Type" value="@Model.Type" />
@@ -167,6 +196,13 @@
 						}
 					</div>
 				}
+				@if (isPicker)
+				{
+					<div class="ckf-pick-bar" id="ckfPickBar">
+						<code class="ckf-pick-bar__url" id="ckfPickUrl"></code>
+						<button type="button" class="btn btn-primary" id="ckfPickConfirm"><i class="fa fa-check"></i> Xác nhận chọn</button>
+					</div>
+				}
 			}
 		</main>
 	</div>
@@ -206,11 +242,17 @@
 				<text>
 				var funcNum = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CKEditorFuncNum));
 				var inputId = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.InputId));
+				var pickBar = document.getElementById('ckfPickBar');
+				var pickUrlEl = document.getElementById('ckfPickUrl');
+				var pickConfirm = document.getElementById('ckfPickConfirm');
+				var selectedUrl = '';
 				function pick(url) {
+					if (!url) return;
 					if (inputId && window.opener && window.opener.document) {
 						var el = window.opener.document.getElementById(inputId);
 						if (el) {
 							el.value = url;
+							el.dispatchEvent(new Event('input', { bubbles: true }));
 							el.dispatchEvent(new Event('change', { bubbles: true }));
 						}
 						window.close();
@@ -221,12 +263,27 @@
 						window.close();
 					}
 				}
+				function highlight(card) {
+					document.querySelectorAll('.ckf-card.is-picked').forEach(function (c) { c.classList.remove('is-picked'); });
+					card.classList.add('is-picked');
+					selectedUrl = card.getAttribute('data-url') || '';
+					if (pickBar) pickBar.classList.add('is-on');
+					if (pickUrlEl) pickUrlEl.textContent = selectedUrl;
+				}
 				document.querySelectorAll('.ckf-card[data-url]').forEach(function (card) {
-					card.addEventListener('click', function () { pick(card.getAttribute('data-url')); });
+					card.addEventListener('click', function () { highlight(card); });
+					card.addEventListener('dblclick', function (e) {
+						e.preventDefault();
+						pick(card.getAttribute('data-url') || '');
+					});
 					card.addEventListener('keydown', function (e) {
-						if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(card.getAttribute('data-url')); }
+						if (e.key === 'Enter') { e.preventDefault(); pick(card.getAttribute('data-url') || ''); }
+						if (e.key === ' ') { e.preventDefault(); highlight(card); }
 					});
 				});
+				if (pickConfirm) {
+					pickConfirm.addEventListener('click', function () { pick(selectedUrl); });
+				}
 				</text>
 			}
 		})();

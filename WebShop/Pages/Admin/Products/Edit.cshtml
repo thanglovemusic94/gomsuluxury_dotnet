@@ -332,9 +332,9 @@
 				setField('Seo.MetaTitle', proposed.proposedMetaTitle);
 				setField('Seo.MetaDescription', proposed.proposedMetaDescription);
 				setField('Seo.SeoFocusKeyword', proposed.proposedFocusKeyword);
-				if (typeof proposed.score === 'number')
-					setField('Seo.SeoScore', String(proposed.score));
-				statusEl.textContent = 'Đã áp dụng vào form — nhớ bấm Lưu.';
+				// Điểm SEO tự chấm checklist — không ghi điểm tay từ AI
+				if (window.WebShopSeoPreview) WebShopSeoPreview.refresh();
+				statusEl.textContent = 'Đã áp dụng meta/từ khóa vào form — điểm SEO tự tính lại. Nhớ bấm Lưu.';
 			});
 		})();
 	</script>

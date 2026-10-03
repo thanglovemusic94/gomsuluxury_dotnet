@@ -80,6 +80,17 @@ public class EditModel(AppDbContext db, AuditService audit) : PageModel
         }
 
         Input.Apply(postEntity, slug);
+        Seo.SeoScore = SeoScoreCalculator.Compute(new SeoScoreCalculator.Request(
+            Title: postEntity.Title,
+            Slug: postEntity.Slug,
+            FocusKeyword: Seo.SeoFocusKeyword,
+            MetaTitle: Seo.MetaTitle,
+            MetaDescription: Seo.MetaDescription,
+            SeoImage: Seo.SeoImage,
+            ImageUrl: postEntity.ImageUrl,
+            ShortText: postEntity.Summary,
+            HtmlBody: postEntity.Content,
+            ImageAlts: null));
         Seo.Apply(postEntity);
         if (!await DbSave.TrySaveAsync(db, ModelState))
             return Page();

@@ -1,21 +1,98 @@
 @model WebShop.Infrastructure.SeoInput
-<div class="form-group">
-	<label class="col-sm-3 control-label">Meta title</label>
-	<div class="col-sm-9"><input asp-for="MetaTitle" class="form-control" maxlength="100" /></div>
-</div>
-<div class="form-group">
-	<label class="col-sm-3 control-label">Meta description</label>
-	<div class="col-sm-9"><textarea asp-for="MetaDescription" class="form-control" maxlength="255" rows="2"></textarea></div>
-</div>
-<div class="form-group">
-	<label class="col-sm-3 control-label">Ảnh SEO</label>
-	<div class="col-sm-9"><input asp-for="SeoImage" class="form-control" maxlength="500" /></div>
-</div>
-<div class="form-group">
-	<label class="col-sm-3 control-label">Từ khóa</label>
-	<div class="col-sm-9"><input asp-for="SeoFocusKeyword" class="form-control" maxlength="100" /></div>
-</div>
-<div class="form-group">
-	<label class="col-sm-3 control-label">Điểm SEO</label>
-	<div class="col-sm-9"><input asp-for="SeoScore" class="form-control" type="number" min="0" max="100" /></div>
+@{
+	var previewTitle = string.IsNullOrWhiteSpace(Model.MetaTitle) ? "(Meta title)" : Model.MetaTitle;
+	var previewDesc = string.IsNullOrWhiteSpace(Model.MetaDescription) ? "(Meta description)" : Model.MetaDescription;
+}
+<div class="js-seo-fields" data-seo-root>
+	<div class="form-group">
+		<label class="col-sm-3 control-label">Xem trước Google</label>
+		<div class="col-sm-9">
+			<div class="seo-preview-tabs" role="tablist">
+				<button type="button" class="seo-preview-tab is-active" data-seo-device="desktop" aria-pressed="true">
+					<i class="ace-icon fa fa-desktop"></i> Desktop
+				</button>
+				<button type="button" class="seo-preview-tab" data-seo-device="mobile" aria-pressed="false">
+					<i class="ace-icon fa fa-mobile"></i> Mobile
+				</button>
+			</div>
+			<div class="seo-preview is-desktop" data-seo-preview>
+				<div class="seo-preview__media" data-seo-preview-media hidden>
+					<img data-seo-preview-img alt="" />
+					<span class="seo-preview__media-badge" data-seo-preview-img-badge hidden>Ảnh đại diện</span>
+				</div>
+				<div class="seo-preview__body">
+					<div class="seo-preview__title" data-seo-preview-title>@previewTitle</div>
+					<div class="seo-preview__url" data-seo-preview-url>yoursite.vn/…</div>
+					<div class="seo-preview__desc" data-seo-preview-desc>@previewDesc</div>
+				</div>
+			</div>
+			<div class="seo-analyze" data-seo-analyze>
+				<div class="seo-analyze__score">
+					<span class="seo-score-pill is-empty" data-seo-score-pill>0</span>
+					<div>
+						<div class="seo-analyze__score-label">Điểm SEO (tự động · chỉ đọc)</div>
+						<div class="seo-analyze__score-hint" data-seo-score-hint>0–49 kém · 50–79 khá · 80–100 tốt</div>
+					</div>
+				</div>
+				<ul class="seo-analyze__checks" data-seo-score-breakdown></ul>
+			</div>
+			<span class="help-block">
+				Schema Product/Article tự sinh từ dữ liệu form — không cần nhập JSON-LD.
+				Điểm SEO chấm theo checklist on-page (không sửa tay). Gemini chỉ gợi ý nội dung.
+			</span>
+		</div>
+	</div>
+	<div class="form-group">
+		<label class="col-sm-3 control-label">Meta title</label>
+		<div class="col-sm-9">
+			<input asp-for="MetaTitle" class="form-control js-seo-meta-title" maxlength="100"
+				   data-seo-ideal-min="50" data-seo-ideal-max="60" data-seo-warn-max="70" />
+			<div class="seo-char" data-seo-counter="title">
+				<span class="seo-char__bar"><i data-seo-bar></i></span>
+				<span class="seo-char__label" data-seo-count>0/60</span>
+			</div>
+		</div>
+	</div>
+	<div class="form-group">
+		<label class="col-sm-3 control-label">Meta description</label>
+		<div class="col-sm-9">
+			<textarea asp-for="MetaDescription" class="form-control js-seo-meta-desc" maxlength="255" rows="2"
+					  data-seo-ideal-min="110" data-seo-ideal-max="160" data-seo-warn-max="180"></textarea>
+			<div class="seo-char" data-seo-counter="desc">
+				<span class="seo-char__bar"><i data-seo-bar></i></span>
+				<span class="seo-char__label" data-seo-count>0/160</span>
+			</div>
+		</div>
+	</div>
+	<div class="form-group">
+		<label class="col-sm-3 control-label">Ảnh SEO</label>
+		<div class="col-sm-9">
+			<div class="input-group">
+				<input asp-for="SeoImage" class="form-control js-seo-image" maxlength="500" />
+				<span class="input-group-btn">
+					<button type="button" class="btn btn-info js-media-pick js-seo-image-pick"
+							data-input="Seo_SeoImage" data-size="large" data-folder="">
+						<i class="fa fa-folder-open"></i> Thư viện
+					</button>
+				</span>
+			</div>
+			<span class="help-block">Xem trước ảnh trong khung Google. Để trống → ảnh đại diện.</span>
+		</div>
+	</div>
+	<div class="form-group">
+		<label class="col-sm-3 control-label">Từ khóa</label>
+		<div class="col-sm-9">
+			<input asp-for="SeoFocusKeyword" type="hidden" class="js-seo-keyword" maxlength="100" />
+			<div class="seo-kw-box" data-seo-kw-box>
+				<div class="seo-kw-chips" data-seo-kw-chips></div>
+				<input type="text" class="seo-kw-input" data-seo-kw-input maxlength="60"
+					   placeholder="Gõ cụm từ khóa rồi Enter hoặc dấu phẩy…" autocomplete="off" />
+			</div>
+			<span class="help-block">
+				Chip đầu = <strong>từ khóa chính</strong> (chấm điểm). Chip sau = phụ (chỉ highlight trong preview).
+				Tối đa 5 cụm · tổng ≤ 100 ký tự khi lưu.
+			</span>
+		</div>
+	</div>
+	<input asp-for="SeoScore" type="hidden" class="js-seo-score" />
 </div>

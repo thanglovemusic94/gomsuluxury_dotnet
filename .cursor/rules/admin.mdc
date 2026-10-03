@@ -11,6 +11,7 @@ alwaysApply: false
 - Route dưới `/Admin/...`. Giữ `[Authorize]` / kiểm tra role hiện có.
 - List: paging qua helper sẵn; thumb list theo token size trong `admin.css` (đổi CSS/Razor cần restart).
 - Soft-delete + bulk: checkbox qua `admin-bulk.js` và `AdminContentDelete` — soft vào Thùng rác; hard chỉ nơi Trash đã làm.
+- Media Admin: grid thumbnail + drawer chi tiết (`admin-media.js`); bulk đổi thư mục/xóa; upload kéo-thả + progress; lọc thiếu Alt.
 
 ## Menu
 
@@ -20,9 +21,10 @@ alwaysApply: false
 ## Trang tĩnh & SEO
 
 - Lưu slug: `PagePaths.NormalizeSlug` + `IsReserved`. Placeholder/help hiển thị `/{slug}`.
-- Tái dùng `_SeoFields` / `SeoInput` cho meta.
+- Tái dùng `_SeoFields` / `SeoInput` cho meta (counter, preview Desktop/Mobile, fallback). Điểm SEO: `SeoScoreCalculator` checklist tự động, badge chỉ đọc. Từ khóa: chip multi-KW (cụm đầu = chính chấm điểm; phụ highlight + bonus nhẹ). Gemini chỉ gợi ý chữ.
 - Index toàn site: Admin → Cấu hình → checkbox “Cho phép index” (`SiteSeoService` / `Seo.AllowIndexing`). Không hard-code chỉ trong appsettings.
 - Role Viewer: banner “chỉ xem” + `admin--readonly`; không dựa vào ẩn nút thôi — server chặn POST `/Admin`.
+- Schema org: form Doanh nghiệp trong Cấu hình; Product/Article schema tự động — không bắt biên tập viên nhập JSON-LD.
 
 ## Style
 

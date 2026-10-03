@@ -20,17 +20,32 @@ public sealed class SiteSeoService(
 
     public async Task EnsureSeedAsync(CancellationToken ct = default)
     {
-        if (await db.SystemSettings.AnyAsync(item => item.Key == AllowIndexingKey, ct))
+        await UpsertIfMissingAsync(
+            AllowIndexingKey,
+            options.Value.AllowIndexing ? "1" : "0",
+            "Cho phép Google / công cụ tìm kiếm index site (1=bật, 0=tắt).",
+            ct);
+
+        await UpsertIfMissingAsync("Email", "", "Email liên hệ (Schema Organization).", ct);
+        await UpsertIfMissingAsync("OpeningHours", "Mo-Su 08:00-17:00", "Giờ mở cửa Schema (vd. Mo-Su 08:00-17:00).", ct);
+        await UpsertIfMissingAsync("OrgType", "Store", "Schema @type: Organization | Store | LocalBusiness.", ct);
+        await UpsertIfMissingAsync("YoutubeUrl", "", "Link YouTube (sameAs Schema).", ct);
+    }
+
+    private async Task UpsertIfMissingAsync(string key, string value, string description, CancellationToken ct)
+    {
+        if (await db.SystemSettings.AnyAsync(item => item.Key == key, ct))
             return;
 
         db.SystemSettings.Add(new SystemSetting
         {
-            Key = AllowIndexingKey,
-            Value = options.Value.AllowIndexing ? "1" : "0",
-            Description = "Cho phép Google / công cụ tìm kiếm index site (1=bật, 0=tắt)."
+            Key = key,
+            Value = value,
+            Description = description
         });
         await db.SaveChangesAsync(ct);
-        cache.Remove(CacheKey);
+        if (key == AllowIndexingKey)
+            cache.Remove(CacheKey);
     }
 
     public async Task<bool> GetAllowIndexingAsync(CancellationToken ct = default)

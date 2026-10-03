@@ -304,6 +304,11 @@ public sealed partial class MediaStorage(IWebHostEnvironment env, IServiceScopeF
                 (item.Alt != null && item.Alt.Contains(term)));
         }
 
+        if (query.MissingAlt)
+        {
+            filtered = filtered.Where(item => item.Alt == null || item.Alt == "");
+        }
+
         var totalCount = await filtered.CountAsync(ct);
         var assets = await filtered
             .OrderByDescending(item => item.CreatedAt)
@@ -369,7 +374,7 @@ public sealed partial class MediaStorage(IWebHostEnvironment env, IServiceScopeF
         if (file.Length <= 0)
             return (false, null, "File trống.", null);
         if (file.Length > _options.MaxUploadBytes)
-            return (false, null, "File tối đa 15MB.", null);
+            return (false, null, $"File tối đa {_options.MaxUploadBytes / (1024 * 1024)}MB.", null);
 
         var ext = Path.GetExtension(file.FileName);
         var isImage = ImageExt.Contains(ext) || PassThroughImageExt.Contains(ext);

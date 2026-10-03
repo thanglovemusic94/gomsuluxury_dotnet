@@ -52,6 +52,137 @@
 <div class="space-10"></div>
 
 <div class="widget-box">
+	<div class="widget-header">
+		<h4 class="widget-title">
+			<i class="ace-icon fa fa-building"></i>
+			Doanh nghiệp / Schema Organization
+		</h4>
+	</div>
+	<div class="widget-body">
+		<div class="widget-main">
+			<p class="help-block">
+				Tự động xuất JSON-LD <code>Organization</code>/<code>Store</code> trên mọi trang shop,
+				và <code>WebSite</code> + SearchAction trên trang chủ (<code>/san-pham?q=…</code>).
+			</p>
+			<form method="post" asp-page-handler="Org" class="form-horizontal">
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Tên thương hiệu</label>
+					<div class="col-sm-9"><input asp-for="Org.SiteName" class="form-control" maxlength="150" /></div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Loại Schema</label>
+					<div class="col-sm-9">
+						<select asp-for="Org.OrgType" class="form-control">
+							<option value="Store">Store</option>
+							<option value="Organization">Organization</option>
+							<option value="LocalBusiness">LocalBusiness</option>
+						</select>
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Email</label>
+					<div class="col-sm-9"><input asp-for="Org.Email" class="form-control" maxlength="150" /></div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Hotline</label>
+					<div class="col-sm-9"><input asp-for="Org.Hotline" class="form-control" maxlength="50" /></div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Địa chỉ</label>
+					<div class="col-sm-9"><input asp-for="Org.Address" class="form-control" maxlength="255" /></div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Giờ mở cửa</label>
+					<div class="col-sm-9">
+						<input asp-for="Org.OpeningHours" class="form-control" maxlength="100" placeholder="Mo-Su 08:00-17:00" />
+						<span class="help-block">Định dạng Schema, ví dụ <code>Mo-Fr 08:00-17:00</code> hoặc <code>Mo-Su 08:00-17:00</code>.</span>
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Logo URL</label>
+					<div class="col-sm-9">
+						<input asp-for="Org.LogoUrl" class="form-control" maxlength="500" placeholder="/uploads/..." />
+						<span class="help-block">Path tương đối được; JSON-LD tự gắn thành absolute URL.</span>
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Facebook</label>
+					<div class="col-sm-9"><input asp-for="Org.FacebookUrl" class="form-control" maxlength="500" /></div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">TikTok</label>
+					<div class="col-sm-9"><input asp-for="Org.TikTokUrl" class="form-control" maxlength="500" /></div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Zalo</label>
+					<div class="col-sm-9"><input asp-for="Org.ZaloUrl" class="form-control" maxlength="500" /></div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">YouTube</label>
+					<div class="col-sm-9"><input asp-for="Org.YoutubeUrl" class="form-control" maxlength="500" /></div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Tọa độ Google Maps</label>
+					<div class="col-sm-9">
+						<input asp-for="Org.GeoCoordinates" id="org-geo-coordinates" class="form-control" maxlength="120"
+							   placeholder="Ví dụ: 21.028511, 105.782302" autocomplete="off" />
+						<span class="help-block">
+							Mở Google Maps → chuột phải vào vị trí cửa hàng → click dòng tọa độ để Copy rồi dán vào đây
+							(<code>Latitude, Longitude</code>).
+						</span>
+					</div>
+				</div>
+				@{
+					var homeAbs = SiteSocial.Absolute(HttpContext.Request, "/");
+					var richTestUrl = "https://search.google.com/test/rich-results?url=" + Uri.EscapeDataString(homeAbs);
+				}
+				<div class="clearfix form-actions" style="margin-bottom:0;">
+					<div class="col-sm-offset-3 col-sm-9">
+						<button type="submit" class="btn btn-primary btn-sm">
+							<i class="ace-icon fa fa-check"></i> Lưu doanh nghiệp / Schema
+						</button>
+						<a href="@richTestUrl" class="btn btn-info btn-sm" target="_blank" rel="noopener noreferrer" style="margin-left:8px;">
+							<i class="ace-icon fa fa-external-link"></i> Kiểm tra Schema Google
+						</a>
+						<span class="help-block" style="margin-top:8px;margin-bottom:0;">
+							Rich Results Test cần URL public (domain / sslip.io). Localhost Google thường không crawl được.
+						</span>
+					</div>
+				</div>
+			</form>
+			<script>
+				(function () {
+					var el = document.getElementById('org-geo-coordinates');
+					if (!el) return;
+					var re = /(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/;
+					function normalize(text) {
+						var m = String(text || '').match(re);
+						if (!m) return null;
+						var lat = parseFloat(m[1]), lng = parseFloat(m[2]);
+						if (!isFinite(lat) || !isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+						return lat + ', ' + lng;
+					}
+					el.addEventListener('paste', function (e) {
+						var pasted = (e.clipboardData || window.clipboardData).getData('text');
+						var norm = normalize(pasted);
+						if (!norm) return;
+						e.preventDefault();
+						el.value = norm;
+					});
+					el.addEventListener('blur', function () {
+						var norm = normalize(el.value);
+						if (norm) el.value = norm;
+					});
+				})();
+			</script>
+		</div>
+	</div>
+</div>
+
+<div class="space-10"></div>
+
+<div class="widget-box">
+	<div class="widget-header"><h4 class="widget-title">Cấu hình khác</h4></div>
 	<div class="widget-body">
 		<div class="widget-main no-padding">
 			<table class="table table-striped table-bordered table-hover">
@@ -61,7 +192,7 @@
 				<tbody>
 				@if (Model.Items.Count == 0)
 				{
-					<tr><td colspan="4">Chưa có cấu hình.</td></tr>
+					<tr><td colspan="4">Không còn khóa tùy chỉnh.</td></tr>
 				}
 				@foreach (var setting in Model.Items)
 				{
