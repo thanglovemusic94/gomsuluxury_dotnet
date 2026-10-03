@@ -1,5 +1,5 @@
-# Mẫu: copy thành .github/workflows/deploy.yml khi repo đã trên GitHub.
-# Cần secrets: VPS_HOST, VPS_USER, VPS_SSH_KEY (và tuỳ chọn VPS_PORT).
+# Deploy WebShop to Lightsail via SSH/rsync.
+# Secrets: VPS_HOST, VPS_USER, VPS_SSH_KEY, optional VPS_PORT
 
 name: Deploy WebShop
 
@@ -21,11 +21,12 @@ jobs:
       - name: Publish
         run: dotnet publish WebShop/WebShop.csproj -c Release -o artifacts/publish
 
-      - name: Upload ace theme
+      - name: Bundle with Production config
         run: |
           mkdir -p artifacts/bundle
           cp -a artifacts/publish artifacts/bundle/WebShop
           cp -a ace artifacts/bundle/ace
+          cp docs/deploy/appsettings.Production.json.example artifacts/bundle/WebShop/appsettings.Production.json
 
       - name: Start SSH agent
         uses: webfactory/ssh-agent@v0.9.0
@@ -40,6 +41,11 @@ jobs:
         run: |
           set -euo pipefail
           rsync -az --delete \
+            --exclude 'webshop.db' \
+            --exclude 'webshop.db-shm' \
+            --exclude 'webshop.db-wal' \
+            --exclude 'wwwroot/uploads/' \
+            --exclude 'wwwroot/is-cache/' \
             -e "ssh -p $PORT -o StrictHostKeyChecking=accept-new" \
             artifacts/bundle/WebShop/ \
             "$USER@$HOST:/var/www/webshop/WebShop/"
@@ -55,4 +61,4 @@ jobs:
           PORT: ${{ secrets.VPS_PORT || 22 }}
         run: |
           ssh -p "$PORT" -o StrictHostKeyChecking=accept-new \
-            "$USER@$HOST" "sudo systemctl restart webshop && sudo systemctl is-active webshop"
+            "$USER@$HOST" "sudo systemctl restart webshop && sleep 2 && sudo systemctl is-active webshop"

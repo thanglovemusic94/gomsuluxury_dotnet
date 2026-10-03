@@ -18,5 +18,5 @@
       "Microsoft.AspNetCore": "Warning"
     }
   },
-  "AllowedHosts": "gomsuluxury.vn;www.gomsuluxury.vn"
+  "AllowedHosts": "*"
 }
