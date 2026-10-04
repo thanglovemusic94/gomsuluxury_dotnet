@@ -189,11 +189,116 @@ window.WebShopEditor = (function () {
 		});
 	}
 
+	function antiforgeryToken() {
+		var el = document.querySelector('input[name="__RequestVerificationToken"]');
+		return el ? el.value : '';
+	}
+
+	function uploadImageFile(file, folder, onOk, onErr) {
+		if (!file || (file.type || '').indexOf('image/') !== 0) {
+			if (onErr) onErr('Chỉ nhận ảnh từ clipboard / kéo thả.');
+			return;
+		}
+		var token = antiforgeryToken();
+		var body = new FormData();
+		var name = file.name && file.name !== 'image.png'
+			? file.name
+			: ('paste-' + Date.now() + '.png');
+		body.append('__RequestVerificationToken', token);
+		body.append('file', file, name);
+		body.append('folder', folder || 'san-pham');
+		body.append('alt', '');
+		body.append('Type', 'Images');
+		fetch('/Admin/Media?handler=UploadAjax', {
+			method: 'POST',
+			headers: { RequestVerificationToken: token },
+			body: body
+		})
+			.then(function (r) { return r.json(); })
+			.then(function (res) {
+				if (res && res.ok && res.url) onOk(res.url);
+				else if (onErr) onErr((res && res.error) || 'Upload thất bại.');
+			})
+			.catch(function () {
+				if (onErr) onErr('Không tải được ảnh.');
+			});
+	}
+
+	/** Paste/kéo ảnh vào `.js-media-paste[data-input]` → upload Media → điền URL. */
+	function bindMediaPasteTargets() {
+		document.querySelectorAll('.js-media-paste').forEach(function (zone) {
+			if (zone.getAttribute('data-bound') === '1') return;
+			zone.setAttribute('data-bound', '1');
+			var inputId = zone.getAttribute('data-input') || '';
+			var folder = zone.getAttribute('data-folder') || 'san-pham';
+			var input = inputId ? document.getElementById(inputId) : null;
+			if (!input) return;
+			var status = zone.querySelector('.js-media-paste-status');
+			var preview = zone.querySelector('.js-media-paste-preview');
+
+			function setStatus(text) {
+				if (status) status.textContent = text || '';
+			}
+
+			function applyUrl(url) {
+				input.value = url;
+				input.dispatchEvent(new Event('input', { bubbles: true }));
+				input.dispatchEvent(new Event('change', { bubbles: true }));
+				if (preview) {
+					preview.src = url;
+					preview.hidden = false;
+				}
+				setStatus('Đã dán ảnh vào thư viện.');
+			}
+
+			function handleImageFile(file) {
+				setStatus('Đang tải ảnh…');
+				uploadImageFile(file, folder, applyUrl, setStatus);
+			}
+
+			function onPaste(e) {
+				var items = e.clipboardData && e.clipboardData.items;
+				if (!items) return;
+				for (var i = 0; i < items.length; i++) {
+					if ((items[i].type || '').indexOf('image/') !== 0) continue;
+					e.preventDefault();
+					var file = items[i].getAsFile();
+					if (file) handleImageFile(file);
+					return;
+				}
+			}
+
+			zone.addEventListener('paste', onPaste);
+			input.addEventListener('paste', onPaste);
+
+			zone.addEventListener('dragover', function (e) {
+				e.preventDefault();
+				zone.classList.add('is-drag');
+			});
+			zone.addEventListener('dragleave', function () {
+				zone.classList.remove('is-drag');
+			});
+			zone.addEventListener('drop', function (e) {
+				e.preventDefault();
+				zone.classList.remove('is-drag');
+				var files = e.dataTransfer && e.dataTransfer.files;
+				if (!files || !files.length) return;
+				handleImageFile(files[0]);
+			});
+
+			if (preview && input.value) {
+				preview.src = input.value;
+				preview.hidden = false;
+			}
+		});
+	}
+
 	return {
 		replace: replace,
 		replaceBlock: replaceBlock,
 		bindForms: bindForms,
 		bindMediaPickers: bindMediaPickers,
+		bindMediaPasteTargets: bindMediaPasteTargets,
 		bindBlockPreview: bindBlockPreview,
 		refreshPreview: refreshPreview,
 		writePreview: writePreview,

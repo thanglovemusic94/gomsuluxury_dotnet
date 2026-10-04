@@ -15,6 +15,9 @@ public class EditModel(AppDbContext db, AuditService audit, GeminiSeoService gem
     [BindProperty]
     public SeoInput Seo { get; set; } = new();
 
+    [BindProperty]
+    public ReviewInput NewReview { get; set; } = new();
+
     public IList<Category> Categories { get; private set; } = [];
 
     public IList<ProductImage> Images { get; private set; } = [];
@@ -213,6 +216,40 @@ public class EditModel(AppDbContext db, AuditService audit, GeminiSeoService gem
         return RedirectToPage(new { id });
     }
 
+    public async Task<IActionResult> OnPostAddReviewAsync(int id)
+    {
+        if (!await db.Products.AnyAsync(item => item.Id == id))
+            return NotFound();
+
+        NewReview.CustomerName = TextHelper.Trimmed(NewReview.CustomerName);
+        NewReview.Comment = TextHelper.Trimmed(NewReview.Comment);
+        NewReview.ImageUrl = TextHelper.Clean(NewReview.ImageUrl);
+        var source = ProductReviewSources.Normalize(NewReview.Source);
+
+        if (NewReview.CustomerName.Length is < 2 or > 100
+            || NewReview.Comment.Length is < 2 or > 1000
+            || NewReview.Rating is < 1 or > 5
+            || (NewReview.ImageUrl?.Length ?? 0) > 500)
+        {
+            TempData["Error"] = "Nhập tên (2–100), nội dung (2–1000), sao 1–5; ảnh tối đa 500 ký tự.";
+            return RedirectToPage(new { id });
+        }
+
+        db.ProductReviews.Add(new ProductReview
+        {
+            ProductId = id,
+            CustomerName = NewReview.CustomerName,
+            Rating = NewReview.Rating,
+            Comment = NewReview.Comment,
+            ImageUrl = NewReview.ImageUrl,
+            Source = source,
+            IsApproved = NewReview.IsApproved
+        });
+        await db.SaveChangesAsync();
+        TempData["Message"] = "Đã thêm đánh giá (curated).";
+        return RedirectToPage(new { id });
+    }
+
     public async Task<IActionResult> OnPostApproveReviewAsync(int id, int reviewId)
     {
         var review = await db.ProductReviews.FirstOrDefaultAsync(item => item.Id == reviewId && item.ProductId == id);
@@ -374,5 +411,20 @@ public class EditModel(AppDbContext db, AuditService audit, GeminiSeoService gem
             product.ImageUrl = ImageUrl;
             product.IsVisible = IsVisible;
         }
+    }
+
+    public class ReviewInput
+    {
+        public string CustomerName { get; set; } = string.Empty;
+
+        public int Rating { get; set; } = 5;
+
+        public string Comment { get; set; } = string.Empty;
+
+        public string? ImageUrl { get; set; }
+
+        public string Source { get; set; } = ProductReviewSources.Livestream;
+
+        public bool IsApproved { get; set; } = true;
     }
 }

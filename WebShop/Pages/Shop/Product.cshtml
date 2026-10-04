@@ -27,6 +27,10 @@
 	AddGallery(item.ImageUrl, altBase);
 	foreach (var image in item.Images.OrderBy(image => image.DisplayOrder))
 		AddGallery(image.ImageUrl, string.IsNullOrWhiteSpace(image.AltText) ? altBase : image.AltText!);
+
+	var reviewCount = Model.Reviews.Count;
+	var reviewAvg = reviewCount > 0 ? Math.Round(Model.Reviews.Average(r => r.Rating), 1) : 0d;
+	var reviewStars = reviewCount > 0 ? (int)Math.Round(reviewAvg, MidpointRounding.AwayFromZero) : 0;
 }
 
 <div class="container shop-page shop-page--detail">
@@ -185,6 +189,18 @@
 						}
 					</p>
 				</div>
+				@if (reviewCount > 0)
+				{
+					<a class="shop-review-summary" href="#khach-hang-noi-gi">
+						<span class="shop-review-summary__stars" aria-hidden="true">
+							@for (var s = 1; s <= 5; s++)
+							{
+								<i class="fa @(s <= reviewStars ? "fa-star" : "fa-star-o")"></i>
+							}
+						</span>
+						<span class="shop-review-summary__text">@reviewAvg.ToString("0.0") · @reviewCount nhận xét</span>
+					</a>
+				}
 				@if (!string.IsNullOrWhiteSpace(item.ShortDescription))
 				{
 					<div class="shop-readmore" data-readmore>
@@ -216,6 +232,80 @@
 		</div>
 	</div>
 
+	<section class="shop-detail-reviews" id="khach-hang-noi-gi" aria-labelledby="shop-reviews-heading">
+		<h2 class="shop-detail-reviews__title" id="shop-reviews-heading">
+			Khách hàng nói gì
+			@if (reviewCount > 0)
+			{
+				<span class="shop-detail-reviews__meta">@reviewAvg.ToString("0.0") ★ · @reviewCount nhận xét</span>
+			}
+		</h2>
+		@if (reviewCount == 0)
+		{
+			<p class="text-muted">Đang cập nhật hình ảnh và nhận xét từ khách Livestream.</p>
+		}
+		else
+		{
+			<div class="shop-reviews">
+				@foreach (var review in Model.Reviews)
+				{
+					var badge = ProductReviewSources.BadgeLabel(review.Source);
+					<figure class="shop-review">
+						@if (!string.IsNullOrWhiteSpace(review.ImageUrl))
+						{
+							<img class="shop-review__media"
+							     src="@MediaUrls.For(review.ImageUrl, MediaSize.Large)"
+							     alt=""
+							     loading="lazy"
+							     decoding="async" />
+						}
+						<blockquote class="shop-review__quote">
+							<p>@review.Comment</p>
+							<footer>
+								<span>@review.CustomerName</span>
+								<span aria-label="@review.Rating trên 5 sao">@review.Rating / 5</span>
+								@if (!string.IsNullOrWhiteSpace(badge))
+								{
+									<span class="shop-review__badge">@badge</span>
+								}
+							</footer>
+						</blockquote>
+					</figure>
+				}
+			</div>
+		}
+		<details class="shop-review-write">
+			<summary>Gửi nhận xét của bạn</summary>
+			<form method="post" asp-page-handler="Review" class="form-horizontal shop-review-form">
+				<div class="form-group">
+					<label class="col-sm-2 control-label">Tên</label>
+					<div class="col-sm-6"><input asp-for="Review.CustomerName" class="form-control" autocomplete="name" /></div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-2 control-label">Số sao</label>
+					<div class="col-sm-3">
+						<select asp-for="Review.Rating" class="form-control">
+							<option value="5">5</option>
+							<option value="4">4</option>
+							<option value="3">3</option>
+							<option value="2">2</option>
+							<option value="1">1</option>
+						</select>
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-2 control-label">Nội dung</label>
+					<div class="col-sm-6"><textarea asp-for="Review.Comment" class="form-control" rows="4"></textarea></div>
+				</div>
+				<div class="form-group">
+					<div class="col-sm-offset-2 col-sm-6">
+						<button class="btn btn-primary" type="submit">Gửi</button>
+					</div>
+				</div>
+			</form>
+		</details>
+	</section>
+
 	<div class="shop-detail-panels">
 		@if (!string.IsNullOrWhiteSpace(description))
 		{
@@ -230,50 +320,6 @@
 			<div class="shop-acc__body">
 				<p>Đóng gói chống sốc riêng cho đồ gốm. Giao hàng toàn quốc; thời gian dự kiến 2–5 ngày tùy khu vực.</p>
 				<p>Đổi trả trong 7 ngày nếu lỗi do vận chuyển hoặc sai mẫu — sản phẩm còn nguyên tem/hộp.</p>
-			</div>
-		</details>
-		<details class="shop-acc">
-			<summary class="shop-acc__summary">Nhận xét @(Model.Reviews.Count > 0 ? $"({Model.Reviews.Count})" : "")</summary>
-			<div class="shop-acc__body">
-				@if (Model.Reviews.Count == 0)
-				{
-					<p class="text-muted">Chưa có nhận xét.</p>
-				}
-				@foreach (var review in Model.Reviews)
-				{
-					<blockquote class="shop-review-quote">
-						<p>@review.Comment</p>
-						<small>@review.CustomerName · @review.Rating / 5 sao</small>
-					</blockquote>
-				}
-				<form method="post" asp-page-handler="Review" class="form-horizontal shop-review-form">
-					<h3>Viết nhận xét</h3>
-					<div class="form-group">
-						<label class="col-sm-2 control-label">Tên</label>
-						<div class="col-sm-6"><input asp-for="Review.CustomerName" class="form-control" autocomplete="name" /></div>
-					</div>
-					<div class="form-group">
-						<label class="col-sm-2 control-label">Số sao</label>
-						<div class="col-sm-3">
-							<select asp-for="Review.Rating" class="form-control">
-								<option value="5">5</option>
-								<option value="4">4</option>
-								<option value="3">3</option>
-								<option value="2">2</option>
-								<option value="1">1</option>
-							</select>
-						</div>
-					</div>
-					<div class="form-group">
-						<label class="col-sm-2 control-label">Nội dung</label>
-						<div class="col-sm-6"><textarea asp-for="Review.Comment" class="form-control" rows="4"></textarea></div>
-					</div>
-					<div class="form-group">
-						<div class="col-sm-offset-2 col-sm-6">
-							<button class="btn btn-primary" type="submit">Gửi</button>
-						</div>
-					</div>
-				</form>
 			</div>
 		</details>
 	</div>

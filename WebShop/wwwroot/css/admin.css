@@ -248,6 +248,27 @@ body.admin--readonly form[method="post"] select {
 .media-drop.is-drag { border-color: #5b9bd5; background: #eef5fb; }
 .media-drop__hint { margin: 0 0 6px; color: #555; font-size: 13px; }
 .media-drop__meta { margin: 0; color: #888; font-size: 12px; }
+.admin-media-paste {
+	border: 1px dashed #c5d0da;
+	border-radius: 6px;
+	padding: 10px 12px;
+	background: #fafbfc;
+	outline: none;
+}
+.admin-media-paste:focus,
+.admin-media-paste.is-drag { border-color: #5b9bd5; background: #eef5fb; }
+.admin-media-paste__hint { margin: 8px 0 0; font-size: 12px; }
+.admin-media-paste__status { margin: 4px 0 0; font-size: 12px; color: #3c763d; min-height: 1.2em; }
+.admin-media-paste__preview {
+	display: block;
+	margin-top: 8px;
+	width: 120px;
+	height: 120px;
+	object-fit: cover;
+	border-radius: 4px;
+	border: 1px solid #e0e0e0;
+	background: #fff;
+}
 .media-upload-progress { margin-top: 12px; display: none; }
 .media-upload-progress.is-on { display: block; }
 .media-upload-progress__bar {

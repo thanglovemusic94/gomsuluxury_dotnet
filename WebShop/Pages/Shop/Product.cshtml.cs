@@ -71,9 +71,10 @@ public class ProductModel(AppDbContext db, CartService cart) : PageModel
         {
             ProductId = Product!.Id,
             UserId = userId,
-            CustomerName = Review.CustomerName,
+            CustomerName = Review.CustomerName.Length > 100 ? Review.CustomerName[..100] : Review.CustomerName,
             Rating = Review.Rating,
-            Comment = Review.Comment,
+            Comment = Review.Comment.Length > 1000 ? Review.Comment[..1000] : Review.Comment,
+            Source = ProductReviewSources.Web,
             IsApproved = false
         });
         await db.SaveChangesAsync();

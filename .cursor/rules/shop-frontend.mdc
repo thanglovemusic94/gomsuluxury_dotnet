@@ -25,6 +25,7 @@ alwaysApply: false
 - JS shop: `defer`. Below-fold home: `content-visibility: auto`.
 - Slider sản phẩm: fit media bằng contain / đúng tỷ lệ — không kéo giãn full bừa.
 - Product gallery: click ảnh to → lightbox quẹt được; desktop hover ô vuông loupe zoom nhẹ; thumb ≤4 grid, >4 `shop-thumbs--strip` kéo ngang (giữ cỡ ~4/ô).
+- Review SP: tóm tắt sao cạnh giá (`#khach-hang-noi-gi`); section “Khách hàng nói gì” ngay dưới gallery/buy (trước mô tả); grid ảnh/quote + badge; form gửi trong `<details>` phụ.
 - HtmlBlock (`Component.InvokeAsync("HtmlBlock", …)`): HTML/CSS/JS sửa được trong DB; style scoped nằm trong block khi Admin cần chỉnh (vd. YouTube facade).
 
 ## Markup

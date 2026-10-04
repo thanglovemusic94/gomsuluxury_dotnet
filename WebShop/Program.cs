@@ -265,6 +265,7 @@ using (var scope = app.Services.CreateScope())
         await LuxuryCatalog.EnsureAsync(db);
     await ProductCategorySchema.EnsureAsync(db);
     await CategorySchema.EnsureAsync(db);
+    await ProductReviewSchema.EnsureAsync(db);
     await ShopNavSeed.EnsureAsync(db);
     await HtmlBlockSeed.EnsureAsync(db);
     await GiftLandingSeed.EnsureAsync(db);

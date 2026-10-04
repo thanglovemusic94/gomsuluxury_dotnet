@@ -200,21 +200,86 @@
 	</div>
 
 	<div class="widget-box">
-		<div class="widget-header"><h4 class="widget-title">Đánh giá</h4></div>
-		<div class="widget-body"><div class="widget-main no-padding">
+		<div class="widget-header"><h4 class="widget-title">Đánh giá / Social proof</h4></div>
+		<div class="widget-body"><div class="widget-main">
+			<p class="help-block" style="margin-top:0">Thêm thủ công comment Live / inbox / ảnh khách (curated). Chỉ dùng nội dung thật.</p>
+			<form method="post" asp-page-handler="AddReview" asp-route-id="@Model.Input.Id" class="form-horizontal" style="margin-bottom:18px">
+				<div class="form-group">
+					<label class="col-sm-2 control-label">Tên khách</label>
+					<div class="col-sm-4"><input asp-for="NewReview.CustomerName" class="form-control" maxlength="100" placeholder="VD: Minh Thư" /></div>
+					<label class="col-sm-1 control-label">Sao</label>
+					<div class="col-sm-2">
+						<select asp-for="NewReview.Rating" class="form-control">
+							<option value="5">5</option>
+							<option value="4">4</option>
+							<option value="3">3</option>
+							<option value="2">2</option>
+							<option value="1">1</option>
+						</select>
+					</div>
+					<label class="col-sm-1 control-label">Nguồn</label>
+					<div class="col-sm-2">
+						<select asp-for="NewReview.Source" class="form-control">
+							@foreach (var choice in ProductReviewSources.AdminChoices)
+							{
+								<option value="@choice.Value">@choice.Label</option>
+							}
+						</select>
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-2 control-label">Nội dung</label>
+					<div class="col-sm-10"><textarea asp-for="NewReview.Comment" class="form-control" rows="3" maxlength="1000" placeholder="Chép comment khen từ Live / inbox"></textarea></div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-2 control-label">Ảnh</label>
+					<div class="col-sm-7">
+						<div class="admin-media-paste js-media-paste" data-input="Review_ImageUrl" data-folder="san-pham" tabindex="0">
+							<div class="input-group">
+								<input asp-for="NewReview.ImageUrl" id="Review_ImageUrl" class="form-control" maxlength="500" placeholder="Ctrl+V dán screenshot, hoặc chọn thư viện" />
+								<span class="input-group-btn">
+									<button type="button" class="btn btn-info js-media-pick" data-input="Review_ImageUrl" data-size="medium" data-folder="san-pham">Thư viện</button>
+								</span>
+							</div>
+							<p class="admin-media-paste__hint help-block">Click ô này rồi <strong>Ctrl+V</strong> dán ảnh chụp màn hình / kéo thả ảnh vào đây.</p>
+							<p class="admin-media-paste__status js-media-paste-status help-block" aria-live="polite"></p>
+							<img class="admin-media-paste__preview js-media-paste-preview" alt="" hidden width="120" height="120" />
+						</div>
+					</div>
+					<div class="col-sm-3">
+						<label class="checkbox-inline">
+							<input asp-for="NewReview.IsApproved" /> Hiện ngay trên shop
+						</label>
+					</div>
+				</div>
+				<div class="form-group">
+					<div class="col-sm-offset-2 col-sm-10">
+						<button type="submit" class="btn btn-sm btn-success">Thêm đánh giá</button>
+					</div>
+				</div>
+			</form>
+		</div>
+		<div class="widget-main no-padding">
 			<table class="table table-striped table-bordered">
-				<thead><tr><th>Khách</th><th>Sao</th><th>Nội dung</th><th>Duyệt</th><th></th></tr></thead>
+				<thead><tr><th>Khách</th><th>Sao</th><th>Nguồn</th><th>Nội dung</th><th>Ảnh</th><th>Duyệt</th><th></th></tr></thead>
 				<tbody>
 				@if (Model.Reviews.Count == 0)
 				{
-					<tr><td colspan="5">Chưa có đánh giá.</td></tr>
+					<tr><td colspan="7">Chưa có đánh giá.</td></tr>
 				}
 				@foreach (var review in Model.Reviews)
 				{
 					<tr>
 						<td>@review.CustomerName</td>
 						<td>@review.Rating</td>
+						<td>@review.Source</td>
 						<td>@review.Comment</td>
+						<td>
+							@if (!string.IsNullOrWhiteSpace(review.ImageUrl))
+							{
+								<img src="@MediaUrls.For(review.ImageUrl, MediaSize.Thumb)" alt="" width="48" height="48" style="object-fit:cover;border-radius:4px" />
+							}
+						</td>
 						<td>@(review.IsApproved ? "Hiện" : "Chờ")</td>
 						<td class="text-right">
 							<form method="post" asp-page-handler="ApproveReview" asp-route-id="@Model.Input.Id" class="inline">
@@ -241,6 +306,7 @@
 		WebShopEditor.replace('.js-ckeditor');
 		WebShopEditor.bindForms();
 		WebShopEditor.bindMediaPickers();
+		WebShopEditor.bindMediaPasteTargets();
 
 		(function () {
 			var btn = document.getElementById('btnAiSeo');

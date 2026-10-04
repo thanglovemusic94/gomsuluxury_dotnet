@@ -216,6 +216,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         {
             entity.Property(review => review.CustomerName).HasMaxLength(100).IsRequired();
             entity.Property(review => review.Comment).HasMaxLength(1000).IsRequired();
+            entity.Property(review => review.ImageUrl).HasMaxLength(500);
+            entity.Property(review => review.Source).HasMaxLength(40).IsRequired().HasDefaultValue("Web");
             entity.Property(review => review.IsApproved).HasDefaultValue(false);
             entity.Property(review => review.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
 
