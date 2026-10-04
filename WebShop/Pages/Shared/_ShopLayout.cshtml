@@ -26,11 +26,20 @@
 		: SiteSocial.Absolute(request, $"{request.PathBase}{request.Path}{request.QueryString}");
 }
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" style="background-color:#fff">
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	@* Critical paint: tránh chớp nền trắng trước khi shop.css về *@
+	<style>
+		html, body { background-color: #fff; color: #2b2622; }
+	</style>
 	<title>@pageTitle</title>
+	@if (isHome)
+	{
+		<link rel="preload" href="~/css/shop.css" as="style" asp-append-version="true" />
+	}
+	<link rel="stylesheet" href="~/css/shop.css" asp-append-version="true" />
 	<link rel="icon" href="/favicon.ico?v=2" sizes="any" />
 	<link rel="icon" href="/favicon-32.png?v=2" type="image/png" sizes="32x32" />
 	<link rel="icon" href="/favicon-48.png?v=2" type="image/png" sizes="48x48" />
@@ -98,11 +107,6 @@
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&amp;display=swap" />
 		<link rel="stylesheet" href="/ace/assets/font-awesome/4.5.0/css/font-awesome.min.css" />
 	</noscript>
-	@if (isHome)
-	{
-		<link rel="preload" href="~/css/shop.css" as="style" asp-append-version="true" />
-	}
-	<link rel="stylesheet" href="~/css/shop.css" asp-append-version="true" />
 	@if (!string.IsNullOrWhiteSpace(lcp))
 	{
 		if (!string.IsNullOrWhiteSpace(lcpSrcSet))
@@ -116,7 +120,7 @@
 	}
 	@await RenderSectionAsync("Styles", required: false)
 </head>
-<body class="shop@(ViewData["ImmersiveDetail"] is true ? " shop--detail-immersive" : null)">
+<body class="shop@(ViewData["ImmersiveDetail"] is true ? " shop--detail-immersive" : null)" style="background-color:#fff">
 	@await Component.InvokeAsync("ShopHeader")
 	<main id="main" class="shop-main">
 		@RenderBody()

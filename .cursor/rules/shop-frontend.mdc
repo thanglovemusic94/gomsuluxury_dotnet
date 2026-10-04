@@ -21,6 +21,7 @@ alwaysApply: false
 - Tôn trọng `prefers-reduced-motion` với hover/animation (desktop hover OK khi cho phép motion).
 - Slider: LCP Medium + `SrcSetBetween(Medium, Large)`; dots dưới viewport (không đè slide); slide đầu `fetchpriority=high`.
 - Font: Be Vietnam + Cormorant + Font Awesome đều không chặn (`media=print` → `onload`).
+- FOUC: `_ShopLayout` / `_ShopAdsLayout` — inline nền `#fff` + chữ `#2b2622` ngay đầu `<head>`, nạp `shop.css` (hoặc ads CSS) sớm trước font/meta phụ. Không Turbo/HTMX.
 - JS shop: `defer`. Below-fold home: `content-visibility: auto`.
 - Slider sản phẩm: fit media bằng contain / đúng tỷ lệ — không kéo giãn full bừa.
 - Product gallery: click ảnh to → lightbox quẹt được; desktop hover ô vuông loupe zoom nhẹ; thumb ≤4 grid, >4 `shop-thumbs--strip` kéo ngang (giữ cỡ ~4/ô).

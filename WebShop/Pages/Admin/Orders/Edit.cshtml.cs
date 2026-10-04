@@ -63,26 +63,49 @@ public class EditModel(AppDbContext db) : PageModel
         var nowCancelled = Input.Status == "Cancelled";
         if (wasCancelled != nowCancelled)
         {
-            var products = await db.Products
-                .Where(product => order.Items.Select(item => item.ProductId).Contains(product.Id))
-                .ToListAsync();
-            foreach (var line in order.Items)
+            await using var tx = await db.Database.BeginTransactionAsync();
+            if (nowCancelled)
             {
-                var product = products.First(item => item.Id == line.ProductId);
-                if (nowCancelled)
-                    product.Stock += line.Quantity;
-                else if (product.Stock < line.Quantity)
+                foreach (var line in order.Items)
+                    await StockInventory.RestoreAsync(db, line.ProductId, line.Quantity);
+            }
+            else
+            {
+                var products = await db.Products.AsNoTracking()
+                    .Where(product => order.Items.Select(item => item.ProductId).Contains(product.Id))
+                    .ToDictionaryAsync(product => product.Id);
+                var stockLines = order.Items
+                    .Select(line =>
+                    {
+                        products.TryGetValue(line.ProductId, out var product);
+                        return (line.ProductId, line.Quantity, product?.Name ?? $"#{line.ProductId}");
+                    })
+                    .ToList();
+                var (stockOk, stockError) = await StockInventory.TryDecrementManyAsync(db, stockLines);
+                if (!stockOk)
                 {
-                    ModelState.AddModelError(string.Empty, $"Không đủ tồn kho để mở lại đơn: {product.Name}.");
+                    await tx.RollbackAsync();
+                    ModelState.AddModelError(string.Empty, stockError ?? "Không đủ tồn kho để mở lại đơn.");
                     return Page();
                 }
             }
 
-            if (!nowCancelled)
+            order.Status = Input.Status;
+            order.PaymentStatus = Input.PaymentStatus;
+            order.PaymentMethod = Input.PaymentMethod.Trim();
+            order.CustomerName = Input.CustomerName.Trim();
+            order.CustomerPhone = Input.CustomerPhone.Trim();
+            order.ShippingAddress = Input.ShippingAddress.Trim();
+            order.OrderNote = TextHelper.Clean(Input.OrderNote);
+            if (!await DbSave.TrySaveAsync(db, ModelState))
             {
-                foreach (var line in order.Items)
-                    products.First(item => item.Id == line.ProductId).Stock -= line.Quantity;
+                await tx.RollbackAsync();
+                return Page();
             }
+
+            await tx.CommitAsync();
+            TempData["Message"] = "Đã cập nhật đơn hàng.";
+            return RedirectToPage(new { id = order.Id });
         }
 
         order.Status = Input.Status;

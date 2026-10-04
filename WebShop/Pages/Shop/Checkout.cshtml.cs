@@ -98,13 +98,32 @@ public class CheckoutModel(AppDbContext db, CartService cart) : PageModel
                 OriginalCostPrice = product.CostPrice
             });
             order.TotalAmount += unitPrice * line.Quantity;
-            product.Stock -= line.Quantity;
+        }
+
+        await using var tx = await db.Database.BeginTransactionAsync();
+        var stockLines = Lines
+            .Select(line =>
+            {
+                var product = products.First(item => item.Id == line.ProductId);
+                return (product.Id, line.Quantity, product.Name);
+            })
+            .ToList();
+        var (stockOk, stockError) = await StockInventory.TryDecrementManyAsync(db, stockLines);
+        if (!stockOk)
+        {
+            await tx.RollbackAsync();
+            ModelState.AddModelError(string.Empty, stockError ?? "Không đủ tồn kho.");
+            return Page();
         }
 
         db.Orders.Add(order);
         if (!await DbSave.TrySaveAsync(db, ModelState))
+        {
+            await tx.RollbackAsync();
             return Page();
+        }
 
+        await tx.CommitAsync();
         cart.Clear();
         TempData["OrderCode"] = order.OrderCode;
         return RedirectToPage();

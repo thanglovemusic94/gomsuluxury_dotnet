@@ -94,13 +94,34 @@ public class CreateModel(AppDbContext db) : PageModel
                 OriginalCostPrice = product.CostPrice
             });
             order.TotalAmount += unitPrice * line.Quantity;
-            product.Stock -= line.Quantity;
+        }
+
+        await using var tx = await db.Database.BeginTransactionAsync();
+        var stockLines = lines
+            .Select(line =>
+            {
+                var product = products.First(item => item.Id == line.ProductId);
+                return (product.Id, line.Quantity, product.Name);
+            })
+            .ToList();
+        var (stockOk, stockError) = await StockInventory.TryDecrementManyAsync(db, stockLines);
+        if (!stockOk)
+        {
+            await tx.RollbackAsync();
+            ModelState.AddModelError(string.Empty, stockError ?? "Không đủ tồn kho.");
+            await LoadAsync();
+            return Page();
         }
 
         db.Orders.Add(order);
         if (!await DbSave.TrySaveAsync(db, ModelState))
+        {
+            await tx.RollbackAsync();
+            await LoadAsync();
             return Page();
+        }
 
+        await tx.CommitAsync();
         TempData["Message"] = $"Đã tạo đơn {order.OrderCode}.";
         return RedirectToPage("Edit", new { id = order.Id });
     }

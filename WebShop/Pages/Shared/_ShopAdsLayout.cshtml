@@ -19,20 +19,15 @@
 	var useFullShopCss = ViewData["AdsUseFullShopCss"] as bool? == true;
 }
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" style="background-color:#fff">
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	@* Critical paint: tránh chớp nền trắng trước khi CSS ads/shop về *@
+	<style>
+		html, body { background-color: #fff; color: #2b2622; }
+	</style>
 	<title>@(ViewData["Title"] ?? siteName)</title>
-	@if (ViewData["Description"] is string description && !string.IsNullOrWhiteSpace(description))
-	{
-		<meta name="description" content="@description" />
-	}
-	<meta name="robots" content="noindex,follow" />
-	<link rel="preconnect" href="https://fonts.googleapis.com" />
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
-	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600&amp;family=Cormorant+Garamond:wght@600;700&amp;display=swap" />
-	<link rel="stylesheet" href="/ace/assets/font-awesome/4.5.0/css/font-awesome.min.css" />
 	@if (useFullShopCss)
 	{
 		@* Gift Ads: shop.css (card/gift) + chrome ads riêng — không dùng bundle (tránh trùng base) *@
@@ -49,6 +44,15 @@
 		<link rel="stylesheet" href="~/css/shop-base.css" asp-append-version="true" />
 		<link rel="stylesheet" href="~/css/shop-ads.css" asp-append-version="true" />
 	}
+	@if (ViewData["Description"] is string description && !string.IsNullOrWhiteSpace(description))
+	{
+		<meta name="description" content="@description" />
+	}
+	<meta name="robots" content="noindex,follow" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600&amp;family=Cormorant+Garamond:wght@600;700&amp;display=swap" />
+	<link rel="stylesheet" href="/ace/assets/font-awesome/4.5.0/css/font-awesome.min.css" />
 	@if (!string.IsNullOrWhiteSpace(lcp))
 	{
 		<link rel="preload" as="image" href="@lcp" fetchpriority="high" />
@@ -77,7 +81,7 @@
 		@Html.Raw(headScripts)
 	}
 </head>
-<body class="shop shop--ads">
+<body class="shop shop--ads" style="background-color:#fff">
 	<header class="shop-ads-bar">
 		<a class="shop-ads-bar__brand" href="/" title="@siteName">
 			@if (!string.IsNullOrWhiteSpace(logoUrl))

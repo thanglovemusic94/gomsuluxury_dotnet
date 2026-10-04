@@ -147,16 +147,27 @@ public class LivestreamCheckoutModel(AppDbContext db, TemporaryCartService carts
             OriginalCostPrice = product.CostPrice
         });
         order.TotalAmount = unitPrice * tracked.Quantity;
-        product.Stock -= tracked.Quantity;
+
+        await using var tx = await db.Database.BeginTransactionAsync();
+        if (!await StockInventory.TryDecrementAsync(db, product.Id, tracked.Quantity))
+        {
+            await tx.RollbackAsync();
+            ModelState.AddModelError(string.Empty, $"Không đủ tồn kho: {product.Name}.");
+            return Page();
+        }
 
         db.Orders.Add(order);
         if (!await DbSave.TrySaveAsync(db, ModelState))
+        {
+            await tx.RollbackAsync();
             return Page();
+        }
 
         tracked.Status = TemporaryCartStatuses.Ordered;
         tracked.OrderId = order.Id;
         tracked.CustomerPhone = Input.CustomerPhone;
         await db.SaveChangesAsync();
+        await tx.CommitAsync();
 
         TempData["OrderCode"] = order.OrderCode;
         return RedirectToPage(new { token });

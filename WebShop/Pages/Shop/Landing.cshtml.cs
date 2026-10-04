@@ -113,12 +113,23 @@ public class LandingModel(AppDbContext db, ShopStore shop) : PageModel
             UnitPrice = unitPrice,
             OriginalCostPrice = tracked.CostPrice
         });
-        tracked.Stock -= Input.Quantity;
+
+        await using var tx = await db.Database.BeginTransactionAsync();
+        if (!await StockInventory.TryDecrementAsync(db, tracked.Id, Input.Quantity))
+        {
+            await tx.RollbackAsync();
+            ModelState.AddModelError(string.Empty, $"Không đủ tồn kho: {tracked.Name}.");
+            return Page();
+        }
 
         db.Orders.Add(order);
         if (!await DbSave.TrySaveAsync(db, ModelState))
+        {
+            await tx.RollbackAsync();
             return Page();
+        }
 
+        await tx.CommitAsync();
         TempData["OrderCode"] = order.OrderCode;
         TempData["OrderTotal"] = order.TotalAmount;
         return RedirectToPage(new { slug });
