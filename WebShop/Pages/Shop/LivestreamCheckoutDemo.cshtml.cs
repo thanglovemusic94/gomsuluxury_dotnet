@@ -13,7 +13,8 @@ public class LivestreamCheckoutDemoModel(AppDbContext db, TemporaryCartService c
     public async Task<IActionResult> OnGetAsync()
     {
         var product = await db.Products.AsNoTracking()
-            .Where(item => item.IsVisible && item.Stock > 0)
+            .WhereListedOnShop()
+            .Where(item => item.Stock > 0)
             .OrderByDescending(item => item.Id)
             .FirstOrDefaultAsync();
 

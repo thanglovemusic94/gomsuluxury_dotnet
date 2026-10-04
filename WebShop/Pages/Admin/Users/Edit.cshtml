@@ -3,10 +3,11 @@
 @{
     ViewData["Title"] = Model.Input.Id == 0 ? "Thêm thành viên" : "Sửa thành viên";
     ViewData["Menu"] = "Users";
+	ViewData["AdminBackHref"] = "/Admin/Users";
 }
 
 <div class="page-header">
-	<h1>@ViewData["Title"]</h1>
+	<h1><partial name="_AdminBackLink" />@ViewData["Title"]</h1>
 </div>
 <partial name="_AdminAlerts" />
 

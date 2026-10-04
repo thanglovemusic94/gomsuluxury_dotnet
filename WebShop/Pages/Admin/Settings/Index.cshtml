@@ -196,7 +196,7 @@
 				}
 				@foreach (var setting in Model.Items)
 				{
-					<tr>
+					<tr data-href="/Admin/Settings/Edit/@setting.Id">
 						<td>@setting.Key</td>
 						<td>@(setting.Value is { Length: > 80 } ? setting.Value[..80] + "…" : setting.Value)</td>
 						<td>@setting.Description</td>

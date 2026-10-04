@@ -23,6 +23,7 @@ alwaysApply: false
 - Font: Be Vietnam + Cormorant + Font Awesome đều không chặn (`media=print` → `onload`).
 - JS shop: `defer`. Below-fold home: `content-visibility: auto`.
 - Slider sản phẩm: fit media bằng contain / đúng tỷ lệ — không kéo giãn full bừa.
+- Product gallery: click ảnh to → lightbox quẹt được; desktop hover ô vuông loupe zoom nhẹ; thumb ≤4 grid, >4 `shop-thumbs--strip` kéo ngang (giữ cỡ ~4/ô).
 - HtmlBlock (`Component.InvokeAsync("HtmlBlock", …)`): HTML/CSS/JS sửa được trong DB; style scoped nằm trong block khi Admin cần chỉnh (vd. YouTube facade).
 
 ## Markup

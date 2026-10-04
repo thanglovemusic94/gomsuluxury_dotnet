@@ -10,6 +10,9 @@ public class Category
 
     public string Type { get; set; } = string.Empty;
 
+    /// <summary>False = ẩn trên shop (menu/filter) và sản phẩm chỉ thuộc danh mục này cũng không hiện.</summary>
+    public bool IsVisible { get; set; } = true;
+
     public int? ParentId { get; set; }
 
     public Category? Parent { get; set; }

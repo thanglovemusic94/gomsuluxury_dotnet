@@ -3,9 +3,10 @@
 @{
     ViewData["Title"] = "Tạo đơn hàng";
     ViewData["Menu"] = "Orders";
+	ViewData["AdminBackHref"] = "/Admin/Orders";
 }
 
-<div class="page-header"><h1>Tạo đơn hàng</h1></div>
+<div class="page-header"><h1><partial name="_AdminBackLink" />Tạo đơn hàng</h1></div>
 <partial name="_AdminAlerts" />
 
 @if (Model.Products.Count == 0)

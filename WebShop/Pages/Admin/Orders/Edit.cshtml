@@ -3,10 +3,11 @@
 @{
     ViewData["Title"] = Model.Input.OrderCode;
     ViewData["Menu"] = "Orders";
+	ViewData["AdminBackHref"] = "/Admin/Orders";
 }
 
 <div class="page-header">
-	<h1>@Model.Input.OrderCode <small><i class="ace-icon fa fa-angle-double-right"></i> @Model.Input.TotalAmount.ToString("N0")</small></h1>
+	<h1><partial name="_AdminBackLink" />@Model.Input.OrderCode <small><i class="ace-icon fa fa-angle-double-right"></i> @Model.Input.TotalAmount.ToString("N0")</small></h1>
 </div>
 <partial name="_AdminAlerts" />
 

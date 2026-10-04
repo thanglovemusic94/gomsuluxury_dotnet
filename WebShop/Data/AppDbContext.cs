@@ -131,6 +131,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(category => category.Name).HasMaxLength(100).IsRequired();
             entity.Property(category => category.Slug).HasMaxLength(150).IsRequired();
             entity.Property(category => category.Type).HasMaxLength(20).IsRequired();
+            entity.Property(category => category.IsVisible).HasDefaultValue(true);
             entity.HasIndex(category => category.Slug).IsUnique();
 
             entity.HasOne(category => category.Parent)

@@ -45,7 +45,7 @@ public class IndexModel(AppDbContext db, ShopStore shop) : PageModel
         ViewData["ShopAssets"] = "home";
 
         Products = await db.Products.AsNoTracking()
-            .Where(item => item.IsVisible)
+            .WhereListedOnShop()
             .OrderByDescending(item => item.CreatedAt)
             .Take(8)
             .ToListAsync();
@@ -64,14 +64,15 @@ public class IndexModel(AppDbContext db, ShopStore shop) : PageModel
     private async Task<IReadOnlyList<Product>> LoadGiftProductsAsync()
     {
         var giftCatId = await db.Categories.AsNoTracking()
-            .Where(item => item.Type == "Product" && item.Slug == GiftLandingSeed.CategorySlug)
+            .Where(item => item.Type == "Product" && item.IsVisible && item.Slug == GiftLandingSeed.CategorySlug)
             .Select(item => (int?)item.Id)
             .FirstOrDefaultAsync();
 
         if (giftCatId is int id)
         {
             var fromCat = await db.Products.AsNoTracking()
-                .Where(item => item.IsVisible && item.ProductCategories.Any(link => link.CategoryId == id))
+                .WhereListedOnShop()
+                .Where(item => item.ProductCategories.Any(link => link.CategoryId == id))
                 .OrderByDescending(item => item.CreatedAt)
                 .Take(4)
                 .ToListAsync();
@@ -81,7 +82,8 @@ public class IndexModel(AppDbContext db, ShopStore shop) : PageModel
 
         var slugs = GiftLandingSeed.FallbackCategorySlugs;
         var fallback = await db.Products.AsNoTracking()
-            .Where(item => item.IsVisible && item.ProductCategories.Any(link => slugs.Contains(link.Category.Slug)))
+            .WhereListedOnShop()
+            .Where(item => item.ProductCategories.Any(link => link.Category.IsVisible && slugs.Contains(link.Category.Slug)))
             .OrderByDescending(item => item.CreatedAt)
             .Take(4)
             .ToListAsync();

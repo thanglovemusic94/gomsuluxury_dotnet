@@ -81,7 +81,7 @@
 				}
 				@foreach (var post in Model.Items)
 				{
-					<tr>
+					<tr data-href="/Admin/Posts/Edit/@post.Id">
 						<td class="admin-check-col">
 							<input type="checkbox" class="js-admin-row-check" name="ids" value="@post.Id" form="posts-bulk-form" />
 						</td>

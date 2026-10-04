@@ -70,7 +70,7 @@
 				}
 				@foreach (var order in Model.Items)
 				{
-					<tr>
+					<tr data-href="/Admin/Orders/Edit/@order.Id">
 						<td>@order.OrderCode</td>
 						<td>@order.OrderDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
 						<td>@order.CustomerName<br /><small>@order.CustomerPhone</small></td>

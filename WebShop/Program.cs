@@ -264,6 +264,7 @@ using (var scope = app.Services.CreateScope())
     if (seed.GetValue("LuxuryCatalog", true))
         await LuxuryCatalog.EnsureAsync(db);
     await ProductCategorySchema.EnsureAsync(db);
+    await CategorySchema.EnsureAsync(db);
     await ShopNavSeed.EnsureAsync(db);
     await HtmlBlockSeed.EnsureAsync(db);
     await GiftLandingSeed.EnsureAsync(db);

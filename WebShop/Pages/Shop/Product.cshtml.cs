@@ -85,7 +85,8 @@ public class ProductModel(AppDbContext db, CartService cart) : PageModel
     {
         Product = await db.Products
             .Include(item => item.Images)
-            .FirstOrDefaultAsync(item => item.IsVisible && item.Slug == slug);
+            .WhereListedOnShop()
+            .FirstOrDefaultAsync(item => item.Slug == slug);
         if (Product is null)
             return false;
 
@@ -95,21 +96,27 @@ public class ProductModel(AppDbContext db, CartService cart) : PageModel
             .ToListAsync();
 
         var relatedCategoryIds = await db.ProductCategories.AsNoTracking()
-            .Where(link => link.ProductId == Product.Id)
+            .Where(link => link.ProductId == Product.Id && link.Category.IsVisible)
             .Select(link => link.CategoryId)
             .ToListAsync();
         if (relatedCategoryIds.Count == 0 && Product.CategoryId > 0)
-            relatedCategoryIds = [Product.CategoryId];
+        {
+            var primaryVisible = await db.Categories.AsNoTracking()
+                .AnyAsync(item => item.Id == Product.CategoryId && item.IsVisible);
+            if (primaryVisible)
+                relatedCategoryIds = [Product.CategoryId];
+        }
 
         RelatedProducts = await db.Products.AsNoTracking()
-            .Where(item => item.IsVisible && item.Id != Product.Id &&
+            .WhereListedOnShop()
+            .Where(item => item.Id != Product.Id &&
                 item.ProductCategories.Any(link => relatedCategoryIds.Contains(link.CategoryId)))
             .OrderByDescending(item => item.CreatedAt)
             .Take(6)
             .ToListAsync();
 
         var categorySlug = await db.Categories.AsNoTracking()
-            .Where(item => item.Id == Product.CategoryId)
+            .Where(item => item.Id == Product.CategoryId && item.IsVisible)
             .Select(item => item.Slug)
             .FirstOrDefaultAsync();
         RelatedCatalogUrl = string.IsNullOrWhiteSpace(categorySlug)
@@ -131,7 +138,7 @@ public class ProductModel(AppDbContext db, CartService cart) : PageModel
     }
 
     private Task<Product?> Visible(string slug) =>
-        db.Products.AsNoTracking().FirstOrDefaultAsync(item => item.IsVisible && item.Slug == slug);
+        db.Products.AsNoTracking().WhereListedOnShop().FirstOrDefaultAsync(item => item.Slug == slug);
 
     public class ReviewInput
     {

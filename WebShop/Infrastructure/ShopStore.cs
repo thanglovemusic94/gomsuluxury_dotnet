@@ -183,9 +183,31 @@ public class ShopStore(AppDbContext db, CartService cart)
 
     private async Task<List<CategoryNavItem>> BuildCategoryNavAsync(IReadOnlyList<MenuNode> children)
     {
-        var slugs = children.Select(item => SlugFromCategoryUrl(item.Url)).Where(item => item is not null).Cast<string>().ToList();
-        var icons = await CategoryIconsAsync(slugs);
-        return children.Select(item =>
+        var slugs = children
+            .Select(item => SlugFromCategoryUrl(item.Url))
+            .Where(slug => slug is not null)
+            .Cast<string>()
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        // Menu Header có thể còn link danh mục đã ẩn — chỉ giữ mục đang IsVisible (hoặc URL không phải /danh-muc/).
+        var visibleSlugs = slugs.Count == 0
+            ? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            : (await db.Categories.AsNoTracking()
+                .Where(item => item.Type == "Product" && item.IsVisible && slugs.Contains(item.Slug))
+                .Select(item => item.Slug)
+                .ToListAsync())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var filtered = children.Where(item =>
+        {
+            var slug = SlugFromCategoryUrl(item.Url);
+            return slug is null || visibleSlugs.Contains(slug);
+        }).ToList();
+
+        var icons = await CategoryIconsAsync(
+            filtered.Select(item => SlugFromCategoryUrl(item.Url)).Where(slug => slug is not null).Cast<string>().ToList());
+        return filtered.Select(item =>
         {
             var slug = SlugFromCategoryUrl(item.Url);
             icons.TryGetValue(slug ?? "", out var icon);
@@ -196,7 +218,7 @@ public class ShopStore(AppDbContext db, CartService cart)
     private async Task<List<CategoryNavItem>> BuildCategoryNavFromDbAsync()
     {
         var rows = await db.Categories.AsNoTracking()
-            .Where(item => item.Type == "Product" && item.ParentId == null)
+            .Where(item => item.Type == "Product" && item.IsVisible && item.ParentId == null)
             .OrderBy(item => item.Name)
             .Select(item => new
             {
@@ -224,7 +246,7 @@ public class ShopStore(AppDbContext db, CartService cart)
             return [];
 
         var rows = await db.ProductCategories.AsNoTracking()
-            .Where(link => link.Product.IsVisible && slugs.Contains(link.Category.Slug))
+            .Where(link => link.Category.IsVisible && link.Product.IsVisible && slugs.Contains(link.Category.Slug))
             .OrderByDescending(link => link.Product.CreatedAt)
             .Select(link => new { link.Category.Slug, link.Product.ImageUrl })
             .ToListAsync();

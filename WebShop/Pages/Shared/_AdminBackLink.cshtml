@@ -1,0 +1,10 @@
+@{
+	var href = ViewData["AdminBackHref"] as string;
+	var label = ViewData["AdminBackLabel"] as string ?? "Quay lại";
+}
+@if (!string.IsNullOrWhiteSpace(href))
+{
+	<a class="btn btn-sm btn-default admin-back-btn" href="@href" title="@label">
+		<i class="ace-icon fa fa-arrow-left"></i> @label
+	</a>
+}

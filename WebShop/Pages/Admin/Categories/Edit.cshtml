@@ -3,9 +3,10 @@
 @{
     ViewData["Title"] = Model.Input.Id == 0 ? "Thêm danh mục" : "Sửa danh mục";
     ViewData["Menu"] = "Categories";
+	ViewData["AdminBackHref"] = "/Admin/Categories";
 }
 
-<div class="page-header"><h1>@ViewData["Title"]</h1></div>
+<div class="page-header"><h1><partial name="_AdminBackLink" />@ViewData["Title"]</h1></div>
 <partial name="_AdminAlerts" />
 
 <form method="post" class="form-horizontal">
@@ -45,6 +46,15 @@
 							<option value="@parent.Id">@parent.Label</option>
 						}
 					</select>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Hiển thị</label>
+				<div class="col-sm-9">
+					<label class="checkbox-inline">
+						<input asp-for="Input.IsVisible" /> Hiện trên cửa hàng
+					</label>
+					<span class="help-block">Tắt thì danh mục biến mất khỏi menu/filter; sản phẩm chỉ thuộc danh mục này cũng không hiện trên shop.</span>
 				</div>
 			</div>
 			<div class="clearfix form-actions">

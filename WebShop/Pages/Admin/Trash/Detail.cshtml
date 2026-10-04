@@ -3,10 +3,12 @@
 @{
 	ViewData["Title"] = "Chi tiết thùng rác";
 	ViewData["Menu"] = "Trash";
+	ViewData["AdminBackHref"] = "/Admin/Trash";
 }
 
 <div class="page-header">
 	<h1>
+		<partial name="_AdminBackLink" />
 		Chi tiết đã xóa
 		<small><i class="ace-icon fa fa-angle-double-right"></i> @AuditEntities.Label(Model.Type) #@Model.Id</small>
 	</h1>

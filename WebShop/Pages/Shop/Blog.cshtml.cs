@@ -13,7 +13,7 @@ public class BlogModel(AppDbContext db) : PageModel
     {
         Posts = await db.Posts.AsNoTracking()
             .Include(item => item.Category)
-            .Where(item => item.IsPublished)
+            .Where(item => item.IsPublished && item.Category.IsVisible)
             .OrderByDescending(item => item.CreatedAt)
             .ToListAsync();
     }

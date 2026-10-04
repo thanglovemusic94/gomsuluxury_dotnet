@@ -3,7 +3,7 @@
 	var menu = Model.Menu;
 }
 <li class="menu-tree__item" data-id="@menu.Id">
-	<div class="menu-tree__row @(menu.IsActive ? "" : "is-inactive")">
+	<div class="menu-tree__row js-admin-row-link @(menu.IsActive ? "" : "is-inactive")" data-href="/Admin/Menus/Edit/@menu.Id">
 		<span class="menu-tree__handle" title="Kéo để sắp xếp"><i class="fa fa-bars"></i></span>
 		<div class="menu-tree__meta">
 			<strong class="menu-tree__name">@menu.Name</strong>

@@ -73,16 +73,21 @@
 							{
 								var slide = gallery[i];
 								<div class="shop-gallery__slide" data-gallery-slide="@i">
-									<img class="shop-gallery__photo"
-									     src="@slide.Large"
-									     srcset="@slide.SrcSet"
-									     sizes="(max-width: 767px) 100vw, (max-width: 991px) 50vw, min(640px, 48vw)"
-									     alt="@slide.Alt"
-									     width="1200"
-									     height="1200"
-									     fetchpriority="@(i == 0 ? "high" : "auto")"
-									     loading="@(i == 0 ? "eager" : "lazy")"
-									     decoding="async" />
+									<button type="button"
+									        class="shop-gallery__zoom"
+									        data-gallery-open="@i"
+									        aria-label="Xem ảnh lớn @(i + 1)">
+										<img class="shop-gallery__photo"
+										     src="@slide.Large"
+										     srcset="@slide.SrcSet"
+										     sizes="(max-width: 767px) 100vw, (max-width: 991px) 50vw, min(640px, 48vw)"
+										     alt="@slide.Alt"
+										     width="1200"
+										     height="1200"
+										     fetchpriority="@(i == 0 ? "high" : "auto")"
+										     loading="@(i == 0 ? "eager" : "lazy")"
+										     decoding="async" />
+									</button>
 								</div>
 							}
 						</div>
@@ -113,7 +118,7 @@
 			</div>
 			@if (gallery.Count > 1)
 			{
-				<div class="shop-thumbs" data-gallery-thumbs>
+				<div class="shop-thumbs @(gallery.Count > 4 ? "shop-thumbs--strip" : null)" data-gallery-thumbs>
 					@for (var i = 0; i < gallery.Count; i++)
 					{
 						var slide = gallery[i];
@@ -129,6 +134,38 @@
 							     loading="lazy"
 							     decoding="async" />
 						</button>
+					}
+				</div>
+			}
+
+			@if (gallery.Count > 0)
+			{
+				<div class="shop-lightbox" data-gallery-lightbox hidden>
+					<button type="button" class="shop-lightbox__close" data-lightbox-close aria-label="Đóng">×</button>
+					@if (gallery.Count > 1)
+					{
+						<button type="button" class="shop-lightbox__nav shop-lightbox__nav--prev" data-lightbox-prev aria-label="Ảnh trước"><i class="fa fa-angle-left" aria-hidden="true"></i></button>
+						<button type="button" class="shop-lightbox__nav shop-lightbox__nav--next" data-lightbox-next aria-label="Ảnh sau"><i class="fa fa-angle-right" aria-hidden="true"></i></button>
+					}
+					<div class="shop-lightbox__viewport" data-lightbox-viewport>
+						<div class="shop-lightbox__track">
+							@for (var i = 0; i < gallery.Count; i++)
+							{
+								var slide = gallery[i];
+								<div class="shop-lightbox__slide" data-lightbox-slide="@i">
+									<img src="@slide.Large"
+									     srcset="@slide.SrcSet"
+									     sizes="100vw"
+									     alt="@slide.Alt"
+									     loading="lazy"
+									     decoding="async" />
+								</div>
+							}
+						</div>
+					</div>
+					@if (gallery.Count > 1)
+					{
+						<div class="shop-lightbox__count" data-lightbox-count>1 / @gallery.Count</div>
 					}
 				</div>
 			}

@@ -3,15 +3,16 @@
 @{
 	ViewData["Title"] = "Chi tiết block";
 	ViewData["Menu"] = "Blocks";
+	ViewData["AdminBackHref"] = "/Admin/Blocks";
 	var item = Model.Item;
 }
 
 <div class="page-header">
 	<h1>
+		<partial name="_AdminBackLink" />
 		@item.Title
 		<small><i class="ace-icon fa fa-angle-double-right"></i> <code>@item.Key</code></small>
 		<a class="btn btn-sm btn-info pull-right" href="/Admin/Blocks/Edit/@item.Id" style="margin-left:8px;">Sửa</a>
-		<a class="btn btn-sm btn-default pull-right" href="/Admin/Blocks">Danh sách</a>
 	</h1>
 </div>
 

@@ -56,7 +56,7 @@
 			}
 			else foreach (var item in Model.Items)
 			{
-				<tr>
+				<tr data-href="/Admin/Trash/Detail?Type=@Uri.EscapeDataString(item.Type)&Id=@item.Id">
 					<td><span class="label label-info">@AuditEntities.Label(item.Type)</span></td>
 					<td>
 						<a href="/Admin/Trash/Detail?Type=@Uri.EscapeDataString(item.Type)&Id=@item.Id">#@item.Id · @item.Title</a>

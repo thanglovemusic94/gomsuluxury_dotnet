@@ -37,7 +37,7 @@
 				@foreach (var row in Model.Items)
 				{
 					var item = row.Page;
-					<tr>
+					<tr data-href="/Admin/Landings/Edit/@item.Id">
 						<td>@item.Name</td>
 						<td>
 							<code>/lp/@item.Slug</code>

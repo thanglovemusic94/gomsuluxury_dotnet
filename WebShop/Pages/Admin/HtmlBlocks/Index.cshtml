@@ -51,7 +51,7 @@
 				@foreach (var item in Model.Items)
 				{
 					var excerpt = Plain(item.Content);
-					<tr>
+					<tr data-href="/Admin/Blocks/Edit/@item.Id">
 						<td><code>@item.Key</code></td>
 						<td>@item.Title</td>
 						<td>

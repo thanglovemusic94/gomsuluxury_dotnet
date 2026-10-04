@@ -10,7 +10,7 @@ public class CategoryModel(AppDbContext db) : PageModel
     public async Task<IActionResult> OnGetAsync(string slug)
     {
         var exists = await db.Categories.AsNoTracking()
-            .AnyAsync(item => item.Type == "Product" && item.Slug == slug);
+            .AnyAsync(item => item.Type == "Product" && item.IsVisible && item.Slug == slug);
         if (!exists)
             return NotFound();
 

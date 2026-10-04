@@ -93,12 +93,12 @@ public class CatalogModel(AppDbContext db) : PageModel
             PageNumber = 1;
 
         var categories = await db.Categories.AsNoTracking()
-            .Where(item => item.Type == "Product")
+            .Where(item => item.Type == "Product" && item.IsVisible)
             .OrderBy(item => item.Name)
             .ToListAsync();
 
         var productCounts = await db.ProductCategories.AsNoTracking()
-            .Where(link => link.Product.IsVisible)
+            .Where(link => link.Category.IsVisible && link.Product.IsVisible)
             .GroupBy(link => link.CategoryId)
             .Select(group => new { CategoryId = group.Key, Count = group.Count() })
             .ToDictionaryAsync(item => item.CategoryId, item => item.Count);
@@ -113,12 +113,19 @@ public class CatalogModel(AppDbContext db) : PageModel
             Collect(categories, selected.Id, categoryIds);
             Title = selected.Name;
         }
+        else if (!string.IsNullOrWhiteSpace(Cat))
+        {
+            // Danh mục ẩn / không tồn tại: không liệt kê sản phẩm theo slug đó.
+            Title = "Sản phẩm";
+        }
         else if (!string.IsNullOrWhiteSpace(Q))
         {
             Title = "Tìm: " + Q.Trim();
         }
 
-        var query = db.Products.AsNoTracking().Where(item => item.IsVisible);
+        var query = db.Products.AsNoTracking().WhereListedOnShop();
+        if (!string.IsNullOrWhiteSpace(Cat) && selected is null)
+            query = query.Where(_ => false);
         var keyword = Q?.Trim();
         if (!string.IsNullOrWhiteSpace(keyword))
             query = query.Where(item => item.Name.Contains(keyword));
@@ -150,7 +157,7 @@ public class CatalogModel(AppDbContext db) : PageModel
             return;
 
         var iconRows = await db.ProductCategories.AsNoTracking()
-            .Where(link => link.Product.IsVisible && link.Product.ImageUrl != null && link.Product.ImageUrl != "")
+            .Where(link => link.Category.IsVisible && link.Product.IsVisible && link.Product.ImageUrl != null && link.Product.ImageUrl != "")
             .OrderByDescending(link => link.Product.CreatedAt)
             .Select(link => new { link.CategoryId, link.Product.ImageUrl })
             .ToListAsync();

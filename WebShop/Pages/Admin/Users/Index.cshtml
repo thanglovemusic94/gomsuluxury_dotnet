@@ -65,7 +65,7 @@
 				}
 				@foreach (var user in Model.Items)
 				{
-					<tr>
+					<tr data-href="/Admin/Users/Edit/@user.Id">
 						<td>@user.Username</td>
 						<td>@user.FullName</td>
 						<td>@user.Email</td>

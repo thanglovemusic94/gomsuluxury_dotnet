@@ -20,6 +20,25 @@ public class IndexModel(AppDbContext db) : PageModel
             .ToListAsync();
     }
 
+    public async Task<IActionResult> OnPostToggleVisibleAsync(int id)
+    {
+        var category = await db.Categories.FindAsync(id);
+        if (category is null)
+            return NotFound();
+
+        category.IsVisible = !category.IsVisible;
+        if (!await DbSave.TrySaveAsync(db, ModelState))
+        {
+            TempData["Error"] = "Không đổi được trạng thái hiển thị.";
+            return RedirectToPage();
+        }
+
+        TempData["Message"] = category.IsVisible
+            ? $"Đã hiện danh mục «{category.Name}» trên cửa hàng."
+            : $"Đã ẩn danh mục «{category.Name}» — sản phẩm chỉ thuộc mục này cũng không hiện trên shop.";
+        return RedirectToPage();
+    }
+
     public async Task<IActionResult> OnPostDeleteAsync(int id)
     {
         var category = await db.Categories.FindAsync(id);

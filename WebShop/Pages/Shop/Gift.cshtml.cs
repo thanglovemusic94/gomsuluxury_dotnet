@@ -47,13 +47,14 @@ public class GiftModel(AppDbContext db, ShopStore shop) : PageModel
             : "tel:" + Hotline.Replace(" ", "", StringComparison.Ordinal);
 
         var giftCat = await db.Categories.AsNoTracking()
-            .FirstOrDefaultAsync(item => item.Type == "Product" && item.Slug == GiftLandingSeed.CategorySlug);
+            .FirstOrDefaultAsync(item => item.Type == "Product" && item.IsVisible && item.Slug == GiftLandingSeed.CategorySlug);
 
         List<Product> products = [];
         if (giftCat is not null)
         {
             products = await db.Products.AsNoTracking()
-                .Where(item => item.IsVisible && item.ProductCategories.Any(link => link.CategoryId == giftCat.Id))
+                .WhereListedOnShop()
+                .Where(item => item.ProductCategories.Any(link => link.CategoryId == giftCat.Id))
                 .OrderByDescending(item => item.CreatedAt)
                 .Take(12)
                 .ToListAsync();
@@ -64,7 +65,8 @@ public class GiftModel(AppDbContext db, ShopStore shop) : PageModel
         {
             var slugs = GiftLandingSeed.FallbackCategorySlugs;
             products = await db.Products.AsNoTracking()
-                .Where(item => item.IsVisible && item.ProductCategories.Any(link => slugs.Contains(link.Category.Slug)))
+                .WhereListedOnShop()
+                .Where(item => item.ProductCategories.Any(link => link.Category.IsVisible && slugs.Contains(link.Category.Slug)))
                 .OrderByDescending(item => item.CreatedAt)
                 .Take(8)
                 .ToListAsync();
@@ -73,7 +75,7 @@ public class GiftModel(AppDbContext db, ShopStore shop) : PageModel
         if (products.Count == 0)
         {
             products = await db.Products.AsNoTracking()
-                .Where(item => item.IsVisible)
+                .WhereListedOnShop()
                 .OrderByDescending(item => item.CreatedAt)
                 .Take(8)
                 .ToListAsync();

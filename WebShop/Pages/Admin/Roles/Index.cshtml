@@ -28,7 +28,7 @@
 				}
 				@foreach (var role in Model.Items)
 				{
-					<tr>
+					<tr data-href="/Admin/Roles/Edit/@role.Id">
 						<td>@role.Name</td>
 						<td>@role.Description</td>
 						<td class="text-right">

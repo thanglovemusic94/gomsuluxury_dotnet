@@ -16,7 +16,7 @@ public class PostPageModel(AppDbContext db) : PageModel
         Post = await db.Posts.AsNoTracking()
             .Include(item => item.Category)
             .Include(item => item.Author)
-            .FirstOrDefaultAsync(item => item.IsPublished && item.Slug == slug);
+            .FirstOrDefaultAsync(item => item.IsPublished && item.Category.IsVisible && item.Slug == slug);
         if (Post is null)
             return NotFound();
 

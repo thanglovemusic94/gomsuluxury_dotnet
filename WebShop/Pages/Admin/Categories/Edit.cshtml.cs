@@ -28,7 +28,8 @@ public class EditModel(AppDbContext db) : PageModel
                 Name = category.Name,
                 Slug = category.Slug,
                 Type = category.Type,
-                ParentId = category.ParentId
+                ParentId = category.ParentId,
+                IsVisible = category.IsVisible
             };
         }
 
@@ -85,6 +86,7 @@ public class EditModel(AppDbContext db) : PageModel
         categoryEntity.Slug = slug;
         categoryEntity.Type = Input.Type;
         categoryEntity.ParentId = Input.ParentId;
+        categoryEntity.IsVisible = Input.IsVisible;
         if (!await DbSave.TrySaveAsync(db, ModelState))
             return Page();
 
@@ -146,5 +148,7 @@ public class EditModel(AppDbContext db) : PageModel
         public string Type { get; set; } = "Product";
 
         public int? ParentId { get; set; }
+
+        public bool IsVisible { get; set; } = true;
     }
 }

@@ -45,7 +45,7 @@
 				}
 				@foreach (var item in Model.Items)
 				{
-					<tr>
+					<tr data-href="/Admin/Pages/Edit/@item.Id">
 						<td class="admin-check-col">
 							<input type="checkbox" class="js-admin-row-check" name="ids" value="@item.Id" form="pages-bulk-form" />
 						</td>

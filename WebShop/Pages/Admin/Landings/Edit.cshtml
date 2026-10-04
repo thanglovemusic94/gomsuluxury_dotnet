@@ -3,10 +3,11 @@
 @{
 	ViewData["Title"] = Model.Input.Id == 0 ? "Thêm Landing Page" : "Sửa Landing Page";
 	ViewData["Menu"] = "Landings";
+	ViewData["AdminBackHref"] = "/Admin/Landings";
 	var offerLocal = Model.Input.OfferEndsAt?.ToString("yyyy-MM-ddTHH:mm");
 }
 
-<div class="page-header"><h1>@ViewData["Title"]</h1></div>
+<div class="page-header"><h1><partial name="_AdminBackLink" />@ViewData["Title"]</h1></div>
 <partial name="_AdminAlerts" />
 
 <form method="post" class="form-horizontal">

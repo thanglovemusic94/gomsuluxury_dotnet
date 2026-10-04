@@ -95,6 +95,18 @@ body.no-skin .breadcrumb { font-size: 13.5px; }
 .admin-check-col { width: 36px; text-align: center; vertical-align: middle !important; }
 .admin-check-col input { margin: 0; }
 
+/* Click cả dòng list → Edit/Detail */
+tr[data-href],
+.js-admin-row-link[data-href] { cursor: pointer; }
+tr[data-href]:hover > td { background-color: #f3f8fc !important; }
+.menu-tree__row.js-admin-row-link[data-href]:hover { background-color: #f3f8fc; }
+.page-header h1 .admin-back-btn {
+	margin-right: 10px;
+	vertical-align: middle;
+	position: relative;
+	top: -2px;
+}
+
 /* Ảnh trong danh sách admin */
 body.no-skin .admin-list-thumb,
 .admin-list-thumb {

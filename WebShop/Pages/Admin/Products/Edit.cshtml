@@ -3,9 +3,10 @@
 @{
     ViewData["Title"] = Model.Input.Id == 0 ? "Thêm sản phẩm" : "Sửa sản phẩm";
     ViewData["Menu"] = "Products";
+	ViewData["AdminBackHref"] = "/Admin/Products";
 }
 
-<div class="page-header"><h1>@ViewData["Title"]</h1></div>
+<div class="page-header"><h1><partial name="_AdminBackLink" />@ViewData["Title"]</h1></div>
 <partial name="_AdminAlerts" />
 
 @if (Model.Categories.Count == 0)
