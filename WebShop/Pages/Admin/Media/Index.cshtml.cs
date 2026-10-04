@@ -6,7 +6,7 @@ using WebShop.Infrastructure;
 
 namespace WebShop.Pages.Admin.Media;
 
-public class IndexModel(MediaStorage media, MediaUsageService usage, AuditService audit, IOptions<MediaOptions> mediaOptions) : PageModel
+public class IndexModel(MediaStorage media, MediaUsageService usage, AuditService audit, MediaFolderService folders, IOptions<MediaOptions> mediaOptions) : PageModel
 {
     [BindProperty(SupportsGet = true)]
     public string Type { get; set; } = "Images";
@@ -28,6 +28,14 @@ public class IndexModel(MediaStorage media, MediaUsageService usage, AuditServic
 
     public MediaPageResult PageData { get; private set; } = new();
 
+    public IReadOnlyList<MediaFolderEntry> FolderList { get; private set; } = [];
+
+    public IReadOnlyList<MediaFolderEntry> ChildFolders { get; private set; } = [];
+
+    public int DeleteFolderFileCount { get; private set; }
+
+    public int DeleteFolderSubfolderCount { get; private set; }
+
     public Dictionary<int, int> UsageCounts { get; private set; } = new();
 
     public long MaxUploadBytes => mediaOptions.Value.MaxUploadBytes;
@@ -35,6 +43,8 @@ public class IndexModel(MediaStorage media, MediaUsageService usage, AuditServic
     public async Task OnGetAsync(CancellationToken ct)
     {
         PageSize = AdminPaging.NormalizeSize(PageSize);
+        FolderList = await folders.ListAsync(ct);
+        ChildFolders = MediaFolderService.ImmediateChildren(FolderList, Folder);
         PageData = await media.ListPagedAsync(new MediaQuery
         {
             Type = Type,
@@ -46,6 +56,10 @@ public class IndexModel(MediaStorage media, MediaUsageService usage, AuditServic
         }, ct);
         PageNumber = PageData.Page;
         PageSize = PageData.PageSize;
+
+        var impact = await folders.GetDeleteImpactAsync(Folder, ct);
+        DeleteFolderFileCount = impact.Files;
+        DeleteFolderSubfolderCount = impact.Subfolders;
 
         var ids = PageData.Items.Where(item => item.Id > 0).Select(item => item.Id).ToList();
         UsageCounts = await usage.CountUsagesAsync(ids, ct);
@@ -68,6 +82,58 @@ public class IndexModel(MediaStorage media, MediaUsageService usage, AuditServic
 
         var items = await usage.GetUsagesAsync(id, ct);
         return new JsonResult(items, SeoJsonOptions);
+    }
+
+    public async Task<IActionResult> OnPostCreateFolderAsync(string? newFolderName, CancellationToken ct)
+    {
+        var parent = MediaFolders.Normalize(Folder);
+        var (ok, key, error) = await folders.CreateAsync(newFolderName, parent, ct);
+        TempData[ok ? "Message" : "Error"] = ok
+            ? $"Đã tạo thư mục «{MediaFolders.Label(key)}»."
+            : error ?? "Tạo thư mục thất bại.";
+        return RedirectToPage(KeepList(1, ok && !string.IsNullOrWhiteSpace(key) ? key : parent));
+    }
+
+    public async Task<IActionResult> OnPostDeleteFolderAsync(CancellationToken ct)
+    {
+        var target = MediaFolders.Normalize(Folder);
+        var (ok, parent, files, subfolders, error) = await folders.DeleteAsync(
+            target, User.Identity?.Name, ct);
+        if (ok)
+        {
+            TempData["Message"] =
+                $"Đã xóa «{MediaFolders.Label(target)}»" +
+                (subfolders > 0 ? $", {subfolders} thư mục con" : "") +
+                (files > 0 ? $", {files} file vào thùng rác" : "") +
+                ".";
+            await audit.LogAsync(AuditActions.SoftDelete, AuditEntities.Media, 0, null,
+                $"Xóa thư mục media «{MediaFolders.Label(target)}»",
+                $"files={files}; subfolders={subfolders}", ct);
+            return RedirectToPage(KeepList(1, parent ?? MediaFolders.All));
+        }
+
+        TempData["Error"] = error ?? "Xóa thư mục thất bại.";
+        return RedirectToPage(KeepList());
+    }
+
+    public async Task<IActionResult> OnPostRenameFolderAsync(string? newFolderName, CancellationToken ct)
+    {
+        var target = MediaFolders.Normalize(Folder);
+        var (ok, newKey, error) = await folders.RenameAsync(target, newFolderName, ct);
+        TempData[ok ? "Message" : "Error"] = ok
+            ? $"Đã đổi tên thư mục → «{MediaFolders.Label(newKey)}»."
+            : error ?? "Đổi tên thư mục thất bại.";
+        return RedirectToPage(KeepList(1, ok && !string.IsNullOrWhiteSpace(newKey) ? newKey : target));
+    }
+
+    public async Task<IActionResult> OnPostMoveFolderAsync(string? targetParent, CancellationToken ct)
+    {
+        var source = MediaFolders.Normalize(Folder);
+        var (ok, newKey, error) = await folders.MoveAsync(source, targetParent, ct);
+        TempData[ok ? "Message" : "Error"] = ok
+            ? $"Đã chuyển thư mục → «{MediaFolders.Label(newKey)}»."
+            : error ?? "Di chuyển thư mục thất bại.";
+        return RedirectToPage(KeepList(1, ok && !string.IsNullOrWhiteSpace(newKey) ? newKey : source));
     }
 
     public async Task<IActionResult> OnPostUploadAsync(IFormFile? file, string? alt, string? folder, CancellationToken ct)
@@ -122,6 +188,53 @@ public class IndexModel(MediaStorage media, MediaUsageService usage, AuditServic
         var (ok, error) = await media.UpdateFolderAsync(id, folder, ct);
         TempData[ok ? "Message" : "Error"] = ok ? "Đã đổi thư mục." : error;
         return RedirectToPage(KeepList());
+    }
+
+    public async Task<IActionResult> OnPostRenameAsync(int id, string? newName, CancellationToken ct)
+    {
+        var (ok, error) = await media.RenameAsync(id, newName, ct);
+        TempData[ok ? "Message" : "Error"] = ok ? "Đã đổi tên file." : error ?? "Đổi tên thất bại.";
+        return RedirectToPage(KeepList());
+    }
+
+    public async Task<IActionResult> OnPostCopyAsync(int id, string? folder, CancellationToken ct)
+    {
+        var dest = MediaFolders.Normalize(folder);
+        if (dest == MediaFolders.All)
+            dest = MediaFolders.Other;
+        var (ok, error) = await media.CopyToFolderAsync(id, dest, ct);
+        TempData[ok ? "Message" : "Error"] = ok
+            ? $"Đã sao chép sang «{MediaFolders.Label(dest)}»."
+            : error ?? "Sao chép thất bại.";
+        return RedirectToPage(KeepList(1, ok ? dest : null));
+    }
+
+    public async Task<IActionResult> OnPostBulkCopyAsync(int[]? ids, string? folder, CancellationToken ct)
+    {
+        ids ??= [];
+        if (ids.Length == 0)
+        {
+            TempData["Error"] = "Chưa chọn ảnh.";
+            return RedirectToPage(KeepList());
+        }
+
+        var dest = MediaFolders.Normalize(folder);
+        if (dest == MediaFolders.All)
+            dest = MediaFolders.Other;
+
+        var okCount = 0;
+        string? lastError = null;
+        foreach (var id in ids.Distinct())
+        {
+            var (ok, error) = await media.CopyToFolderAsync(id, dest, ct);
+            if (ok) okCount++;
+            else lastError = error;
+        }
+
+        TempData[okCount > 0 ? "Message" : "Error"] = okCount > 0
+            ? $"Đã sao chép {okCount}/{ids.Length} file sang «{MediaFolders.Label(dest)}»."
+            : lastError ?? "Sao chép thất bại.";
+        return RedirectToPage(KeepList(1, dest));
     }
 
     public async Task<IActionResult> OnPostBulkFolderAsync(int[]? ids, string? folder, CancellationToken ct)

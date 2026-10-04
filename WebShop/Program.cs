@@ -42,6 +42,7 @@ builder.Services.Configure<SeoOptions>(builder.Configuration.GetSection(SeoOptio
 builder.Services.AddScoped<SiteSeoService>();
 builder.Services.AddSingleton<MediaStorage>();
 builder.Services.AddSingleton<MediaUsageService>();
+builder.Services.AddScoped<MediaFolderService>();
 builder.Services.AddHostedService<MediaGarbageCollector>();
 builder.Services.AddShopImageSharp();
 builder.Services.AddScoped<HtmlBlockService>();

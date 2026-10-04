@@ -11,7 +11,8 @@ alwaysApply: false
 - Route dưới `/Admin/...`. Giữ `[Authorize]` / kiểm tra role hiện có.
 - List: paging qua helper sẵn; thumb list theo token size trong `admin.css` (đổi CSS/Razor cần restart).
 - Soft-delete + bulk: checkbox qua `admin-bulk.js` và `AdminContentDelete` — soft vào Thùng rác; hard chỉ nơi Trash đã làm. Nạp `admin-bulk.js` khi `ViewData["AdminAssets"]` chứa `bulk`.
-- Media Admin: grid thumbnail + drawer chi tiết (`admin-media.js`); bulk đổi thư mục/xóa; upload kéo-thả + progress; lọc thiếu Alt.
+- Media Admin: grid thumbnail + drawer chi tiết (`admin-media.js`); bulk đổi thư mục / sao chép / xóa; drawer đổi tên file + chuyển/sao chép; upload kéo-thả + progress; lọc thiếu Alt; New Subfolder / Đổi tên / Chuyển / Xóa thư mục cascade (cùng `MediaFolderService`); lưới hiện thư mục con trực tiếp.
+- Picker CKEditor (`/Admin/CkFinder/Browse`): UX kiểu CKFinder — Ctrl/⌘ multi-select; toolbar Chọn / Choose Resized / Upload nhiều / New Subfolder / Đổi tên·Chuyển·Xóa thư mục custom (cascade) / View / Download / Sửa / Copy·Move / Rename / Delete file. Thư mục built-in + custom (`MediaFolderService` / `Media.CustomFolders`); sidebar cây có indent; lưới nội dung hiện thư mục con trực tiếp + ảnh.
 - Asset theo trang: `ViewData["AdminAssets"]` (token cách nhau bởi space). `seo` = `admin-seo-fields.js` (partial `_SeoFields` tự gắn); `bulk` = `admin-bulk.js`. Editor/media/menus vẫn qua `@section Scripts` từng trang. ACE + `admin.css` giữ global Admin.
 
 ## Menu

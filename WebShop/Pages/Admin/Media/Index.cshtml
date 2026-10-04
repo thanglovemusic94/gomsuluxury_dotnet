@@ -6,6 +6,7 @@
 	ViewData["Menu"] = "Media";
 	var data = Model.PageData;
 	var folder = MediaFolders.Normalize(Model.Folder);
+	var canDeleteFolder = folder != MediaFolders.All && !MediaFolders.IsBuiltIn(folder);
 	string SizeLabel(long bytes) => bytes < 1024 * 1024
 		? $"{bytes / 1024.0:0.#} KB"
 		: $"{bytes / (1024.0 * 1024):0.##} MB";
@@ -48,17 +49,34 @@
 							<span class="badge badge-info pull-right">@(data.FolderCounts.GetValueOrDefault(MediaFolders.All))</span>
 						</a>
 					</li>
-					@foreach (var item in MediaFolders.Items)
+					@foreach (var item in Model.FolderList)
 					{
 						<li class="@(folder == item.Key ? "active" : null)">
-							<a href="@FolderUrl(item.Key)">
-								<i class="menu-icon fa fa-folder-o"></i>
+							<a href="@FolderUrl(item.Key)" style="padding-left:@(12 + Math.Max(0, item.Depth) * 12)px">
+								<i class="menu-icon fa @(item.Depth > 0 ? "fa-folder-o" : "fa-folder")"></i>
 								@item.Label
 								<span class="badge pull-right">@(data.FolderCounts.GetValueOrDefault(item.Key))</span>
 							</a>
 						</li>
 					}
 				</ul>
+				<div class="media-side__actions" style="padding:10px 12px;border-top:1px solid #eee;">
+					<button type="button" class="btn btn-xs btn-default btn-block" id="mediaNewFolderBtn" style="margin-bottom:6px;">
+						<i class="fa fa-folder-o"></i> Thư mục con
+					</button>
+					<button type="button" class="btn btn-xs btn-default btn-block" id="mediaRenameFolderBtn" @(canDeleteFolder ? null : "disabled") style="margin-bottom:6px;"
+							title="Đổi tên thư mục đang chọn">
+						<i class="fa fa-font"></i> Đổi tên thư mục
+					</button>
+					<button type="button" class="btn btn-xs btn-default btn-block" id="mediaMoveFolderBtn" @(canDeleteFolder ? null : "disabled") style="margin-bottom:6px;"
+							title="Di chuyển thư mục đang chọn">
+						<i class="fa fa-share"></i> Chuyển thư mục
+					</button>
+					<button type="button" class="btn btn-xs btn-danger btn-block" id="mediaDeleteFolderBtn" @(canDeleteFolder ? null : "disabled")
+							title="@(canDeleteFolder ? "Xóa thư mục + con + file (thùng rác)" : "Chỉ xóa thư mục tùy chỉnh")">
+						<i class="fa fa-trash"></i> Xóa thư mục
+					</button>
+				</div>
 			</div></div>
 		</div>
 	</div>
@@ -70,11 +88,11 @@
 				<div class="form-inline" style="margin-bottom:10px;">
 					<label style="margin-right:8px;">Thư mục đích</label>
 					<select id="mediaUploadFolder" class="form-control input-sm">
-						@foreach (var item in MediaFolders.Items)
+						@foreach (var item in Model.FolderList)
 						{
 							var selected = folder == item.Key || (folder == MediaFolders.All && item.Key == MediaFolders.Other);
-							if (selected) { <option value="@item.Key" selected>@item.Label</option> }
-							else { <option value="@item.Key">@item.Label</option> }
+							if (selected) { <option value="@item.Key" selected>@item.IndentedLabel</option> }
+							else { <option value="@item.Key">@item.IndentedLabel</option> }
 						}
 					</select>
 					<input type="text" id="mediaUploadAlt" class="form-control input-sm" maxlength="255" placeholder="Alt SEO (tuỳ chọn)" style="min-width:200px;margin-left:8px;" />
@@ -136,15 +154,21 @@
 				}
 				<partial name="_AdminPager" model="mediaPager" />
 
-				@if (data.Items.Count == 0)
+				@{
+					var hasChildren = Model.ChildFolders.Count > 0;
+					var hasFiles = data.Items.Count > 0;
+				}
+				@if (!hasChildren && !hasFiles)
 				{
 					<div class="media-empty">
 						<i class="fa fa-picture-o fa-2x" style="margin-bottom:8px;display:block;opacity:.5;"></i>
-						Không có file khớp bộ lọc. Hãy tải lên hoặc đổi thư mục.
+						Không có file khớp bộ lọc. Tạo thư mục con, tải lên, hoặc đổi thư mục.
 					</div>
 				}
 				else
 				{
+					@if (hasFiles)
+					{
 					<div class="media-bulk">
 						<label class="checkbox-inline" style="margin:0;">
 							<input type="checkbox" id="mediaSelectPage" /> Chọn trang
@@ -161,12 +185,27 @@
 							<input type="hidden" name="Q" value="@Model.Q" />
 							<div id="mediaBulkFolderIds"></div>
 							<select name="folder" class="form-control input-sm" id="mediaBulkFolderSelect">
-								@foreach (var f in MediaFolders.Items)
+								@foreach (var f in Model.FolderList)
 								{
-									<option value="@f.Key">@f.Label</option>
+									<option value="@f.Key">@f.IndentedLabel</option>
 								}
 							</select>
 							<button type="submit" class="btn btn-sm btn-info" id="mediaBulkFolderBtn" disabled>Đổi thư mục</button>
+						</form>
+						<form method="post" asp-page-handler="BulkCopy" id="mediaBulkCopyForm" class="form-inline" style="display:inline-flex;gap:6px;align-items:center;margin:0;">
+							<input type="hidden" name="Type" value="@Model.Type" />
+							<input type="hidden" name="Folder" value="@folder" />
+							<input type="hidden" name="PageNumber" value="@data.Page" />
+							<input type="hidden" name="PageSize" value="@pageSize" />
+							<input type="hidden" name="Q" value="@Model.Q" />
+							<div id="mediaBulkCopyIds"></div>
+							<select name="folder" class="form-control input-sm" id="mediaBulkCopySelect">
+								@foreach (var f in Model.FolderList)
+								{
+									<option value="@f.Key">@f.IndentedLabel</option>
+								}
+							</select>
+							<button type="submit" class="btn btn-sm btn-default" id="mediaBulkCopyBtn" disabled>Sao chép</button>
 						</form>
 						<form method="post" asp-page-handler="BulkDelete" id="mediaBulkDeleteForm" class="inline" style="display:inline;margin:0;" onsubmit="return confirm('Chuyển các ảnh đã chọn vào thùng rác?');">
 							<input type="hidden" name="Type" value="@Model.Type" />
@@ -178,9 +217,23 @@
 							<button type="submit" class="btn btn-sm btn-danger" id="mediaBulkDeleteBtn" disabled>Xóa</button>
 						</form>
 					</div>
+					}
 
 					<div class="media-workspace" id="mediaWorkspace">
 						<div class="media-grid" id="mediaGrid">
+							@foreach (var child in Model.ChildFolders)
+							{
+								var count = data.FolderCounts.GetValueOrDefault(child.Key);
+								<a class="media-card media-card--folder" href="@FolderUrl(child.Key)" title="@MediaFolders.Label(child.Key)">
+									<div class="media-card__preview media-card__preview--folder">
+										<i class="fa fa-folder"></i>
+									</div>
+									<div class="media-card__body">
+										<div class="media-card__name">@child.Label</div>
+										<div class="media-card__meta">Thư mục@(count > 0 ? $" · {count} file" : "")</div>
+									</div>
+								</a>
+							}
 							@foreach (var item in data.Items)
 							{
 								var previewUrl = item.IsImage ? (item.MediumUrl ?? item.ThumbUrl ?? item.OriginalUrl) : "";
@@ -219,8 +272,15 @@
 										}
 									</div>
 									<div class="media-card__body">
-										<div class="media-card__name" title="@(item.Alt ?? item.Name)">@(string.IsNullOrWhiteSpace(item.Alt) ? item.Name : item.Alt)</div>
-										<div class="media-card__meta">@MediaFolders.Label(item.Folder) · @SizeLabel(item.Size)</div>
+										<div class="media-card__name" title="@item.Name">@item.Name</div>
+										<div class="media-card__meta">
+											@if (!string.IsNullOrWhiteSpace(item.Alt) && !string.Equals(item.Alt, item.Name, StringComparison.Ordinal))
+											{
+												<span class="media-card__alt" title="@item.Alt">@item.Alt</span>
+												<span> · </span>
+											}
+											@MediaFolders.Label(item.Folder) · @SizeLabel(item.Size)
+										</div>
 									</div>
 								</div>
 							}
@@ -247,6 +307,19 @@
 								</div>
 								<button type="submit" class="btn btn-sm btn-primary btn-block">Lưu Alt</button>
 							</form>
+							<form method="post" asp-page-handler="Rename" id="drawerRenameForm" style="margin-top:10px;">
+								<input type="hidden" name="Type" value="@Model.Type" />
+								<input type="hidden" name="Folder" value="@folder" />
+								<input type="hidden" name="PageNumber" value="@data.Page" />
+								<input type="hidden" name="PageSize" value="@pageSize" />
+								<input type="hidden" name="Q" value="@Model.Q" />
+								<input type="hidden" name="id" id="drawerRenameId" value="0" />
+								<div class="form-group">
+									<label for="drawerRenameInput">Tên file</label>
+									<input type="text" name="newName" id="drawerRenameInput" class="form-control input-sm" maxlength="180" />
+								</div>
+								<button type="submit" class="btn btn-sm btn-default btn-block">Đổi tên file</button>
+							</form>
 							<form method="post" asp-page-handler="Folder" id="drawerFolderForm" style="margin-top:10px;">
 								<input type="hidden" name="Type" value="@Model.Type" />
 								<input type="hidden" name="Folder" value="@folder" />
@@ -255,15 +328,33 @@
 								<input type="hidden" name="Q" value="@Model.Q" />
 								<input type="hidden" name="id" id="drawerFolderId" value="0" />
 								<div class="form-group">
-									<label for="drawerFolderSelect">Thư mục</label>
+									<label for="drawerFolderSelect">Đổi thư mục</label>
 									<select name="folder" id="drawerFolderSelect" class="form-control input-sm">
-										@foreach (var f in MediaFolders.Items)
+										@foreach (var f in Model.FolderList)
 										{
-											<option value="@f.Key">@f.Label</option>
+											<option value="@f.Key">@f.IndentedLabel</option>
 										}
 									</select>
 								</div>
-								<button type="submit" class="btn btn-sm btn-default btn-block">Đổi thư mục</button>
+								<button type="submit" class="btn btn-sm btn-default btn-block">Chuyển file</button>
+							</form>
+							<form method="post" asp-page-handler="Copy" id="drawerCopyForm" style="margin-top:10px;">
+								<input type="hidden" name="Type" value="@Model.Type" />
+								<input type="hidden" name="Folder" value="@folder" />
+								<input type="hidden" name="PageNumber" value="@data.Page" />
+								<input type="hidden" name="PageSize" value="@pageSize" />
+								<input type="hidden" name="Q" value="@Model.Q" />
+								<input type="hidden" name="id" id="drawerCopyId" value="0" />
+								<div class="form-group">
+									<label for="drawerCopySelect">Sao chép sang</label>
+									<select name="folder" id="drawerCopySelect" class="form-control input-sm">
+										@foreach (var f in Model.FolderList)
+										{
+											<option value="@f.Key">@f.IndentedLabel</option>
+										}
+									</select>
+								</div>
+								<button type="submit" class="btn btn-sm btn-info btn-block">Sao chép file</button>
 							</form>
 							<form method="post" asp-page-handler="Regenerate" id="drawerRegenForm" style="margin-top:10px;">
 								<input type="hidden" name="Type" value="@Model.Type" />
@@ -289,6 +380,117 @@
 					</div>
 				}
 			</div></div>
+		</div>
+	</div>
+</div>
+
+<form method="post" asp-page-handler="CreateFolder" id="mediaCreateFolderForm" style="display:none;">
+	<input type="hidden" name="Type" value="@Model.Type" />
+	<input type="hidden" name="Folder" value="@folder" />
+	<input type="hidden" name="PageSize" value="@pageSize" />
+	<input type="hidden" name="Q" value="@Model.Q" />
+	<input type="hidden" name="newFolderName" id="mediaNewFolderName" value="" />
+</form>
+<form method="post" asp-page-handler="DeleteFolder" id="mediaDeleteFolderForm" style="display:none;">
+	<input type="hidden" name="Type" value="@Model.Type" />
+	<input type="hidden" name="Folder" value="@folder" />
+	<input type="hidden" name="PageSize" value="@pageSize" />
+	<input type="hidden" name="Q" value="@Model.Q" />
+</form>
+<form method="post" asp-page-handler="RenameFolder" id="mediaRenameFolderForm" style="display:none;">
+	<input type="hidden" name="Type" value="@Model.Type" />
+	<input type="hidden" name="Folder" value="@folder" />
+	<input type="hidden" name="PageSize" value="@pageSize" />
+	<input type="hidden" name="Q" value="@Model.Q" />
+	<input type="hidden" name="newFolderName" id="mediaRenameFolderName" value="" />
+</form>
+<form method="post" asp-page-handler="MoveFolder" id="mediaMoveFolderForm" style="display:none;">
+	<input type="hidden" name="Type" value="@Model.Type" />
+	<input type="hidden" name="Folder" value="@folder" />
+	<input type="hidden" name="PageSize" value="@pageSize" />
+	<input type="hidden" name="Q" value="@Model.Q" />
+	<input type="hidden" name="targetParent" id="mediaMoveFolderParent" value="" />
+</form>
+
+<div class="media-folder-modal" id="mediaNewFolderModal" aria-hidden="true">
+	<div class="media-folder-modal__panel" role="dialog" aria-modal="true">
+		<div class="media-folder-modal__head">Thư mục con mới</div>
+		<div class="media-folder-modal__body">
+			<p class="text-muted" style="margin-top:0;font-size:12px;">
+				Trong: <strong>@(folder == MediaFolders.All ? "gốc (Tất cả)" : MediaFolders.Label(folder))</strong>
+			</p>
+			<label style="font-size:13px;">Tên thư mục</label>
+			<input type="text" class="form-control input-sm" id="mediaNewFolderInput" maxlength="60" placeholder="Ví dụ: Chiến dịch Tết" />
+		</div>
+		<div class="media-folder-modal__foot">
+			<button type="button" class="btn btn-default js-media-folder-close" data-close="mediaNewFolderModal">Hủy</button>
+			<button type="button" class="btn btn-success" id="mediaNewFolderOk">Tạo</button>
+		</div>
+	</div>
+</div>
+
+<div class="media-folder-modal" id="mediaDeleteFolderModal" aria-hidden="true">
+	<div class="media-folder-modal__panel" role="dialog" aria-modal="true">
+		<div class="media-folder-modal__head">Xác nhận xóa thư mục</div>
+		<div class="media-folder-modal__body">
+			<p style="margin-top:0;font-size:13px;">
+				Xóa thư mục <strong>@MediaFolders.Label(folder)</strong>?
+			</p>
+			<p style="color:#a94442;font-size:13px;">
+				Sẽ xóa toàn bộ thư mục con
+				@if (Model.DeleteFolderSubfolderCount > 0) { <text>(@Model.DeleteFolderSubfolderCount)</text> }
+				và mọi file bên trong
+				@if (Model.DeleteFolderFileCount > 0) { <text>(@Model.DeleteFolderFileCount → thùng rác)</text> }
+				else { <text>(không có file)</text> }.
+			</p>
+			<p class="text-muted" style="font-size:12px;margin-bottom:0;">Thư mục không khôi phục được; file có thể lấy lại từ Thùng rác.</p>
+		</div>
+		<div class="media-folder-modal__foot">
+			<button type="button" class="btn btn-default js-media-folder-close" data-close="mediaDeleteFolderModal">Không</button>
+			<button type="button" class="btn btn-danger" id="mediaDeleteFolderOk">Có, xóa hết</button>
+		</div>
+	</div>
+</div>
+
+<div class="media-folder-modal" id="mediaRenameFolderModal" aria-hidden="true">
+	<div class="media-folder-modal__panel" role="dialog" aria-modal="true">
+		<div class="media-folder-modal__head">Đổi tên thư mục</div>
+		<div class="media-folder-modal__body">
+			<p class="text-muted" style="margin-top:0;font-size:12px;">Đang đổi: <strong>@MediaFolders.Label(folder)</strong></p>
+			<label style="font-size:13px;">Tên mới</label>
+			<input type="text" class="form-control input-sm" id="mediaRenameFolderInput" maxlength="60" value="@MediaFolders.LeafLabel(folder)" />
+		</div>
+		<div class="media-folder-modal__foot">
+			<button type="button" class="btn btn-default js-media-folder-close" data-close="mediaRenameFolderModal">Hủy</button>
+			<button type="button" class="btn btn-success" id="mediaRenameFolderOk">Lưu</button>
+		</div>
+	</div>
+</div>
+
+<div class="media-folder-modal" id="mediaMoveFolderModal" aria-hidden="true">
+	<div class="media-folder-modal__panel" role="dialog" aria-modal="true">
+		<div class="media-folder-modal__head">Chuyển thư mục vào…</div>
+		<div class="media-folder-modal__body">
+			<p class="text-muted" style="margin-top:0;font-size:12px;">Đang chuyển: <strong>@MediaFolders.Label(folder)</strong></p>
+			<ul class="media-move-folder-list" id="mediaMoveFolderList">
+				<li><button type="button" data-parent=""><i class="fa fa-folder-open-o"></i> Gốc (Tất cả)</button></li>
+				@foreach (var item in Model.FolderList)
+				{
+					var blocked = item.Key == folder
+						|| item.Key.StartsWith(folder + "/", StringComparison.OrdinalIgnoreCase);
+					if (blocked) { continue; }
+					var pad = Math.Max(0, item.Depth) * 12;
+					<li>
+						<button type="button" data-parent="@item.Key" style="padding-left:@(10 + pad)px">
+							<i class="fa @(item.Depth > 0 ? "fa-folder-o" : "fa-folder")"></i> @item.Label
+						</button>
+					</li>
+				}
+			</ul>
+		</div>
+		<div class="media-folder-modal__foot">
+			<button type="button" class="btn btn-default js-media-folder-close" data-close="mediaMoveFolderModal">Hủy</button>
+			<button type="button" class="btn btn-success" id="mediaMoveFolderOk">Chuyển</button>
 		</div>
 	</div>
 </div>
@@ -329,4 +531,128 @@
 
 @section Scripts {
 	<script src="~/js/admin-media.js" asp-append-version="true"></script>
+	<script>
+		(function () {
+			function openModal(id) {
+				var el = document.getElementById(id);
+				if (!el) return;
+				el.classList.add('is-on');
+				el.setAttribute('aria-hidden', 'false');
+			}
+			function closeModal(id) {
+				var el = document.getElementById(id);
+				if (!el) return;
+				el.classList.remove('is-on');
+				el.setAttribute('aria-hidden', 'true');
+			}
+			document.querySelectorAll('.js-media-folder-close').forEach(function (btn) {
+				btn.addEventListener('click', function () { closeModal(btn.getAttribute('data-close')); });
+			});
+			document.querySelectorAll('.media-folder-modal').forEach(function (m) {
+				m.addEventListener('click', function (e) { if (e.target === m) closeModal(m.id); });
+			});
+			var newBtn = document.getElementById('mediaNewFolderBtn');
+			if (newBtn) {
+				newBtn.addEventListener('click', function () {
+					var inp = document.getElementById('mediaNewFolderInput');
+					if (inp) inp.value = '';
+					openModal('mediaNewFolderModal');
+					setTimeout(function () { if (inp) inp.focus(); }, 30);
+				});
+			}
+			var newOk = document.getElementById('mediaNewFolderOk');
+			if (newOk) {
+				newOk.addEventListener('click', function () {
+					var name = (document.getElementById('mediaNewFolderInput').value || '').trim();
+					if (!name) { alert('Nhập tên thư mục.'); return; }
+					document.getElementById('mediaNewFolderName').value = name;
+					document.getElementById('mediaCreateFolderForm').submit();
+				});
+			}
+			var newInp = document.getElementById('mediaNewFolderInput');
+			if (newInp) {
+				newInp.addEventListener('keydown', function (e) {
+					if (e.key === 'Enter') { e.preventDefault(); newOk && newOk.click(); }
+				});
+			}
+			var delBtn = document.getElementById('mediaDeleteFolderBtn');
+			if (delBtn) {
+				delBtn.addEventListener('click', function () {
+					if (delBtn.disabled) return;
+					openModal('mediaDeleteFolderModal');
+				});
+			}
+			var delOk = document.getElementById('mediaDeleteFolderOk');
+			if (delOk) {
+				delOk.addEventListener('click', function () {
+					document.getElementById('mediaDeleteFolderForm').submit();
+				});
+			}
+
+			var renameBtn = document.getElementById('mediaRenameFolderBtn');
+			if (renameBtn) {
+				renameBtn.addEventListener('click', function () {
+					if (renameBtn.disabled) return;
+					openModal('mediaRenameFolderModal');
+					setTimeout(function () {
+						var inp = document.getElementById('mediaRenameFolderInput');
+						if (inp) { inp.focus(); inp.select(); }
+					}, 30);
+				});
+			}
+			var renameOk = document.getElementById('mediaRenameFolderOk');
+			if (renameOk) {
+				renameOk.addEventListener('click', function () {
+					var name = (document.getElementById('mediaRenameFolderInput').value || '').trim();
+					if (!name) { alert('Nhập tên thư mục.'); return; }
+					document.getElementById('mediaRenameFolderName').value = name;
+					document.getElementById('mediaRenameFolderForm').submit();
+				});
+			}
+			var renameInp = document.getElementById('mediaRenameFolderInput');
+			if (renameInp) {
+				renameInp.addEventListener('keydown', function (e) {
+					if (e.key === 'Enter') { e.preventDefault(); renameOk && renameOk.click(); }
+				});
+			}
+
+			var moveParent = '';
+			var moveBtn = document.getElementById('mediaMoveFolderBtn');
+			if (moveBtn) {
+				moveBtn.addEventListener('click', function () {
+					if (moveBtn.disabled) return;
+					moveParent = '';
+					document.querySelectorAll('#mediaMoveFolderList button').forEach(function (b) { b.classList.remove('is-on'); });
+					openModal('mediaMoveFolderModal');
+				});
+			}
+			document.querySelectorAll('#mediaMoveFolderList button').forEach(function (btn) {
+				btn.addEventListener('click', function () {
+					document.querySelectorAll('#mediaMoveFolderList button').forEach(function (b) { b.classList.remove('is-on'); });
+					btn.classList.add('is-on');
+					moveParent = btn.getAttribute('data-parent') || '';
+				});
+				btn.addEventListener('dblclick', function () {
+					moveParent = btn.getAttribute('data-parent') || '';
+					document.getElementById('mediaMoveFolderOk').click();
+				});
+			});
+			var moveOk = document.getElementById('mediaMoveFolderOk');
+			if (moveOk) {
+				moveOk.addEventListener('click', function () {
+					document.getElementById('mediaMoveFolderParent').value = moveParent;
+					document.getElementById('mediaMoveFolderForm').submit();
+				});
+			}
+
+			document.addEventListener('keydown', function (e) {
+				if (e.key === 'Escape') {
+					closeModal('mediaNewFolderModal');
+					closeModal('mediaDeleteFolderModal');
+					closeModal('mediaRenameFolderModal');
+					closeModal('mediaMoveFolderModal');
+				}
+			});
+		})();
+	</script>
 }

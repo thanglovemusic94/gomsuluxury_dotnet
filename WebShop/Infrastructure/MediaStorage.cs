@@ -401,10 +401,10 @@ public sealed partial class MediaStorage(IWebHostEnvironment env, IServiceScopeF
             folderKey = MediaFolders.Other;
 
         var originalName = $"{safeBase}-{stamp}{ext.ToLowerInvariant()}";
-        var originalRel = Path.Combine(
+        var originalRel = CombineRel(
             "originals",
             folderKey,
-            ym.Replace('/', Path.DirectorySeparatorChar),
+            ym,
             originalName);
         var originalAbs = Path.Combine(RootPath, originalRel);
         Directory.CreateDirectory(Path.GetDirectoryName(originalAbs)!);
@@ -418,13 +418,14 @@ public sealed partial class MediaStorage(IWebHostEnvironment env, IServiceScopeF
         {
             using var dedupeScope = scopes.CreateScope();
             var dedupeDb = dedupeScope.ServiceProvider.GetRequiredService<AppDbContext>();
-            var existing = await dedupeDb.MediaAssets.AsNoTracking()
-                .FirstOrDefaultAsync(item => item.ContentHash == contentHash, ct);
-            if (existing is not null)
+            // Chỉ bỏ qua khi trùng hash trong CÙNG thư mục — upload sang folder khác vẫn tạo bản mới
+            var existingSameFolder = await dedupeDb.MediaAssets.AsNoTracking()
+                .FirstOrDefaultAsync(item => item.ContentHash == contentHash && item.Folder == folderKey, ct);
+            if (existingSameFolder is not null)
             {
                 TryDelete(originalAbs);
-                var publicExisting = existing.MediumUrl ?? existing.OriginalUrl;
-                return (true, publicExisting, null, existing);
+                var publicExisting = existingSameFolder.MediumUrl ?? existingSameFolder.OriginalUrl;
+                return (true, publicExisting, null, existingSameFolder);
             }
         }
 
@@ -576,6 +577,137 @@ public sealed partial class MediaStorage(IWebHostEnvironment env, IServiceScopeF
             key = MediaFolders.Other;
         asset.Folder = key;
         asset.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync(ct);
+        return (true, null);
+    }
+
+    /// <summary>Đổi tên file (giữ stamp nếu có) + cập nhật URL trong nội dung tham chiếu.</summary>
+    public async Task<(bool Ok, string? Error)> RenameAsync(int id, string? newFileName, CancellationToken ct = default)
+    {
+        await EnsureSchemaAsync(ct);
+        using var scope = scopes.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var asset = await db.MediaAssets.FirstOrDefaultAsync(item => item.Id == id, ct);
+        if (asset is null)
+            return (false, "Không tìm thấy ảnh.");
+
+        newFileName = (newFileName ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(newFileName))
+            return (false, "Tên file trống.");
+
+        var currentExt = Path.GetExtension(asset.FileName);
+        if (string.IsNullOrWhiteSpace(currentExt))
+            currentExt = Path.GetExtension(asset.OriginalPath);
+        var requestedExt = Path.GetExtension(newFileName);
+        var rawBase = Path.GetFileNameWithoutExtension(newFileName);
+        if (string.IsNullOrWhiteSpace(rawBase))
+            return (false, "Tên file không hợp lệ.");
+
+        var safeBase = SanitizeName(rawBase);
+        if (string.IsNullOrWhiteSpace(safeBase))
+            safeBase = "file";
+
+        var (_, stamp) = SplitBaseAndStamp(Path.GetFileNameWithoutExtension(asset.FileName));
+        if (string.IsNullOrWhiteSpace(stamp))
+            stamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+
+        var ext = string.IsNullOrWhiteSpace(requestedExt) ? currentExt : requestedExt;
+        if (string.IsNullOrWhiteSpace(ext))
+            ext = ".bin";
+        var newOriginalName = $"{safeBase}-{stamp}{ext.ToLowerInvariant()}";
+        if (string.Equals(asset.FileName, newOriginalName, StringComparison.OrdinalIgnoreCase))
+            return (true, null);
+
+        try
+        {
+            var oldUrls = UrlSet(asset);
+            var urlMap = RenameAssetFiles(asset, safeBase, stamp, newOriginalName);
+            asset.UpdatedAt = DateTime.UtcNow;
+            await db.SaveChangesAsync(ct);
+            if (urlMap.Count > 0)
+                await RewriteReferencesAsync(db, urlMap, oldUrls, asset.Alt ?? string.Empty, ct);
+            return (true, null);
+        }
+        catch (Exception ex)
+        {
+            return (false, "Đổi tên thất bại: " + ex.Message);
+        }
+    }
+
+    /// <summary>Sao chép asset sang thư mục khác (file mới, không đụng bản gốc).</summary>
+    public async Task<(bool Ok, string? Error)> CopyToFolderAsync(int id, string? folder, CancellationToken ct = default)
+    {
+        await EnsureSchemaAsync(ct);
+        using var scope = scopes.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var source = await db.MediaAssets.AsNoTracking().FirstOrDefaultAsync(item => item.Id == id, ct);
+        if (source is null)
+            return (false, "Không tìm thấy ảnh.");
+
+        var folderKey = MediaFolders.Normalize(folder);
+        if (folderKey == MediaFolders.All)
+            folderKey = MediaFolders.Other;
+
+        var originalAbs = Path.Combine(RootPath, source.OriginalPath.Replace('/', Path.DirectorySeparatorChar));
+        if (!File.Exists(originalAbs))
+            return (false, "Thiếu file gốc.");
+
+        var now = DateTime.UtcNow;
+        var stamp = now.ToString("yyyyMMddHHmmss");
+        var ym = $"{now:yyyy}/{now:MM}";
+        var (baseName, _) = SplitBaseAndStamp(Path.GetFileNameWithoutExtension(source.FileName));
+        var safeBase = SanitizeName(string.IsNullOrWhiteSpace(baseName) ? "file" : baseName);
+        var ext = Path.GetExtension(source.OriginalPath);
+        if (string.IsNullOrWhiteSpace(ext))
+            ext = Path.GetExtension(source.FileName);
+        if (string.IsNullOrWhiteSpace(ext))
+            ext = ".bin";
+
+        var originalName = $"{safeBase}-copy-{stamp}{ext.ToLowerInvariant()}";
+        var originalRel = CombineRel(
+            "originals",
+            folderKey,
+            ym,
+            originalName);
+        var destAbs = Path.Combine(RootPath, originalRel);
+        Directory.CreateDirectory(Path.GetDirectoryName(destAbs)!);
+        File.Copy(originalAbs, destAbs, overwrite: false);
+
+        var asset = new MediaAsset
+        {
+            FileName = originalName,
+            Alt = source.Alt,
+            Folder = folderKey,
+            IsImage = source.IsImage,
+            OriginalPath = originalRel.Replace('\\', '/'),
+            OriginalUrl = ToUrl(originalRel),
+            OriginalBytes = new FileInfo(destAbs).Length,
+            ContentHash = null, // tránh dedupe gộp với bản gốc
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
+        if (source.IsImage && !PassThroughImageExt.Contains(ext))
+        {
+            try
+            {
+                await WriteOptimizedAsync(destAbs, safeBase + "-copy", stamp, ym, folderKey, asset, ct);
+            }
+            catch
+            {
+                asset.ThumbUrl = asset.OriginalUrl;
+                asset.MediumUrl = asset.OriginalUrl;
+                asset.LargeUrl = asset.OriginalUrl;
+            }
+        }
+        else if (source.IsImage)
+        {
+            asset.ThumbUrl = asset.OriginalUrl;
+            asset.MediumUrl = asset.OriginalUrl;
+            asset.LargeUrl = asset.OriginalUrl;
+        }
+
+        db.MediaAssets.Add(asset);
         await db.SaveChangesAsync(ct);
         return (true, null);
     }
@@ -780,11 +912,11 @@ public sealed partial class MediaStorage(IWebHostEnvironment env, IServiceScopeF
         Action<MediaAsset, string, string>? setPath,
         CancellationToken ct)
     {
-        var rel = Path.Combine(
+        var rel = CombineRel(
             "optimized",
             sizeFolder,
             folderKey,
-            ym.Replace('/', Path.DirectorySeparatorChar),
+            ym,
             $"{safeBase}-{stamp}.webp");
         var abs = Path.Combine(RootPath, rel);
         Directory.CreateDirectory(Path.GetDirectoryName(abs)!);
@@ -849,35 +981,29 @@ public sealed partial class MediaStorage(IWebHostEnvironment env, IServiceScopeF
                 norm = norm["uploads/".Length..];
 
             var parts = norm.Split('/', StringSplitOptions.RemoveEmptyEntries);
-            // optimized / {size} / {folder} / yyyy / MM / file.webp
+            // optimized / {size} / [{folder}/...] / yyyy / MM / file.webp
             // or legacy: optimized / {size} / yyyy / MM / file.webp
-            if (parts.Length >= 5 && parts[0].Equals("optimized", StringComparison.OrdinalIgnoreCase))
+            if (parts.Length >= 5
+                && parts[0].Equals("optimized", StringComparison.OrdinalIgnoreCase)
+                && Regex.IsMatch(parts[^3], @"^\d{4}$")
+                && Regex.IsMatch(parts[^2], @"^\d{2}$"))
             {
+                var ym = $"{parts[^3]}/{parts[^2]}";
+                var file = Path.GetFileNameWithoutExtension(parts[^1]);
                 string folderKey;
-                string ym;
-                string file;
-                if (parts.Length >= 6 && Regex.IsMatch(parts[3], @"^\d{4}$") && Regex.IsMatch(parts[4], @"^\d{2}$"))
+                if (parts.Length == 5)
                 {
-                    folderKey = MediaFolders.Normalize(parts[2]);
-                    if (folderKey == MediaFolders.All)
-                        folderKey = MediaFolders.Other;
-                    ym = $"{parts[3]}/{parts[4]}";
-                    file = Path.GetFileNameWithoutExtension(parts[^1]);
-                }
-                else if (Regex.IsMatch(parts[2], @"^\d{4}$") && Regex.IsMatch(parts[3], @"^\d{2}$"))
-                {
+                    // optimized / size / yyyy / MM / file
                     folderKey = MediaFolders.Normalize(asset.Folder);
-                    if (folderKey == MediaFolders.All)
-                        folderKey = MediaFolders.Other;
-                    ym = $"{parts[2]}/{parts[3]}";
-                    file = Path.GetFileNameWithoutExtension(parts[^1]);
                 }
                 else
                 {
-                    folderKey = string.Empty;
-                    ym = string.Empty;
-                    file = string.Empty;
+                    // parts[2 .. ^3) = folder segments (có thể lồng)
+                    folderKey = MediaFolders.Normalize(string.Join('/', parts[2..^3]));
                 }
+
+                if (folderKey == MediaFolders.All)
+                    folderKey = MediaFolders.Other;
 
                 if (!string.IsNullOrWhiteSpace(file))
                 {
@@ -960,6 +1086,20 @@ public sealed partial class MediaStorage(IWebHostEnvironment env, IServiceScopeF
         asset.UpdatedAt,
         asset.IsImage,
         false);
+
+    /// <summary>Ghép đường dẫn tương đối; mỗi phần có thể chứa segment bằng '/' (folder lồng).</summary>
+    private static string CombineRel(params string[] parts)
+    {
+        var segs = new List<string>();
+        foreach (var part in parts)
+        {
+            if (string.IsNullOrWhiteSpace(part))
+                continue;
+            segs.AddRange(part.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries));
+        }
+
+        return Path.Combine(segs.ToArray());
+    }
 
     private static string ToUrl(string relativePath) =>
         "/uploads/" + relativePath.Replace('\\', '/');

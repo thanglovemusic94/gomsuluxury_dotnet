@@ -5,6 +5,7 @@
 	Layout = null;
 	var isPicker = !string.IsNullOrWhiteSpace(Model.CKEditorFuncNum) || !string.IsNullOrWhiteSpace(Model.InputId);
 	var folder = MediaFolders.Normalize(Model.Folder);
+	var canDeleteFolder = folder != MediaFolders.All && !MediaFolders.IsBuiltIn(folder);
 	var data = Model.PageData;
 	string PickUrl(MediaItem item) => (Model.Size ?? "medium").ToLowerInvariant() switch
 	{
@@ -15,6 +16,10 @@
 	};
 	string Link(string f, int p = 1) =>
 		$"/Admin/CkFinder/Browse?Type={Model.Type}&Size={Model.Size}&Folder={Uri.EscapeDataString(f)}&PageNumber={p}&CKEditor={Uri.EscapeDataString(Model.CKEditor ?? "")}&CKEditorFuncNum={Uri.EscapeDataString(Model.CKEditorFuncNum ?? "")}&InputId={Uri.EscapeDataString(Model.InputId ?? "")}";
+	string SizeLabel(long bytes) =>
+		bytes < 1024 ? $"{bytes} B" :
+		bytes < 1024 * 1024 ? $"{bytes / 1024.0:0.#} KB" :
+		$"{bytes / (1024.0 * 1024):0.#} MB";
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -25,92 +30,126 @@
 	<link rel="stylesheet" href="/ace/assets/css/bootstrap.min.css" />
 	<link rel="stylesheet" href="/ace/assets/font-awesome/4.5.0/css/font-awesome.min.css" />
 	<style>
-		body { background: #f3f5f7; margin: 0; font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif; }
-		.ckf-layout { display: grid; grid-template-columns: 210px 1fr; min-height: 100vh; }
-		.ckf-side { background: #fff; border-right: 1px solid #e2e6ea; padding: 14px 12px; }
-		.ckf-side h2 { margin: 0 0 12px; font-size: 15px; }
+		body { background: #eef1f4; margin: 0; font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif; color: #333; }
+		.ckf-layout { display: grid; grid-template-columns: 200px 1fr; min-height: 100vh; }
+		.ckf-side { background: #fff; border-right: 1px solid #dde2e8; padding: 12px 10px; overflow-x: auto; }
+		.ckf-side h2 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #777; }
 		.ckf-side a {
-			display: flex; justify-content: space-between; align-items: center;
-			padding: 9px 10px; color: #444; text-decoration: none; border-radius: 5px; margin-bottom: 3px;
+			display: flex; justify-content: space-between; align-items: center; gap: 8px;
+			padding: 7px 10px; color: #444; text-decoration: none; border-radius: 4px; margin-bottom: 1px; font-size: 13px;
 		}
-		.ckf-side a:hover, .ckf-side a.is-active { background: #eef5fb; color: #337ab7; }
+		.ckf-side a:hover, .ckf-side a.is-active { background: #e8f2fb; color: #1e6bb8; }
 		.ckf-side a.is-active { font-weight: 600; }
-		.ckf-main { padding: 18px; }
-		.ckf-head { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-		.ckf-title { margin: 0; font-size: 20px; }
-		.ckf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+		.ckf-side a .ckf-folder-name { display: flex; align-items: center; gap: 6px; min-width: 0; }
+		.ckf-side a .ckf-folder-name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+		.ckf-side a .ckf-folder-count { flex-shrink: 0; color: #888; font-size: 11px; }
+		.ckf-main { display: flex; flex-direction: column; min-width: 0; }
+		.ckf-toolbar {
+			display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
+			padding: 8px 12px; background: #f7f8fa; border-bottom: 1px solid #dde2e8;
+			position: sticky; top: 0; z-index: 30;
+		}
+		.ckf-toolbar .btn { border-radius: 3px; }
+		.ckf-toolbar .btn[disabled], .ckf-toolbar a.disabled { opacity: .4; pointer-events: none; }
+		.ckf-toolbar__sep { width: 1px; height: 22px; background: #d0d7de; margin: 0 6px; }
+		.ckf-toolbar__count { margin-left: auto; font-size: 12px; color: #1e6bb8; font-weight: 600; }
+		.ckf-body { padding: 14px 16px 28px; }
+		.ckf-drop {
+			border: 1px dashed #c5ced8; background: #fafbfc; border-radius: 4px;
+			padding: 10px 12px; margin-bottom: 12px; color: #777; font-size: 13px;
+		}
+		.ckf-head { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+		.ckf-title { margin: 0; font-size: 16px; }
+		.ckf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 12px; }
 		.ckf-card {
-			background: #fff; border: 1px solid #e2e6ea; border-radius: 6px; padding: 0; overflow: hidden;
-			cursor: @(isPicker ? "pointer" : "default"); min-height: 180px;
-			transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+			background: #fff; border: 1px solid #dde2e8; border-radius: 4px; overflow: hidden;
+			cursor: pointer; user-select: none; min-height: 188px;
 			display: flex; flex-direction: column;
+			transition: border-color .12s, box-shadow .12s;
 		}
-		.ckf-card:hover { border-color: #5b9bd5; box-shadow: 0 6px 16px rgba(51,122,183,.12); transform: translateY(-1px); }
+		.ckf-card:hover { border-color: #5b9bd5; }
+		.ckf-card.is-picked { border-color: #1e6bb8; box-shadow: 0 0 0 2px rgba(30,107,184,.35); position: relative; }
+		.ckf-card.is-picked::after {
+			content: "\f00c"; font-family: FontAwesome; position: absolute; top: 6px; right: 6px; z-index: 2;
+			width: 20px; height: 20px; line-height: 20px; text-align: center; border-radius: 50%;
+			background: #1e6bb8; color: #fff; font-size: 10px;
+		}
 		.ckf-thumb {
-			position: relative; height: 110px; display: flex; align-items: center; justify-content: center;
-			background:
-				linear-gradient(45deg, #f0f0f0 25%, transparent 25%),
-				linear-gradient(-45deg, #f0f0f0 25%, transparent 25%),
-				linear-gradient(45deg, transparent 75%, #f0f0f0 75%),
-				linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
-			background-size: 14px 14px;
-			background-position: 0 0, 0 7px, 7px -7px, -7px 0;
-			background-color: #fafafa;
-			overflow: hidden;
+			height: 108px; display: flex; align-items: center; justify-content: center; background: #f4f6f8; overflow: hidden;
 		}
-		.ckf-thumb img { max-width: 100%; max-height: 110px; object-fit: contain; transition: transform .2s ease; }
-		.ckf-card:hover .ckf-thumb img { transform: scale(1.04); }
-		.ckf-overlay {
-			position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 6px;
-			background: rgba(20,28,40,.42); opacity: 0; transition: opacity .15s ease;
+		.ckf-thumb img { max-width: 100%; max-height: 108px; object-fit: contain; pointer-events: none; }
+		.ckf-card--folder { text-decoration: none; color: inherit; }
+		.ckf-card--folder:hover { border-color: #e6a817; }
+		.ckf-card--folder .ckf-thumb { background: #fff8e8; color: #e6a817; font-size: 48px; }
+		.ckf-meta { padding: 8px; display: flex; flex-direction: column; gap: 2px; }
+		.ckf-name {
+			font-size: 11px; color: #333; min-height: 28px; line-height: 1.3; word-break: break-word;
+			display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 		}
-		.ckf-card:hover .ckf-overlay { opacity: 1; }
-		.ckf-overlay .btn { box-shadow: 0 2px 8px rgba(0,0,0,.2); }
-		.ckf-meta { padding: 8px 10px 10px; flex: 1; display: flex; flex-direction: column; gap: 4px; }
-		.ckf-name { font-size: 11px; word-break: break-word; color: #333; min-height: 28px; line-height: 1.35;
-			display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-		.ckf-empty { padding: 48px 20px; text-align: center; color: #888; background: #fff; border: 1px dashed #ccc; border-radius: 6px; }
-		.ckf-pager { margin-top: 16px; }
-		.ckf-pager a { margin-right: 6px; }
+		.ckf-sub { font-size: 10px; color: #888; }
+		.ckf-empty { padding: 48px 20px; text-align: center; color: #888; background: #fff; border: 1px dashed #ccc; border-radius: 4px; }
+		.ckf-pager { margin-top: 14px; }
+		.ckf-pager a { margin-right: 5px; }
 		.ckf-toast {
-			position: fixed; right: 16px; bottom: 16px; z-index: 9999; background: #323232; color: #fff;
-			padding: 10px 14px; border-radius: 6px; font-size: 12px; opacity: 0; transform: translateY(8px);
-			transition: opacity .2s ease, transform .2s ease; max-width: 360px; pointer-events: none;
+			position: fixed; right: 14px; bottom: 14px; z-index: 10050; background: #323232; color: #fff;
+			padding: 10px 14px; border-radius: 4px; font-size: 12px; opacity: 0; transform: translateY(8px);
+			transition: opacity .2s, transform .2s; max-width: 360px; pointer-events: none;
 		}
 		.ckf-toast.is-show { opacity: 1; transform: translateY(0); }
 		.ckf-toast code { color: #a8d5ff; font-size: 10px; word-break: break-all; }
-		.ckf-card.is-picked {
-			border-color: #337ab7;
-			box-shadow: 0 0 0 3px rgba(51,122,183,.4);
-			position: relative;
+
+		.ckf-modal-backdrop {
+			display: none; position: fixed; inset: 0; z-index: 10000; background: rgba(20,28,40,.45);
+			align-items: center; justify-content: center; padding: 16px;
 		}
-		.ckf-card.is-picked::after {
-			content: "\f00c";
-			font-family: FontAwesome;
-			position: absolute;
-			top: 8px;
-			right: 8px;
-			z-index: 3;
-			width: 22px;
-			height: 22px;
-			line-height: 22px;
-			text-align: center;
-			border-radius: 50%;
-			background: #337ab7;
-			color: #fff;
-			font-size: 11px;
+		.ckf-modal-backdrop.is-on { display: flex; }
+		.ckf-modal {
+			background: #fff; border-radius: 4px; box-shadow: 0 12px 40px rgba(0,0,0,.22);
+			width: min(420px, 100%); max-height: calc(100vh - 40px); overflow: auto;
 		}
-		.ckf-pick-bar {
-			position: sticky; bottom: 0; margin-top: 16px; padding: 12px 14px;
-			background: #fff; border: 1px solid #e2e6ea; border-radius: 6px;
-			display: none; align-items: center; justify-content: space-between; gap: 12px;
-			box-shadow: 0 -4px 16px rgba(0,0,0,.06);
+		.ckf-modal__head {
+			padding: 12px 14px; border-bottom: 1px solid #e6ebf0; font-weight: 600; font-size: 14px;
 		}
-		.ckf-pick-bar.is-on { display: flex; }
-		.ckf-pick-bar__url { font-size: 11px; color: #666; word-break: break-all; flex: 1; }
+		.ckf-modal__body { padding: 14px; }
+		.ckf-modal__foot {
+			padding: 10px 14px; border-top: 1px solid #e6ebf0; display: flex; justify-content: flex-end; gap: 8px;
+		}
+		.ckf-radio { display: flex; align-items: center; gap: 8px; padding: 7px 0; font-size: 13px; cursor: pointer; }
+		.ckf-radio input { margin: 0; }
+		.ckf-custom-size { display: none; gap: 10px; margin: 8px 0 0 24px; }
+		.ckf-custom-size.is-on { display: flex; flex-wrap: wrap; }
+		.ckf-custom-size label { font-size: 12px; color: #666; display: flex; flex-direction: column; gap: 4px; }
+		.ckf-custom-size input { width: 90px; height: 30px; }
+		.ckf-folder-list { list-style: none; margin: 0; padding: 0; border: 1px solid #e2e6ea; border-radius: 4px; max-height: 260px; overflow: auto; }
+		.ckf-folder-list button {
+			display: flex; width: 100%; align-items: center; gap: 8px; border: 0; border-bottom: 1px solid #f0f2f5;
+			background: #fff; padding: 10px 12px; text-align: left; font-size: 13px; cursor: pointer;
+		}
+		.ckf-folder-list button:last-child { border-bottom: 0; }
+		.ckf-folder-list button:hover, .ckf-folder-list button.is-on { background: #e8f2fb; color: #1e6bb8; }
+		.ckf-folder-list .fa { color: #3b82c4; }
+		.ckf-newfolder-hint { font-size: 12px; color: #666; margin-bottom: 10px; }
+
+		.ckf-viewer {
+			display: none; position: fixed; inset: 0; z-index: 10040; background: rgba(10,14,20,.88);
+			flex-direction: column; align-items: center; justify-content: center;
+		}
+		.ckf-viewer.is-on { display: flex; }
+		.ckf-viewer__img { max-width: min(92vw, 1200px); max-height: calc(100vh - 100px); object-fit: contain; box-shadow: 0 10px 40px rgba(0,0,0,.4); }
+		.ckf-viewer__nav {
+			position: absolute; top: 50%; transform: translateY(-50%); width: 48px; height: 48px; border: 0; border-radius: 50%;
+			background: rgba(0,0,0,.45); color: #fff; font-size: 22px; cursor: pointer;
+		}
+		.ckf-viewer__nav:hover { background: rgba(0,0,0,.65); }
+		.ckf-viewer__prev { left: 18px; }
+		.ckf-viewer__next { right: 18px; }
+		.ckf-viewer__meta { margin-top: 12px; color: #fff; font-size: 13px; text-align: center; }
+		.ckf-viewer__close {
+			position: absolute; top: 14px; right: 16px; border: 0; background: transparent; color: #fff; font-size: 28px; cursor: pointer;
+		}
 		@@media (max-width: 720px) {
 			.ckf-layout { grid-template-columns: 1fr; }
-			.ckf-side { border-right: 0; border-bottom: 1px solid #e2e6ea; }
+			.ckf-side { border-right: 0; border-bottom: 1px solid #dde2e8; }
 		}
 	</style>
 </head>
@@ -119,93 +158,383 @@
 		<aside class="ckf-side">
 			<h2><i class="fa fa-folder-open"></i> Thư mục</h2>
 			<a class="@(folder == MediaFolders.All ? "is-active" : null)" href="@Link("")">
-				<span>Tất cả</span><span>@(data.FolderCounts.GetValueOrDefault(MediaFolders.All))</span>
+				<span class="ckf-folder-name"><i class="fa fa-folder-open-o"></i> <span>Tất cả</span></span>
+				<span class="ckf-folder-count">@(data.FolderCounts.GetValueOrDefault(MediaFolders.All))</span>
 			</a>
-			@foreach (var item in MediaFolders.Items)
+			@foreach (var item in Model.FolderList)
 			{
-				<a class="@(folder == item.Key ? "is-active" : null)" href="@Link(item.Key)">
-					<span>@item.Label</span><span>@(data.FolderCounts.GetValueOrDefault(item.Key))</span>
+				var pad = Math.Max(0, item.Depth) * 14;
+				<a class="@(folder == item.Key ? "is-active" : null)" href="@Link(item.Key)" style="padding-left:@(10 + pad)px">
+					<span class="ckf-folder-name">
+						<i class="fa @(item.Depth > 0 ? "fa-folder-o" : "fa-folder")"></i>
+						<span>@item.Label</span>
+					</span>
+					<span class="ckf-folder-count">@(data.FolderCounts.GetValueOrDefault(item.Key))</span>
 				</a>
 			}
 		</aside>
 		<main class="ckf-main">
-			<div class="ckf-head">
-				<div>
-					<h1 class="ckf-title">@MediaFolders.Label(folder)</h1>
-					<small class="text-muted">@(isPicker ? "Bấm đúp ảnh để chọn ngay · hoặc bấm một lần rồi Xác nhận" : "Duyệt thư viện · copy URL") · bản <strong>@Model.Size</strong></small>
-				</div>
-				<form method="post" asp-page-handler="Upload" enctype="multipart/form-data" class="form-inline">
-					<input type="hidden" name="Type" value="@Model.Type" />
-					<input type="hidden" name="Size" value="@Model.Size" />
-					<input type="hidden" name="CKEditor" value="@Model.CKEditor" />
-					<input type="hidden" name="CKEditorFuncNum" value="@Model.CKEditorFuncNum" />
-					<input type="hidden" name="InputId" value="@Model.InputId" />
-					<select name="folder" class="form-control input-sm" style="width:auto;display:inline-block;">
-						@foreach (var item in MediaFolders.Items)
-						{
-							<option value="@item.Key" selected="@(folder == item.Key || (folder == MediaFolders.All && item.Key == MediaFolders.Other))">@item.Label</option>
-						}
-					</select>
-					<input type="file" name="file" accept="image/*" required />
-					<button type="submit" class="btn btn-sm btn-primary"><i class="fa fa-upload"></i> Tải lên</button>
-				</form>
-			</div>
-
-			@if (!string.IsNullOrWhiteSpace(Model.Flash))
-			{
-				<div class="alert alert-info">@Model.Flash</div>
-			}
-
-			@if (data.Items.Count == 0)
-			{
-				<div class="ckf-empty">Thư mục trống. Hãy tải lên hoặc chọn “Tất cả”.</div>
-			}
-			else
-			{
-				<div class="ckf-grid">
-					@foreach (var item in data.Items.Where(i => i.IsImage))
-					{
-						var url = PickUrl(item);
-						<div class="ckf-card" data-url="@url" @(isPicker ? "role=button tabindex=0" : null)>
-							<div class="ckf-thumb">
-								<img src="@item.ThumbUrl" alt="@(item.Alt ?? item.Name)" loading="lazy" />
-								<div class="ckf-overlay">
-									@if (isPicker)
-									{
-										<span class="btn btn-xs btn-primary"><i class="fa fa-check"></i> Chọn</span>
-									}
-									else
-									{
-										<button type="button" class="btn btn-xs btn-primary js-copy-url" data-url="@url"><i class="fa fa-link"></i> Copy</button>
-									}
-								</div>
-							</div>
-							<div class="ckf-meta">
-								<div class="ckf-name" title="@item.Name">@(item.Alt ?? item.Name)</div>
-								<small class="text-muted">@MediaFolders.Label(item.Folder)</small>
-							</div>
-						</div>
-					}
-				</div>
-				@if (data.TotalPages > 1)
-				{
-					<div class="ckf-pager">
-						@for (var i = 1; i <= data.TotalPages; i++)
-						{
-							<a class="btn btn-xs @(i == data.Page ? "btn-primary" : "btn-default")" href="@Link(folder, i)">@i</a>
-						}
-					</div>
-				}
+			<div class="ckf-toolbar" id="ckfToolbar" data-picker="@(isPicker ? "1" : "0")">
 				@if (isPicker)
 				{
-					<div class="ckf-pick-bar" id="ckfPickBar">
-						<code class="ckf-pick-bar__url" id="ckfPickUrl"></code>
-						<button type="button" class="btn btn-primary" id="ckfPickConfirm"><i class="fa fa-check"></i> Xác nhận chọn</button>
-					</div>
+					<button type="button" class="btn btn-sm btn-success" id="ckfChoose" disabled><i class="fa fa-check"></i> Chọn</button>
+					<button type="button" class="btn btn-sm btn-info" id="ckfChooseResized" disabled><i class="fa fa-picture-o"></i> Chọn resized</button>
+					<span class="ckf-toolbar__sep"></span>
 				}
-			}
+				<label class="btn btn-sm btn-default" style="margin:0;cursor:pointer;">
+					<i class="fa fa-cloud-upload"></i> Upload
+					<input type="file" id="ckfUploadInput" name="files" accept="image/*" multiple hidden form="ckfUploadForm" />
+				</label>
+				<button type="button" class="btn btn-sm btn-default" id="ckfNewFolder"><i class="fa fa-folder-o"></i> New Subfolder</button>
+				<button type="button" class="btn btn-sm btn-default" id="ckfRenameFolder" @(canDeleteFolder ? null : "disabled") title="Đổi tên thư mục đang mở"><i class="fa fa-font"></i> Đổi tên thư mục</button>
+				<button type="button" class="btn btn-sm btn-default" id="ckfMoveFolder" @(canDeleteFolder ? null : "disabled") title="Di chuyển thư mục đang mở"><i class="fa fa-share"></i> Chuyển thư mục</button>
+				<button type="button" class="btn btn-sm btn-danger" id="ckfDeleteFolder" @(canDeleteFolder ? null : "disabled") title="@(canDeleteFolder ? "Xóa thư mục + mọi thư mục con và file bên trong" : "Chỉ xóa được thư mục tùy chỉnh")"><i class="fa fa-folder"></i> Xóa thư mục</button>
+				<button type="button" class="btn btn-sm btn-default" id="ckfView" disabled><i class="fa fa-eye"></i> Xem</button>
+				<a class="btn btn-sm btn-default disabled" id="ckfDownload" href="#" target="_blank" rel="noopener"><i class="fa fa-download"></i> Tải</a>
+				<a class="btn btn-sm btn-default disabled" id="ckfEdit" href="#" target="_blank" rel="noopener" title="Mở trong Admin Media"><i class="fa fa-pencil"></i> Sửa</a>
+				<span class="ckf-toolbar__sep"></span>
+				<button type="button" class="btn btn-sm btn-default" id="ckfCopy" disabled><i class="fa fa-files-o"></i> Copy</button>
+				<button type="button" class="btn btn-sm btn-default" id="ckfMove" disabled><i class="fa fa-folder-open-o"></i> Move</button>
+				<button type="button" class="btn btn-sm btn-default" id="ckfRename" disabled><i class="fa fa-font"></i> Rename</button>
+				<button type="button" class="btn btn-sm btn-danger" id="ckfDelete" disabled><i class="fa fa-trash"></i> Delete</button>
+				<span class="ckf-toolbar__count" id="ckfCount">0 chọn</span>
+			</div>
+
+			<div class="ckf-body">
+				<div class="ckf-drop">Select files to upload — hoặc bấm Upload · Ctrl/⌘ + click chọn nhiều</div>
+				<div class="ckf-head">
+					<div>
+						<h1 class="ckf-title">@MediaFolders.Label(folder)</h1>
+						<small class="text-muted">@(isPicker ? "Chọn ảnh để chèn vào nội dung" : "Duyệt thư viện") · mặc định <strong>@Model.Size</strong></small>
+					</div>
+					<form method="post" asp-page-handler="Upload" enctype="multipart/form-data" id="ckfUploadForm" class="form-inline">
+						<input type="hidden" name="Type" value="@Model.Type" />
+						<input type="hidden" name="Size" value="@Model.Size" />
+						<input type="hidden" name="CKEditor" value="@Model.CKEditor" />
+						<input type="hidden" name="CKEditorFuncNum" value="@Model.CKEditorFuncNum" />
+						<input type="hidden" name="InputId" value="@Model.InputId" />
+						<input type="hidden" name="folder" value="@(folder == MediaFolders.All ? MediaFolders.Other : folder)" />
+					</form>
+				</div>
+
+				@if (!string.IsNullOrWhiteSpace(Model.Flash))
+				{
+					<div class="alert alert-info">@Model.Flash</div>
+				}
+
+				@{
+					var images = data.Items.Where(i => i.IsImage).ToList();
+					var hasChildren = Model.ChildFolders.Count > 0;
+					var hasFiles = images.Count > 0;
+				}
+				@if (!hasChildren && !hasFiles)
+				{
+					<div class="ckf-empty">Thư mục trống. Tạo subfolder, tải ảnh lên, hoặc chọn “Tất cả”.</div>
+				}
+				else
+				{
+					<div class="ckf-grid" id="ckfGrid">
+						@foreach (var child in Model.ChildFolders)
+						{
+							var count = data.FolderCounts.GetValueOrDefault(child.Key);
+							<a class="ckf-card ckf-card--folder" href="@Link(child.Key)" title="@MediaFolders.Label(child.Key)">
+								<div class="ckf-thumb"><i class="fa fa-folder"></i></div>
+								<div class="ckf-meta">
+									<div class="ckf-name">@child.Label</div>
+									<span class="ckf-sub">Thư mục@(count > 0 ? $" · {count} ảnh" : "")</span>
+								</div>
+							</a>
+						}
+						@foreach (var item in images)
+						{
+							var url = PickUrl(item);
+							<div class="ckf-card"
+							     role="button"
+							     tabindex="0"
+							     data-id="@item.Id"
+							     data-url="@url"
+							     data-thumb="@item.ThumbUrl"
+							     data-medium="@item.MediumUrl"
+							     data-large="@item.LargeUrl"
+							     data-original="@item.OriginalUrl"
+							     data-name="@item.Name"
+							     data-folder="@item.Folder">
+								<div class="ckf-thumb">
+									<img src="@item.ThumbUrl" alt="@(item.Alt ?? item.Name)" loading="lazy" />
+								</div>
+								<div class="ckf-meta">
+									<div class="ckf-name" title="@item.Name">@item.Name</div>
+									<span class="ckf-sub">@item.ModifiedUtc.ToLocalTime().ToString("M/d/yyyy h:mm tt") · @SizeLabel(item.Size)</span>
+								</div>
+							</div>
+						}
+					</div>
+					@if (data.TotalPages > 1)
+					{
+						<div class="ckf-pager">
+							@for (var i = 1; i <= data.TotalPages; i++)
+							{
+								<a class="btn btn-xs @(i == data.Page ? "btn-primary" : "btn-default")" href="@Link(folder, i)">@i</a>
+							}
+						</div>
+					}
+				}
+			</div>
 		</main>
 	</div>
+
+	@* Choose Resized *@
+	<div class="ckf-modal-backdrop" id="ckfResizeModal" aria-hidden="true">
+		<div class="ckf-modal" role="dialog" aria-labelledby="ckfResizeTitle">
+			<div class="ckf-modal__head" id="ckfResizeTitle">Choose Resized</div>
+			<div class="ckf-modal__body">
+				<label class="ckf-radio"><input type="radio" name="ckfResize" value="original" /> Original size</label>
+				<label class="ckf-radio"><input type="radio" name="ckfResize" value="thumb" /> Small (thumb ~@MediaUrls.ThumbW)</label>
+				<label class="ckf-radio"><input type="radio" name="ckfResize" value="medium" checked /> Medium (~@MediaUrls.MediumW)</label>
+				<label class="ckf-radio"><input type="radio" name="ckfResize" value="large" /> Large (~@MediaUrls.LargeW)</label>
+				<label class="ckf-radio"><input type="radio" name="ckfResize" value="custom" /> Custom</label>
+				<div class="ckf-custom-size" id="ckfCustomSize">
+					<label>Width <input type="number" id="ckfCustomW" class="form-control input-sm" min="16" max="1600" value="800" /></label>
+					<label>Height <input type="number" id="ckfCustomH" class="form-control input-sm" min="16" max="1600" value="600" /></label>
+				</div>
+			</div>
+			<div class="ckf-modal__foot">
+				<button type="button" class="btn btn-default" data-close-modal="ckfResizeModal">Cancel</button>
+				<button type="button" class="btn btn-success" id="ckfResizeOk">OK</button>
+			</div>
+		</div>
+	</div>
+
+	@* Copy / Move folder *@
+	<div class="ckf-modal-backdrop" id="ckfFolderModal" aria-hidden="true">
+		<div class="ckf-modal" role="dialog">
+			<div class="ckf-modal__head" id="ckfFolderTitle">Copy File To...</div>
+			<div class="ckf-modal__body">
+				<ul class="ckf-folder-list" id="ckfFolderList">
+					@foreach (var item in Model.FolderList)
+					{
+						var pad = Math.Max(0, item.Depth) * 14;
+						<li>
+							<button type="button" data-folder="@item.Key" style="padding-left:@(12 + pad)px">
+								<i class="fa @(item.Depth > 0 ? "fa-folder-o" : "fa-folder")"></i> @item.Label
+							</button>
+						</li>
+					}
+				</ul>
+			</div>
+			<div class="ckf-modal__foot">
+				<button type="button" class="btn btn-default" data-close-modal="ckfFolderModal">Cancel</button>
+				<button type="button" class="btn btn-success" id="ckfFolderOk">OK</button>
+			</div>
+		</div>
+	</div>
+
+	@* New Subfolder *@
+	<div class="ckf-modal-backdrop" id="ckfNewFolderModal" aria-hidden="true">
+		<div class="ckf-modal" role="dialog">
+			<div class="ckf-modal__head">New Subfolder</div>
+			<div class="ckf-modal__body">
+				<p class="ckf-newfolder-hint" id="ckfNewFolderHint">
+					Trong: <strong>@(folder == MediaFolders.All ? "gốc (Tất cả)" : MediaFolders.Label(folder))</strong>
+				</p>
+				<label style="font-size:13px;display:block;margin-bottom:8px;">Type the new folder name:</label>
+				<input type="text" class="form-control" id="ckfNewFolderInput" maxlength="60" placeholder="Ví dụ: Chiến dịch Tết" />
+			</div>
+			<div class="ckf-modal__foot">
+				<button type="button" class="btn btn-default" data-close-modal="ckfNewFolderModal">Cancel</button>
+				<button type="button" class="btn btn-success" id="ckfNewFolderOk">OK</button>
+			</div>
+		</div>
+	</div>
+
+	@* Delete folder (cascade) *@
+	<div class="ckf-modal-backdrop" id="ckfDeleteFolderModal" aria-hidden="true">
+		<div class="ckf-modal" role="dialog">
+			<div class="ckf-modal__head">Xác nhận xóa thư mục</div>
+			<div class="ckf-modal__body">
+				<p style="margin:0 0 10px;font-size:13px;">
+					Bạn có chắc muốn xóa thư mục <strong>@MediaFolders.Label(folder)</strong>?
+				</p>
+				<p style="margin:0 0 8px;font-size:13px;color:#a94442;">
+					Thao tác này sẽ xóa <strong>toàn bộ thư mục con</strong>
+					@if (Model.DeleteFolderSubfolderCount > 0)
+					{
+						<text> (@Model.DeleteFolderSubfolderCount)</text>
+					}
+					và <strong>mọi file bên trong</strong>
+					@if (Model.DeleteFolderFileCount > 0)
+					{
+						<text> (@Model.DeleteFolderFileCount file → thùng rác)</text>
+					}
+					else
+					{
+						<text> (không có file)</text>
+					}.
+				</p>
+				<p style="margin:0;font-size:12px;color:#666;">Không thể hoàn tác thư mục; file có thể khôi phục từ Thùng rác.</p>
+			</div>
+			<div class="ckf-modal__foot">
+				<button type="button" class="btn btn-default" data-close-modal="ckfDeleteFolderModal">Không</button>
+				<button type="button" class="btn btn-danger" id="ckfDeleteFolderOk">Có, xóa hết</button>
+			</div>
+		</div>
+	</div>
+
+	@* Rename folder *@
+	<div class="ckf-modal-backdrop" id="ckfRenameFolderModal" aria-hidden="true">
+		<div class="ckf-modal" role="dialog">
+			<div class="ckf-modal__head">Đổi tên thư mục</div>
+			<div class="ckf-modal__body">
+				<p class="ckf-newfolder-hint">Đang đổi: <strong>@MediaFolders.Label(folder)</strong></p>
+				<label style="font-size:13px;display:block;margin-bottom:8px;">Tên mới:</label>
+				<input type="text" class="form-control" id="ckfRenameFolderInput" maxlength="60" value="@MediaFolders.LeafLabel(folder)" />
+			</div>
+			<div class="ckf-modal__foot">
+				<button type="button" class="btn btn-default" data-close-modal="ckfRenameFolderModal">Cancel</button>
+				<button type="button" class="btn btn-success" id="ckfRenameFolderOk">OK</button>
+			</div>
+		</div>
+	</div>
+
+	@* Move folder *@
+	<div class="ckf-modal-backdrop" id="ckfMoveFolderModal" aria-hidden="true">
+		<div class="ckf-modal" role="dialog">
+			<div class="ckf-modal__head">Chuyển thư mục vào…</div>
+			<div class="ckf-modal__body">
+				<p class="ckf-newfolder-hint">Đang chuyển: <strong>@MediaFolders.Label(folder)</strong></p>
+				<ul class="ckf-folder-list" id="ckfMoveFolderList">
+					<li>
+						<button type="button" data-parent="" class="@(folder == MediaFolders.All ? null : null)">
+							<i class="fa fa-folder-open-o"></i> Gốc (Tất cả)
+						</button>
+					</li>
+					@foreach (var item in Model.FolderList)
+					{
+						var blocked = item.Key == folder
+							|| item.Key.StartsWith(folder + "/", StringComparison.OrdinalIgnoreCase);
+						if (blocked) { continue; }
+						var pad = Math.Max(0, item.Depth) * 14;
+						<li>
+							<button type="button" data-parent="@item.Key" style="padding-left:@(12 + pad)px">
+								<i class="fa @(item.Depth > 0 ? "fa-folder-o" : "fa-folder")"></i> @item.Label
+							</button>
+						</li>
+					}
+				</ul>
+			</div>
+			<div class="ckf-modal__foot">
+				<button type="button" class="btn btn-default" data-close-modal="ckfMoveFolderModal">Cancel</button>
+				<button type="button" class="btn btn-success" id="ckfMoveFolderOk">OK</button>
+			</div>
+		</div>
+	</div>
+
+	@* Rename file *@
+	<div class="ckf-modal-backdrop" id="ckfRenameModal" aria-hidden="true">
+		<div class="ckf-modal" role="dialog">
+			<div class="ckf-modal__head">Rename</div>
+			<div class="ckf-modal__body">
+				<label style="font-size:13px;display:block;margin-bottom:8px;">Type the new file name:</label>
+				<input type="text" class="form-control" id="ckfRenameInput" />
+			</div>
+			<div class="ckf-modal__foot">
+				<button type="button" class="btn btn-default" data-close-modal="ckfRenameModal">Cancel</button>
+				<button type="button" class="btn btn-success" id="ckfRenameOk">OK</button>
+			</div>
+		</div>
+	</div>
+
+	@* Viewer *@
+	<div class="ckf-viewer" id="ckfViewer" aria-hidden="true">
+		<button type="button" class="ckf-viewer__close" id="ckfViewerClose" aria-label="Đóng">&times;</button>
+		<button type="button" class="ckf-viewer__nav ckf-viewer__prev" id="ckfViewerPrev" aria-label="Trước"><i class="fa fa-angle-left"></i></button>
+		<img class="ckf-viewer__img" id="ckfViewerImg" alt="" />
+		<button type="button" class="ckf-viewer__nav ckf-viewer__next" id="ckfViewerNext" aria-label="Sau"><i class="fa fa-angle-right"></i></button>
+		<div class="ckf-viewer__meta" id="ckfViewerMeta"></div>
+	</div>
+
+	<form method="post" asp-page-handler="BulkFolder" id="ckfBulkFolderForm" style="display:none;">
+		<input type="hidden" name="Type" value="@Model.Type" />
+		<input type="hidden" name="Size" value="@Model.Size" />
+		<input type="hidden" name="Folder" value="@folder" />
+		<input type="hidden" name="PageNumber" value="@data.Page" />
+		<input type="hidden" name="CKEditor" value="@Model.CKEditor" />
+		<input type="hidden" name="CKEditorFuncNum" value="@Model.CKEditorFuncNum" />
+		<input type="hidden" name="InputId" value="@Model.InputId" />
+		<input type="hidden" name="targetFolder" id="ckfBulkFolderValue" value="" />
+		<div id="ckfBulkFolderIds"></div>
+	</form>
+	<form method="post" asp-page-handler="BulkCopy" id="ckfBulkCopyForm" style="display:none;">
+		<input type="hidden" name="Type" value="@Model.Type" />
+		<input type="hidden" name="Size" value="@Model.Size" />
+		<input type="hidden" name="Folder" value="@folder" />
+		<input type="hidden" name="PageNumber" value="@data.Page" />
+		<input type="hidden" name="CKEditor" value="@Model.CKEditor" />
+		<input type="hidden" name="CKEditorFuncNum" value="@Model.CKEditorFuncNum" />
+		<input type="hidden" name="InputId" value="@Model.InputId" />
+		<input type="hidden" name="targetFolder" id="ckfBulkCopyValue" value="" />
+		<div id="ckfBulkCopyIds"></div>
+	</form>
+	<form method="post" asp-page-handler="BulkDelete" id="ckfBulkDeleteForm" style="display:none;">
+		<input type="hidden" name="Type" value="@Model.Type" />
+		<input type="hidden" name="Size" value="@Model.Size" />
+		<input type="hidden" name="Folder" value="@folder" />
+		<input type="hidden" name="PageNumber" value="@data.Page" />
+		<input type="hidden" name="CKEditor" value="@Model.CKEditor" />
+		<input type="hidden" name="CKEditorFuncNum" value="@Model.CKEditorFuncNum" />
+		<input type="hidden" name="InputId" value="@Model.InputId" />
+		<div id="ckfBulkDeleteIds"></div>
+	</form>
+	<form method="post" asp-page-handler="CreateFolder" id="ckfCreateFolderForm" style="display:none;">
+		<input type="hidden" name="Type" value="@Model.Type" />
+		<input type="hidden" name="Size" value="@Model.Size" />
+		<input type="hidden" name="Folder" value="@folder" />
+		<input type="hidden" name="PageNumber" value="@data.Page" />
+		<input type="hidden" name="CKEditor" value="@Model.CKEditor" />
+		<input type="hidden" name="CKEditorFuncNum" value="@Model.CKEditorFuncNum" />
+		<input type="hidden" name="InputId" value="@Model.InputId" />
+		<input type="hidden" name="newFolderName" id="ckfNewFolderName" value="" />
+	</form>
+	<form method="post" asp-page-handler="DeleteFolder" id="ckfDeleteFolderForm" style="display:none;">
+		<input type="hidden" name="Type" value="@Model.Type" />
+		<input type="hidden" name="Size" value="@Model.Size" />
+		<input type="hidden" name="Folder" value="@folder" />
+		<input type="hidden" name="PageNumber" value="@data.Page" />
+		<input type="hidden" name="CKEditor" value="@Model.CKEditor" />
+		<input type="hidden" name="CKEditorFuncNum" value="@Model.CKEditorFuncNum" />
+		<input type="hidden" name="InputId" value="@Model.InputId" />
+	</form>
+	<form method="post" asp-page-handler="RenameFolder" id="ckfRenameFolderForm" style="display:none;">
+		<input type="hidden" name="Type" value="@Model.Type" />
+		<input type="hidden" name="Size" value="@Model.Size" />
+		<input type="hidden" name="Folder" value="@folder" />
+		<input type="hidden" name="PageNumber" value="@data.Page" />
+		<input type="hidden" name="CKEditor" value="@Model.CKEditor" />
+		<input type="hidden" name="CKEditorFuncNum" value="@Model.CKEditorFuncNum" />
+		<input type="hidden" name="InputId" value="@Model.InputId" />
+		<input type="hidden" name="newFolderName" id="ckfRenameFolderName" value="" />
+	</form>
+	<form method="post" asp-page-handler="MoveFolder" id="ckfMoveFolderForm" style="display:none;">
+		<input type="hidden" name="Type" value="@Model.Type" />
+		<input type="hidden" name="Size" value="@Model.Size" />
+		<input type="hidden" name="Folder" value="@folder" />
+		<input type="hidden" name="PageNumber" value="@data.Page" />
+		<input type="hidden" name="CKEditor" value="@Model.CKEditor" />
+		<input type="hidden" name="CKEditorFuncNum" value="@Model.CKEditorFuncNum" />
+		<input type="hidden" name="InputId" value="@Model.InputId" />
+		<input type="hidden" name="targetParent" id="ckfMoveFolderParent" value="" />
+	</form>
+	<form method="post" asp-page-handler="Rename" id="ckfRenameForm" style="display:none;">
+		<input type="hidden" name="Type" value="@Model.Type" />
+		<input type="hidden" name="Size" value="@Model.Size" />
+		<input type="hidden" name="Folder" value="@folder" />
+		<input type="hidden" name="PageNumber" value="@data.Page" />
+		<input type="hidden" name="CKEditor" value="@Model.CKEditor" />
+		<input type="hidden" name="CKEditorFuncNum" value="@Model.CKEditorFuncNum" />
+		<input type="hidden" name="InputId" value="@Model.InputId" />
+		<input type="hidden" name="id" id="ckfRenameId" value="0" />
+		<input type="hidden" name="newName" id="ckfRenameName" value="" />
+	</form>
 
 	<div class="ckf-toast" id="ckfToast" role="status" aria-live="polite"></div>
 
@@ -217,75 +546,415 @@
 				toastEl.innerHTML = html;
 				toastEl.classList.add('is-show');
 				clearTimeout(toastTimer);
-				toastTimer = setTimeout(function () { toastEl.classList.remove('is-show'); }, 2000);
+				toastTimer = setTimeout(function () { toastEl.classList.remove('is-show'); }, 2200);
 			}
-			function copyUrl(url) {
-				if (!url) return;
-				var done = function () { showToast('Đã copy URL<br><code>' + url + '</code>'); };
-				if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done);
-				else {
-					var t = document.createElement('input');
-					t.value = url; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t);
-					done();
-				}
+
+			var grid = document.getElementById('ckfGrid');
+			var isPicker = document.getElementById('ckfToolbar').getAttribute('data-picker') === '1';
+			var funcNum = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CKEditorFuncNum));
+			var inputId = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.InputId));
+			var cards = grid ? Array.prototype.slice.call(grid.querySelectorAll('.ckf-card:not(.ckf-card--folder)')) : [];
+			var folderMode = 'copy';
+			var folderTarget = '';
+			var viewerIndex = 0;
+
+			var elChoose = document.getElementById('ckfChoose');
+			var elChooseResized = document.getElementById('ckfChooseResized');
+			var elView = document.getElementById('ckfView');
+			var elDownload = document.getElementById('ckfDownload');
+			var elEdit = document.getElementById('ckfEdit');
+			var elCopy = document.getElementById('ckfCopy');
+			var elMove = document.getElementById('ckfMove');
+			var elRename = document.getElementById('ckfRename');
+			var elDelete = document.getElementById('ckfDelete');
+			var elCount = document.getElementById('ckfCount');
+			var uploadInput = document.getElementById('ckfUploadInput');
+			var uploadForm = document.getElementById('ckfUploadForm');
+
+			function selectedCards() { return cards.filter(function (c) { return c.classList.contains('is-picked'); }); }
+			function urlOf(card, size) {
+				if (!card) return '';
+				if (size === 'thumb') return card.getAttribute('data-thumb') || '';
+				if (size === 'large') return card.getAttribute('data-large') || '';
+				if (size === 'original') return card.getAttribute('data-original') || '';
+				if (size === 'medium') return card.getAttribute('data-medium') || '';
+				return card.getAttribute('data-url') || card.getAttribute('data-medium') || '';
 			}
-			document.querySelectorAll('.js-copy-url').forEach(function (btn) {
-				btn.addEventListener('click', function (e) {
-					e.preventDefault();
-					e.stopPropagation();
-					copyUrl(btn.getAttribute('data-url') || '');
+			function openModal(id) {
+				var m = document.getElementById(id);
+				if (!m) return;
+				m.classList.add('is-on');
+				m.setAttribute('aria-hidden', 'false');
+			}
+			function closeModal(id) {
+				var m = document.getElementById(id);
+				if (!m) return;
+				m.classList.remove('is-on');
+				m.setAttribute('aria-hidden', 'true');
+			}
+			document.querySelectorAll('[data-close-modal]').forEach(function (btn) {
+				btn.addEventListener('click', function () { closeModal(btn.getAttribute('data-close-modal')); });
+			});
+			document.querySelectorAll('.ckf-modal-backdrop').forEach(function (backdrop) {
+				backdrop.addEventListener('click', function (e) {
+					if (e.target === backdrop) closeModal(backdrop.id);
 				});
 			});
 
-			@if (isPicker)
-			{
-				<text>
-				var funcNum = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CKEditorFuncNum));
-				var inputId = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.InputId));
-				var pickBar = document.getElementById('ckfPickBar');
-				var pickUrlEl = document.getElementById('ckfPickUrl');
-				var pickConfirm = document.getElementById('ckfPickConfirm');
-				var selectedUrl = '';
-				function pick(url) {
-					if (!url) return;
-					if (inputId && window.opener && window.opener.document) {
-						var el = window.opener.document.getElementById(inputId);
-						if (el) {
-							el.value = url;
-							el.dispatchEvent(new Event('input', { bubbles: true }));
-							el.dispatchEvent(new Event('change', { bubbles: true }));
-						}
+			function syncToolbar() {
+				var selected = selectedCards();
+				var n = selected.length;
+				var one = n === 1 ? selected[0] : null;
+				elCount.textContent = n + ' chọn';
+				if (elChoose) {
+					elChoose.disabled = n === 0;
+					elChoose.innerHTML = n > 1 ? '<i class="fa fa-check"></i> Chọn ' + n : '<i class="fa fa-check"></i> Chọn';
+				}
+				if (elChooseResized) elChooseResized.disabled = n !== 1;
+				elView.disabled = n === 0;
+				elCopy.disabled = n === 0 || selected.every(function (c) { return !(+c.getAttribute('data-id') > 0); });
+				elMove.disabled = elCopy.disabled;
+				elRename.disabled = n !== 1 || !(+ (one && one.getAttribute('data-id')) > 0);
+				elDelete.disabled = elCopy.disabled;
+
+				if (one) {
+					var orig = urlOf(one, 'original') || urlOf(one);
+					elDownload.classList.remove('disabled');
+					elDownload.href = orig;
+					elEdit.classList.remove('disabled');
+					elEdit.href = '/Admin/Media?Q=' + encodeURIComponent(one.getAttribute('data-name') || '');
+				} else {
+					elDownload.classList.add('disabled');
+					elDownload.href = '#';
+					elEdit.classList.add('disabled');
+					elEdit.href = '#';
+				}
+			}
+			function selectOnly(card) {
+				cards.forEach(function (c) { c.classList.toggle('is-picked', c === card); });
+				syncToolbar();
+			}
+			function toggle(card) {
+				card.classList.toggle('is-picked');
+				syncToolbar();
+			}
+			function clearSelection() {
+				cards.forEach(function (c) { c.classList.remove('is-picked'); });
+				syncToolbar();
+			}
+
+			function pickUrls(urls) {
+				urls = (urls || []).filter(Boolean);
+				if (!urls.length) return;
+				if (inputId && window.opener && window.opener.document) {
+					var el = window.opener.document.getElementById(inputId);
+					if (el) {
+						el.value = urls[0];
+						el.dispatchEvent(new Event('input', { bubbles: true }));
+						el.dispatchEvent(new Event('change', { bubbles: true }));
+					}
+					window.close();
+					return;
+				}
+				if (funcNum && window.opener && window.opener.CKEDITOR) {
+					if (urls.length === 1) {
+						window.opener.CKEDITOR.tools.callFunction(funcNum, urls[0]);
 						window.close();
 						return;
 					}
-					if (funcNum && window.opener && window.opener.CKEDITOR) {
-						window.opener.CKEDITOR.tools.callFunction(funcNum, url);
+					var editor = window.opener.CKEDITOR.currentInstance;
+					if (editor && editor.insertHtml) {
+						editor.insertHtml(urls.map(function (u) {
+							return '<p><img src="' + u.replace(/"/g, '&quot;') + '" alt="" /></p>';
+						}).join(''));
 						window.close();
+						return;
 					}
+					window.opener.CKEDITOR.tools.callFunction(funcNum, urls[0]);
+					window.close();
 				}
-				function highlight(card) {
-					document.querySelectorAll('.ckf-card.is-picked').forEach(function (c) { c.classList.remove('is-picked'); });
-					card.classList.add('is-picked');
-					selectedUrl = card.getAttribute('data-url') || '';
-					if (pickBar) pickBar.classList.add('is-on');
-					if (pickUrlEl) pickUrlEl.textContent = selectedUrl;
-				}
-				document.querySelectorAll('.ckf-card[data-url]').forEach(function (card) {
-					card.addEventListener('click', function () { highlight(card); });
-					card.addEventListener('dblclick', function (e) {
-						e.preventDefault();
-						pick(card.getAttribute('data-url') || '');
-					});
-					card.addEventListener('keydown', function (e) {
-						if (e.key === 'Enter') { e.preventDefault(); pick(card.getAttribute('data-url') || ''); }
-						if (e.key === ' ') { e.preventDefault(); highlight(card); }
-					});
-				});
-				if (pickConfirm) {
-					pickConfirm.addEventListener('click', function () { pick(selectedUrl); });
-				}
-				</text>
 			}
+
+			function fillIds(container, list) {
+				container.innerHTML = '';
+				list.forEach(function (card) {
+					var id = parseInt(card.getAttribute('data-id') || '0', 10);
+					if (!(id > 0)) return;
+					var input = document.createElement('input');
+					input.type = 'hidden';
+					input.name = 'ids';
+					input.value = String(id);
+					container.appendChild(input);
+				});
+			}
+
+			function customUrl(card, w) {
+				var original = urlOf(card, 'original');
+				if (!original) return urlOf(card, 'medium');
+				w = Math.max(16, Math.min(1600, parseInt(w, 10) || 800));
+				var base = original.indexOf('?') >= 0 ? original.split('?')[0] : original;
+				// Map optimized → originals for ImageSharp when possible
+				base = base
+					.replace('/uploads/optimized/thumb/', '/uploads/originals/')
+					.replace('/uploads/optimized/medium/', '/uploads/originals/')
+					.replace('/uploads/optimized/large/', '/uploads/originals/')
+					.replace('/uploads/optimized/icon/', '/uploads/originals/')
+					.replace(/\.webp$/i, function () { return '.jpg'; });
+				return base + '?width=' + w + '&rmode=max&format=webp&quality=70';
+			}
+
+			cards.forEach(function (card) {
+				card.addEventListener('click', function (e) {
+					if (e.ctrlKey || e.metaKey) toggle(card);
+					else selectOnly(card);
+				});
+				card.addEventListener('dblclick', function (e) {
+					e.preventDefault();
+					selectOnly(card);
+					if (isPicker) pickUrls([urlOf(card)]);
+					else openViewerAt(cards.indexOf(card));
+				});
+				card.addEventListener('keydown', function (e) {
+					if (e.key === 'Enter') {
+						e.preventDefault();
+						if (isPicker) pickUrls([urlOf(card)]);
+						else openViewerAt(cards.indexOf(card));
+					}
+					if (e.key === ' ') {
+						e.preventDefault();
+						if (e.ctrlKey || e.metaKey) toggle(card);
+						else selectOnly(card);
+					}
+				});
+			});
+
+			if (uploadInput && uploadForm) {
+				uploadInput.addEventListener('change', function () {
+					if (!uploadInput.files || !uploadInput.files.length) return;
+					// move files into form via DataTransfer clone of input already bound with form=
+					uploadForm.submit();
+				});
+			}
+
+			if (elChoose) elChoose.addEventListener('click', function () {
+				pickUrls(selectedCards().map(function (c) { return urlOf(c); }));
+			});
+
+			if (elChooseResized) {
+				elChooseResized.addEventListener('click', function () {
+					if (selectedCards().length !== 1) return;
+					openModal('ckfResizeModal');
+					syncCustomSize();
+				});
+			}
+			function syncCustomSize() {
+				var custom = document.querySelector('input[name="ckfResize"][value="custom"]');
+				document.getElementById('ckfCustomSize').classList.toggle('is-on', !!(custom && custom.checked));
+			}
+			document.querySelectorAll('input[name="ckfResize"]').forEach(function (r) {
+				r.addEventListener('change', syncCustomSize);
+			});
+			document.getElementById('ckfResizeOk').addEventListener('click', function () {
+				var one = selectedCards()[0];
+				if (!one) return;
+				var mode = (document.querySelector('input[name="ckfResize"]:checked') || {}).value || 'medium';
+				var url = mode === 'custom'
+					? customUrl(one, document.getElementById('ckfCustomW').value)
+					: urlOf(one, mode);
+				closeModal('ckfResizeModal');
+				pickUrls([url]);
+			});
+
+			function openFolderModal(mode) {
+				folderMode = mode;
+				folderTarget = '';
+				document.getElementById('ckfFolderTitle').textContent = mode === 'move' ? 'Move File To...' : 'Copy File To...';
+				document.querySelectorAll('#ckfFolderList button').forEach(function (b) { b.classList.remove('is-on'); });
+				openModal('ckfFolderModal');
+			}
+			document.querySelectorAll('#ckfFolderList button').forEach(function (btn) {
+				btn.addEventListener('click', function () {
+					document.querySelectorAll('#ckfFolderList button').forEach(function (b) { b.classList.remove('is-on'); });
+					btn.classList.add('is-on');
+					folderTarget = btn.getAttribute('data-folder') || '';
+				});
+				btn.addEventListener('dblclick', function () {
+					folderTarget = btn.getAttribute('data-folder') || '';
+					document.getElementById('ckfFolderOk').click();
+				});
+			});
+			function submitFolderAction() {
+				if (!folderTarget) { showToast('Chọn thư mục đích.'); return; }
+				var list = selectedCards().filter(function (c) { return +c.getAttribute('data-id') > 0; });
+				if (!list.length) {
+					showToast('File này không có id (legacy) — không Move/Copy được.');
+					return;
+				}
+				if (folderMode === 'move') {
+					document.getElementById('ckfBulkFolderValue').value = folderTarget;
+					fillIds(document.getElementById('ckfBulkFolderIds'), list);
+					document.getElementById('ckfBulkFolderForm').submit();
+				} else {
+					document.getElementById('ckfBulkCopyValue').value = folderTarget;
+					fillIds(document.getElementById('ckfBulkCopyIds'), list);
+					document.getElementById('ckfBulkCopyForm').submit();
+				}
+			}
+			document.getElementById('ckfFolderOk').addEventListener('click', submitFolderAction);
+			elCopy.addEventListener('click', function () { openFolderModal('copy'); });
+			elMove.addEventListener('click', function () { openFolderModal('move'); });
+
+			document.getElementById('ckfNewFolder').addEventListener('click', function () {
+				document.getElementById('ckfNewFolderInput').value = '';
+				openModal('ckfNewFolderModal');
+				setTimeout(function () { document.getElementById('ckfNewFolderInput').focus(); }, 30);
+			});
+			document.getElementById('ckfNewFolderOk').addEventListener('click', function () {
+				var name = (document.getElementById('ckfNewFolderInput').value || '').trim();
+				if (!name) { showToast('Nhập tên thư mục.'); return; }
+				document.getElementById('ckfNewFolderName').value = name;
+				document.getElementById('ckfCreateFolderForm').submit();
+			});
+			document.getElementById('ckfNewFolderInput').addEventListener('keydown', function (e) {
+				if (e.key === 'Enter') {
+					e.preventDefault();
+					document.getElementById('ckfNewFolderOk').click();
+				}
+			});
+			var elDeleteFolder = document.getElementById('ckfDeleteFolder');
+			if (elDeleteFolder) {
+				elDeleteFolder.addEventListener('click', function () {
+					if (elDeleteFolder.disabled) return;
+					openModal('ckfDeleteFolderModal');
+				});
+			}
+			document.getElementById('ckfDeleteFolderOk').addEventListener('click', function () {
+				document.getElementById('ckfDeleteFolderForm').submit();
+			});
+
+			var elRenameFolder = document.getElementById('ckfRenameFolder');
+			if (elRenameFolder) {
+				elRenameFolder.addEventListener('click', function () {
+					if (elRenameFolder.disabled) return;
+					openModal('ckfRenameFolderModal');
+					setTimeout(function () {
+						var inp = document.getElementById('ckfRenameFolderInput');
+						if (inp) { inp.focus(); inp.select(); }
+					}, 30);
+				});
+			}
+			document.getElementById('ckfRenameFolderOk').addEventListener('click', function () {
+				var name = (document.getElementById('ckfRenameFolderInput').value || '').trim();
+				if (!name) { showToast('Nhập tên thư mục.'); return; }
+				document.getElementById('ckfRenameFolderName').value = name;
+				document.getElementById('ckfRenameFolderForm').submit();
+			});
+			document.getElementById('ckfRenameFolderInput').addEventListener('keydown', function (e) {
+				if (e.key === 'Enter') {
+					e.preventDefault();
+					document.getElementById('ckfRenameFolderOk').click();
+				}
+			});
+
+			var moveFolderParent = '';
+			var elMoveFolder = document.getElementById('ckfMoveFolder');
+			if (elMoveFolder) {
+				elMoveFolder.addEventListener('click', function () {
+					if (elMoveFolder.disabled) return;
+					moveFolderParent = '';
+					document.querySelectorAll('#ckfMoveFolderList button').forEach(function (b) { b.classList.remove('is-on'); });
+					openModal('ckfMoveFolderModal');
+				});
+			}
+			document.querySelectorAll('#ckfMoveFolderList button').forEach(function (btn) {
+				btn.addEventListener('click', function () {
+					document.querySelectorAll('#ckfMoveFolderList button').forEach(function (b) { b.classList.remove('is-on'); });
+					btn.classList.add('is-on');
+					moveFolderParent = btn.getAttribute('data-parent') || '';
+				});
+				btn.addEventListener('dblclick', function () {
+					moveFolderParent = btn.getAttribute('data-parent') || '';
+					document.getElementById('ckfMoveFolderOk').click();
+				});
+			});
+			document.getElementById('ckfMoveFolderOk').addEventListener('click', function () {
+				document.getElementById('ckfMoveFolderParent').value = moveFolderParent;
+				document.getElementById('ckfMoveFolderForm').submit();
+			});
+
+			elRename.addEventListener('click', function () {
+				var one = selectedCards()[0];
+				if (!one) return;
+				document.getElementById('ckfRenameInput').value = one.getAttribute('data-name') || '';
+				openModal('ckfRenameModal');
+				setTimeout(function () {
+					var inp = document.getElementById('ckfRenameInput');
+					inp.focus();
+					inp.select();
+				}, 30);
+			});
+			document.getElementById('ckfRenameOk').addEventListener('click', function () {
+				var one = selectedCards()[0];
+				var name = (document.getElementById('ckfRenameInput').value || '').trim();
+				if (!one || !name) return;
+				document.getElementById('ckfRenameId').value = one.getAttribute('data-id') || '0';
+				document.getElementById('ckfRenameName').value = name;
+				document.getElementById('ckfRenameForm').submit();
+			});
+
+			elDelete.addEventListener('click', function () {
+				var list = selectedCards().filter(function (c) { return +c.getAttribute('data-id') > 0; });
+				if (!list.length) return;
+				if (!confirm('Chuyển ' + list.length + ' file vào thùng rác?')) return;
+				fillIds(document.getElementById('ckfBulkDeleteIds'), list);
+				document.getElementById('ckfBulkDeleteForm').submit();
+			});
+
+			function openViewerAt(index) {
+				if (!cards.length) return;
+				viewerIndex = (index + cards.length) % cards.length;
+				var card = cards[viewerIndex];
+				var img = document.getElementById('ckfViewerImg');
+				img.src = urlOf(card, 'large') || urlOf(card, 'medium') || urlOf(card);
+				img.alt = card.getAttribute('data-name') || '';
+				document.getElementById('ckfViewerMeta').textContent =
+					(card.getAttribute('data-name') || '') + ' · ' + (viewerIndex + 1) + ' / ' + cards.length;
+				document.getElementById('ckfViewer').classList.add('is-on');
+				selectOnly(card);
+			}
+			elView.addEventListener('click', function () {
+				var selected = selectedCards();
+				if (!selected.length) return;
+				openViewerAt(cards.indexOf(selected[0]));
+			});
+			document.getElementById('ckfViewerClose').addEventListener('click', function () {
+				document.getElementById('ckfViewer').classList.remove('is-on');
+			});
+			document.getElementById('ckfViewerPrev').addEventListener('click', function () { openViewerAt(viewerIndex - 1); });
+			document.getElementById('ckfViewerNext').addEventListener('click', function () { openViewerAt(viewerIndex + 1); });
+			document.getElementById('ckfViewer').addEventListener('click', function (e) {
+				if (e.target.id === 'ckfViewer') document.getElementById('ckfViewer').classList.remove('is-on');
+			});
+
+			document.addEventListener('keydown', function (e) {
+				if (e.key === 'Escape') {
+					clearSelection();
+					closeModal('ckfResizeModal');
+					closeModal('ckfFolderModal');
+					closeModal('ckfRenameModal');
+					closeModal('ckfNewFolderModal');
+					closeModal('ckfDeleteFolderModal');
+					closeModal('ckfRenameFolderModal');
+					closeModal('ckfMoveFolderModal');
+					document.getElementById('ckfViewer').classList.remove('is-on');
+				}
+				if (document.getElementById('ckfViewer').classList.contains('is-on')) {
+					if (e.key === 'ArrowLeft') openViewerAt(viewerIndex - 1);
+					if (e.key === 'ArrowRight') openViewerAt(viewerIndex + 1);
+				}
+			});
+
+			syncToolbar();
 		})();
 	</script>
 </body>

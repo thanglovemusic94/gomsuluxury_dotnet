@@ -14,8 +14,10 @@
 	var selectedCount = document.getElementById("mediaSelectedCount");
 	var bulkFolderIds = document.getElementById("mediaBulkFolderIds");
 	var bulkDeleteIds = document.getElementById("mediaBulkDeleteIds");
+	var bulkCopyIds = document.getElementById("mediaBulkCopyIds");
 	var bulkFolderBtn = document.getElementById("mediaBulkFolderBtn");
 	var bulkDeleteBtn = document.getElementById("mediaBulkDeleteBtn");
+	var bulkCopyBtn = document.getElementById("mediaBulkCopyBtn");
 	var drop = document.getElementById("mediaDrop");
 	var fileInput = document.getElementById("mediaFileInput");
 	var uploadProgress = document.getElementById("mediaUploadProgress");
@@ -97,10 +99,12 @@
 		if (seoBtn) seoBtn.disabled = n === 0;
 		if (bulkFolderBtn) bulkFolderBtn.disabled = n === 0;
 		if (bulkDeleteBtn) bulkDeleteBtn.disabled = n === 0;
+		if (bulkCopyBtn) bulkCopyBtn.disabled = n === 0;
 		if (selectPage) selectPage.checked = boxes.length > 0 && checked.length === boxes.length;
 		var ids = selectedIds();
 		fillIdInputs(bulkFolderIds, ids);
 		fillIdInputs(bulkDeleteIds, ids);
+		fillIdInputs(bulkCopyIds, ids);
 		boxes.forEach(function (box) {
 			var card = box.closest(".media-card");
 			if (card) card.classList.toggle("is-selected", box.checked);
@@ -137,7 +141,7 @@
 		var original = card.getAttribute("data-original") || "";
 		var otf = card.getAttribute("data-otf") || "";
 
-		document.getElementById("drawerTitle").textContent = alt || name || "Chi tiết";
+		document.getElementById("drawerTitle").textContent = name || alt || "Chi tiết";
 		var previewEl = document.getElementById("drawerPreview");
 		if (isImage && preview) {
 			previewEl.innerHTML = '<img src="' + esc(large || preview) + '" alt="' + esc(alt || name) + '">';
@@ -178,8 +182,16 @@
 
 		document.getElementById("drawerAltId").value = id;
 		document.getElementById("drawerAltInput").value = alt;
+		var renameId = document.getElementById("drawerRenameId");
+		var renameInput = document.getElementById("drawerRenameInput");
+		if (renameId) renameId.value = id;
+		if (renameInput) renameInput.value = name;
 		document.getElementById("drawerFolderId").value = id;
 		document.getElementById("drawerFolderSelect").value = folder;
+		var copyId = document.getElementById("drawerCopyId");
+		var copySelect = document.getElementById("drawerCopySelect");
+		if (copyId) copyId.value = id;
+		if (copySelect) copySelect.value = folder;
 		document.getElementById("drawerRegenId").value = id;
 		document.getElementById("drawerDeleteId").value = id;
 		document.getElementById("drawerDeleteName").value = name;
@@ -193,17 +205,23 @@
 		var regenForm = document.getElementById("drawerRegenForm");
 		if (regenForm) regenForm.style.display = isImage && id !== "0" ? "" : "none";
 		var altForm = document.getElementById("drawerAltForm");
+		var renameForm = document.getElementById("drawerRenameForm");
 		var folderForm = document.getElementById("drawerFolderForm");
+		var copyForm = document.getElementById("drawerCopyForm");
 		var deleteForm = document.getElementById("drawerDeleteForm");
 		var usageBtn = document.getElementById("drawerUsageBtn");
 		if (id === "0") {
 			if (altForm) altForm.style.display = "none";
+			if (renameForm) renameForm.style.display = "none";
 			if (folderForm) folderForm.style.display = "none";
+			if (copyForm) copyForm.style.display = "none";
 			if (deleteForm) deleteForm.style.display = "none";
 			if (usageBtn) usageBtn.style.display = "none";
 		} else {
 			if (altForm) altForm.style.display = "";
+			if (renameForm) renameForm.style.display = "";
 			if (folderForm) folderForm.style.display = "";
+			if (copyForm) copyForm.style.display = "";
 			if (deleteForm) deleteForm.style.display = "";
 			if (usageBtn) usageBtn.style.display = "";
 		}
@@ -215,7 +233,7 @@
 		usageBtn.setAttribute("data-id", id);
 	}
 
-	document.querySelectorAll(".media-card").forEach(function (card) {
+	document.querySelectorAll(".media-card:not(.media-card--folder)").forEach(function (card) {
 		card.addEventListener("click", function (e) {
 			if (e.target.closest(".js-media-pick")) return;
 			openDrawer(card);
