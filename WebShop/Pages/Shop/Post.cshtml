@@ -9,12 +9,12 @@
 <div class="container shop-page">
 	<p class="text-muted">@item.Category.Name · @item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</p>
 	<h1 class="shop-title">@item.Title</h1>
-	@if (!string.IsNullOrWhiteSpace(item.ImageUrl))
+	@if (!string.IsNullOrWhiteSpace(Model.CoverImage))
 	{
 		<div class="shop-frame shop-frame--corners shop-frame--wan shop-frame--media" style="margin-bottom:16px;max-width:720px">
 			<img class="shop-photo"
-			     src="@WebShop.Infrastructure.MediaUrls.For(item.ImageUrl, WebShop.Infrastructure.MediaSize.Medium)"
-			     srcset="@WebShop.Infrastructure.MediaUrls.SrcSetUpTo(item.ImageUrl, WebShop.Infrastructure.MediaSize.Medium)"
+			     src="@WebShop.Infrastructure.MediaUrls.For(Model.CoverImage, WebShop.Infrastructure.MediaSize.Medium)"
+			     srcset="@WebShop.Infrastructure.MediaUrls.SrcSetUpTo(Model.CoverImage, WebShop.Infrastructure.MediaSize.Medium)"
 			     sizes="(max-width: 767px) 100vw, 720px"
 			     alt="@item.Title"
 			     width="960"

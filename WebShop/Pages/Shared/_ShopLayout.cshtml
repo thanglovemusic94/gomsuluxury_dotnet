@@ -14,16 +14,6 @@
 	var description = ViewData["Description"] as string;
 	if (string.IsNullOrWhiteSpace(description))
 		description = snap.SiteName;
-	var ogType = ViewData["OgType"] as string ?? "website";
-	var ogImageRaw = SiteSocial.PickImage(
-		ViewData["OgImage"] as string,
-		snap.ShareImageUrl);
-	var ogImage = request is null ? ogImageRaw : SiteSocial.Absolute(request, MediaUrls.For(ogImageRaw, MediaSize.Large));
-	if (string.IsNullOrWhiteSpace(ogImage) && request is not null)
-		ogImage = SiteSocial.Absolute(request, MediaUrls.For(ogImageRaw, MediaSize.Medium));
-	var canonical = request is null
-		? string.Empty
-		: SiteSocial.Absolute(request, $"{request.PathBase}{request.Path}{request.QueryString}");
 }
 <!DOCTYPE html>
 <html lang="vi" style="background-color:#fff">
@@ -52,27 +42,7 @@
 	{
 		<meta name="description" content="@description" />
 	}
-	@if (!string.IsNullOrWhiteSpace(canonical))
-	{
-		<link rel="canonical" href="@canonical" />
-		<meta property="og:url" content="@canonical" />
-	}
-	<meta property="og:site_name" content="@snap.SiteName" />
-	<meta property="og:type" content="@ogType" />
-	<meta property="og:title" content="@pageTitle" />
-	<meta property="og:description" content="@description" />
-	@if (!string.IsNullOrWhiteSpace(ogImage))
-	{
-		<meta property="og:image" content="@ogImage" />
-		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:image" content="@ogImage" />
-	}
-	else
-	{
-		<meta name="twitter:card" content="summary" />
-	}
-	<meta name="twitter:title" content="@pageTitle" />
-	<meta name="twitter:description" content="@description" />
+	<partial name="_OpenGraphMeta" />
 	@{
 		var jsonLd = new List<string>();
 		if (request is not null)

@@ -143,7 +143,8 @@ public static class SchemaOrg
             foreach (var img in product.Images.OrderBy(item => item.DisplayOrder).ThenBy(item => item.Id))
                 AddImg(img.ImageUrl);
 
-        var price = product.DiscountPrice ?? product.Price;
+        var price = ProductPricing.UnitPrice(product);
+        var contactOnly = ProductPricing.ShowContactOnly(product);
         var availability = product.Stock > 0
             ? "https://schema.org/InStock"
             : "https://schema.org/OutOfStock";
@@ -167,15 +168,20 @@ public static class SchemaOrg
         else if (images.Count > 1)
             graph["image"] = images;
 
-        graph["offers"] = new Dictionary<string, object?>
+        var offer = new Dictionary<string, object?>
         {
             ["@type"] = "Offer",
             ["url"] = graph["url"],
-            ["priceCurrency"] = "VND",
-            ["price"] = decimal.Round(price, 0, MidpointRounding.AwayFromZero),
             ["availability"] = availability,
             ["itemCondition"] = "https://schema.org/NewCondition"
         };
+        if (!contactOnly)
+        {
+            offer["priceCurrency"] = "VND";
+            offer["price"] = decimal.Round(price, 0, MidpointRounding.AwayFromZero);
+        }
+
+        graph["offers"] = offer;
 
         if (reviews.Count > 0)
         {

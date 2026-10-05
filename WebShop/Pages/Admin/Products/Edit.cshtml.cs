@@ -175,6 +175,7 @@ public class EditModel(AppDbContext db, AuditService audit, GeminiSeoService gem
         ["Stock"] = product.Stock.ToString(),
         ["ImageUrl"] = product.ImageUrl,
         ["IsVisible"] = product.IsVisible.ToString(),
+        ["HidePrice"] = product.HidePrice.ToString(),
         ["ShortDescription"] = product.ShortDescription,
         ["Description"] = product.Description,
         ["MetaTitle"] = product.MetaTitle,
@@ -381,6 +382,8 @@ public class EditModel(AppDbContext db, AuditService audit, GeminiSeoService gem
 
         public bool IsVisible { get; set; } = true;
 
+        public bool HidePrice { get; set; }
+
         public static ProductInput From(Product product) => new()
         {
             Id = product.Id,
@@ -394,7 +397,8 @@ public class EditModel(AppDbContext db, AuditService audit, GeminiSeoService gem
             Description = product.Description,
             ShortDescription = product.ShortDescription,
             ImageUrl = product.ImageUrl,
-            IsVisible = product.IsVisible
+            IsVisible = product.IsVisible,
+            HidePrice = product.HidePrice
         };
 
         public void Apply(Product product, string slug)
@@ -410,6 +414,7 @@ public class EditModel(AppDbContext db, AuditService audit, GeminiSeoService gem
             product.ShortDescription = TextHelper.Clean(ShortDescription);
             product.ImageUrl = ImageUrl;
             product.IsVisible = IsVisible;
+            product.HidePrice = HidePrice;
         }
     }
 

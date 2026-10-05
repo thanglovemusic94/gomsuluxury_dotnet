@@ -183,7 +183,12 @@ public class LandingModel(AppDbContext db, ShopStore shop) : PageModel
 
         var hero = SiteSocial.PickImage(page.SeoImage, page.HeroImageUrl);
         if (!string.IsNullOrWhiteSpace(hero))
+        {
             ViewData["LcpImage"] = MediaUrls.For(hero, MediaSize.Large);
+            ViewData["OgImage"] = hero;
+        }
+
+        ViewData["OgType"] = "website";
     }
 
     private async Task<IActionResult> HandleInactiveAsync(LandingPage page)

@@ -95,7 +95,131 @@ public static class HtmlBlockSeed
 
         await ScopeProductShortcodesOnceAsync(db);
         await EnsureYoutubePrivacyAsync(db);
+        await EnsureAboutBlocksOnceAsync(db);
         await db.SaveChangesAsync();
+    }
+
+    /// <summary>Trang /gioi-thieu — tạo 1 lần; Admin sửa tại Html blocks.</summary>
+    public static async Task EnsureAboutBlocksOnceAsync(AppDbContext db)
+    {
+        await EnsureOnceAsync(db, "about-hero", "Giới thiệu — Hero",
+            """
+            <p class="shop-about-hero__eyebrow">Giới thiệu</p>
+            <h1 class="shop-about-hero__title">Gốm Sứ Luxury – Tự hào gốm Việt</h1>
+            <span class="shop-about-hero__rule" aria-hidden="true"></span>
+            <p class="shop-about-hero__lead">Vẻ đẹp thuần Việt, đẳng cấp toàn cầu</p>
+            """,
+            "Tiêu đề trang /gioi-thieu (trên ảnh hero).");
+
+        await EnsureOnceAsync(db, "about-story", "Giới thiệu — Câu chuyện",
+            """
+            <h2>Vẻ đẹp thuần Việt, đẳng cấp toàn cầu</h2>
+            <p>Tại <strong>Gốm Sứ Luxury</strong>, chúng tôi tin rằng mỗi sản phẩm gốm sứ là một bản giao hưởng giữa đất, nước, lửa và đôi bàn tay người nghệ nhân Việt.</p>
+            <p>Lấy cảm hứng từ tinh hoa gốm cổ truyền, kết hợp cùng tư duy thiết kế đương đại, chúng tôi kiến tạo nên những tuyệt phẩm gốm sứ cao cấp – nơi hội tụ vẻ đẹp truyền thống và khí chất sang trọng hiện đại.</p>
+            """,
+            "Khối chữ zigzag 1 (bên cạnh ảnh).");
+
+        await EnsureOnceAsync(db, "about-pillars", "Giới thiệu — Sứ mệnh / Tầm nhìn",
+            """
+            <h2 class="shop-about-section-title">Sứ mệnh &amp; Tầm nhìn</h2>
+            <div class="shop-about-pillars__grid">
+            	<article class="shop-about-card">
+            		<span class="shop-about-card__icon" aria-hidden="true"><i class="fa fa-hand-paper-o"></i></span>
+            		<h3>Sứ mệnh</h3>
+            		<p>Gìn giữ và nâng tầm giá trị gốm Việt trên bản đồ gốm sứ thế giới. Mỗi sản phẩm không chỉ để dùng hay trang trí – mà còn là <strong>niềm tự hào của văn hoá Việt</strong>.</p>
+            	</article>
+            	<article class="shop-about-card">
+            		<span class="shop-about-card__icon" aria-hidden="true"><i class="fa fa-eye"></i></span>
+            		<h3>Tầm nhìn</h3>
+            		<p>Trở thành biểu tượng của gốm sứ Việt Nam trong phân khúc cao cấp – nơi mỗi sản phẩm mang đậm chất nghệ thuật và phong cách sống tinh tế của người sở hữu.</p>
+            	</article>
+            	<article class="shop-about-card">
+            		<span class="shop-about-card__icon" aria-hidden="true"><i class="fa fa-shield"></i></span>
+            		<h3>Cam kết</h3>
+            		<p>100% tinh thần thủ công Bát Tràng, men và cốt gốm được hoàn thiện kỹ – kiểm tra từng sản phẩm trước khi đến tay bạn.</p>
+            	</article>
+            </div>
+            """,
+            "3 card sứ mệnh / tầm nhìn / cam kết.");
+
+        await EnsureOnceAsync(db, "about-craft", "Giới thiệu — Người kể chuyện",
+            """
+            <h2>Người kể chuyện bằng gốm</h2>
+            <p><strong>Gốm Sứ Luxury</strong> không chỉ cung cấp sản phẩm – chúng tôi kể chuyện bằng đất, lửa và bàn tay nghệ nhân. Mỗi món đồ là kết tinh của lịch sử, nghệ thuật và từng giọt mồ hôi, mang sự sang trọng cùng niềm tự hào vào không gian sống.</p>
+            """,
+            "Khối chữ zigzag 2.");
+
+        await EnsureOnceAsync(db, "about-values", "Giới thiệu — Giá trị cốt lõi",
+            """
+            <h2 class="shop-about-section-title">Giá trị cốt lõi</h2>
+            <ol class="shop-about-values__list">
+            	<li>
+            		<span class="shop-about-values__num" aria-hidden="true">01</span>
+            		<div>
+            			<h3>Tinh hoa thủ công</h3>
+            			<p>Chế tác hoàn toàn thủ công bởi nghệ nhân Bát Tràng nhiều năm kinh nghiệm.</p>
+            		</div>
+            	</li>
+            	<li>
+            		<span class="shop-about-values__num" aria-hidden="true">02</span>
+            		<div>
+            			<h3>Bản sắc Việt</h3>
+            			<p>Họa tiết và hình khối mang dấu ấn văn hoá từ dân gian đến cung đình.</p>
+            		</div>
+            	</li>
+            	<li>
+            		<span class="shop-about-values__num" aria-hidden="true">03</span>
+            		<div>
+            			<h3>Tinh thần đổi mới</h3>
+            			<p>Thiết kế độc bản trong khuôn khổ truyền thống, dẫn đầu xu hướng gốm hiện đại.</p>
+            		</div>
+            	</li>
+            </ol>
+            """,
+            "Danh sách 01–03 giá trị cốt lõi.");
+
+        await EnsureOnceAsync(db, "about-stats", "Giới thiệu — Con số",
+            """
+            <div class="container shop-about-stats__grid">
+            	<div class="shop-about-stat"><strong>15+</strong><span>Năm kinh nghiệm</span></div>
+            	<div class="shop-about-stat"><strong>50+</strong><span>Nghệ nhân Bát Tràng</span></div>
+            	<div class="shop-about-stat"><strong>10.000+</strong><span>Khách hàng tin chọn</span></div>
+            	<div class="shop-about-stat"><strong>100%</strong><span>Thủ công độc bản</span></div>
+            </div>
+            """,
+            "Hàng số liệu uy tín.");
+
+        await EnsureOnceAsync(db, "about-gallery-title", "Giới thiệu — Tiêu đề gallery",
+            """
+            <h2 id="about-gallery-heading" class="shop-about-section-title">Tinh hoa qua hình ảnh</h2>
+            """,
+            "Tiêu đề khối gallery ảnh.");
+
+        await EnsureOnceAsync(db, "about-quote", "Giới thiệu — Quote / CTA",
+            """
+            <blockquote>
+            	<p>“Gốm Việt – niềm tự hào trong từng sản phẩm. Chúng tôi không chỉ làm gốm, chúng tôi gìn giữ hồn đất Việt.”</p>
+            	<footer>— Đội ngũ Gốm Sứ Luxury</footer>
+            </blockquote>
+            <a class="btn btn-primary shop-about-quote__cta" href="/san-pham">Khám phá bộ sưu tập</a>
+            """,
+            "Lời hứa thương hiệu + nút CTA.");
+    }
+
+    private static async Task EnsureOnceAsync(AppDbContext db, string key, string title, string content, string note)
+    {
+        if (await db.HtmlBlocks.AnyAsync(block => block.Key == key))
+            return;
+
+        db.HtmlBlocks.Add(new HtmlBlock
+        {
+            Key = key,
+            Title = title,
+            Content = content.Trim(),
+            Note = note,
+            IsActive = true,
+            UpdatedAt = DateTime.UtcNow
+        });
     }
 
     /// <summary>

@@ -8,7 +8,7 @@ using WebShop.Models;
 
 namespace WebShop.Pages.Shop;
 
-public class ProductModel(AppDbContext db, CartService cart) : PageModel
+public class ProductModel(AppDbContext db, CartService cart, MediaTrashFilter trash) : PageModel
 {
     public Product? Product { get; private set; }
 
@@ -29,6 +29,12 @@ public class ProductModel(AppDbContext db, CartService cart) : PageModel
         if (product is null)
             return NotFound();
 
+        if (ProductPricing.ShowContactOnly(product))
+        {
+            TempData["Error"] = "Sản phẩm này tư vấn giá — vui lòng gọi / Zalo / Facebook.";
+            return RedirectToPage(new { slug });
+        }
+
         quantity = Math.Clamp(quantity, 1, Math.Max(product.Stock, 1));
         if (product.Stock < 1)
         {
@@ -42,7 +48,7 @@ public class ProductModel(AppDbContext db, CartService cart) : PageModel
             Name = product.Name,
             Slug = product.Slug,
             ImageUrl = product.ImageUrl,
-            UnitPrice = product.DiscountPrice ?? product.Price,
+            UnitPrice = ProductPricing.UnitPrice(product),
             Quantity = quantity
         });
         TempData["CartAdded"] = "1";
@@ -127,7 +133,7 @@ public class ProductModel(AppDbContext db, CartService cart) : PageModel
 		ViewData["Title"] = Product.MetaTitle ?? Product.Name;
         ViewData["Description"] = Product.MetaDescription ?? Product.ShortDescription;
         ViewData["OgType"] = "product";
-        ViewData["OgImage"] = SiteSocial.PickImage(Product.SeoImage, Product.ImageUrl);
+        ViewData["OgImage"] = await trash.LiveOrNullAsync(SiteSocial.PickImage(Product.SeoImage, Product.ImageUrl));
         ViewData["ImmersiveDetail"] = true;
         ViewData["ShopAssets"] = "detail";
         if (HttpContext.Request is { } req)

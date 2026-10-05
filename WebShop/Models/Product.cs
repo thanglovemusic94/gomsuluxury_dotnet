@@ -26,6 +26,11 @@ public class Product : ISoftDeletable
 
     public bool IsVisible { get; set; } = true;
 
+    /// <summary>
+    /// Ẩn giá trên shop, hiện CTA gọi / Zalo / Facebook (vẫn giữ giá trong Admin).
+    /// </summary>
+    public bool HidePrice { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public string? MetaTitle { get; set; }

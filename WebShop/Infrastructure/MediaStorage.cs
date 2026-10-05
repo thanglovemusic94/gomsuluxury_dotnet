@@ -831,6 +831,7 @@ public sealed partial class MediaStorage(IWebHostEnvironment env, IServiceScopeF
         SoftDelete.Mark(asset, deletedBy);
         asset.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
+        scope.ServiceProvider.GetService<MediaTrashFilter>()?.Invalidate();
         return true;
     }
 
@@ -846,6 +847,7 @@ public sealed partial class MediaStorage(IWebHostEnvironment env, IServiceScopeF
         SoftDelete.Restore(asset);
         asset.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
+        scope.ServiceProvider.GetService<MediaTrashFilter>()?.Invalidate();
         return true;
     }
 
@@ -864,6 +866,7 @@ public sealed partial class MediaStorage(IWebHostEnvironment env, IServiceScopeF
         await db.SaveChangesAsync(ct);
         // Hashed on-the-fly cache cannot target one source file reliably.
         MediaImageCache.PurgeAll(env);
+        scope.ServiceProvider.GetService<MediaTrashFilter>()?.Invalidate();
         return true;
     }
 

@@ -165,16 +165,26 @@
 	</div>
 </footer>
 
+@{
+	var floatPhone = WebShop.Infrastructure.SiteContact.DisplayPhone(Model.Hotline);
+	var floatTel = WebShop.Infrastructure.SiteContact.TelHref(Model.Hotline);
+	var floatZalo = WebShop.Infrastructure.SiteContact.ZaloHref(Model.ZaloUrl, Model.Hotline);
+}
 <div class="shop-float" aria-label="Liên hệ nhanh">
-	@if (!string.IsNullOrWhiteSpace(Model.ZaloUrl))
+	@if (!string.IsNullOrWhiteSpace(floatZalo))
 	{
-		<a class="shop-float__btn shop-float__btn--zalo" href="@Model.ZaloUrl" target="_blank" rel="noopener noreferrer" title="Chat Zalo">
+		<a class="shop-float__btn shop-float__btn--zalo" href="@floatZalo" target="_blank" rel="noopener noreferrer"
+		   title="@(string.IsNullOrWhiteSpace(floatPhone) ? "Chat Zalo" : "Zalo " + floatPhone)">
 			<i class="fa fa-commenting" aria-hidden="true"></i>
+			@if (!string.IsNullOrWhiteSpace(floatPhone))
+			{
+				<span class="shop-float__label">@floatPhone</span>
+			}
 		</a>
 	}
-	@if (!string.IsNullOrWhiteSpace(Model.Hotline))
+	@if (!string.IsNullOrWhiteSpace(floatTel))
 	{
-		<a class="shop-float__btn shop-float__btn--phone" href="tel:@Model.Hotline.Replace(" ", "")" title="Gọi hotline">
+		<a class="shop-float__btn shop-float__btn--phone" href="@floatTel" title="Gọi @floatPhone">
 			<i class="fa fa-phone" aria-hidden="true"></i>
 		</a>
 	}

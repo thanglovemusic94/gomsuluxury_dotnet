@@ -14,13 +14,13 @@ Stack: ASP.NET Core 8 Razor Pages + EF Core SQLite. Thư mục app: `WebShop/`. 
 - Ưu tiên mở rộng helper có sẵn (`TextHelper`, `PagePaths`, `SoftDelete`, `AdminContentDelete`, `MediaStorage`) thay vì tạo utility song song.
 - Đổi schema/seed: dùng `Ensure*Async` / `*Schema.EnsureAsync` idempotent gọi từ `Program.cs` lúc startup — không chỉ dựa vào EF migration.
 - SEO index toàn site: khóa DB `Seo.AllowIndexing` chỉnh tại **Admin → Cấu hình** (checkbox). Config `Seo:AllowIndexing` chỉ là mặc định seed khi chưa có dòng DB. Tắt → `robots.txt` Disallow + `noindex`. Meta SEO từng trang vẫn qua `_SeoFields` / `SeoInput`.
-- Favicon / share link: layout dùng `LogoUrl` (hoặc `FaviconUrl` / `OgImageUrl`); fallback `wwwroot/favicon.svg`. OG meta qua `ViewData["OgImage"]` + `SiteSocial`.
+- Favicon / share link: layout dùng `LogoUrl` (hoặc `FaviconUrl` / `OgImageUrl`); fallback `wwwroot/favicon.svg`. OG meta qua `_OpenGraphMeta` + `ViewData["OgImage"]` + `SiteSocial` (absolute https, width/height 1200×630).
 - Schema.org JSON-LD: `SchemaOrg` tự sinh Organization (mọi trang), WebSite+SearchAction (trang chủ), Product/BlogPosting từ DB; logo/image absolute qua `SiteSocial.Absolute`; tọa độ 1 ô `GeoCoordinates` (`lat, lng`, dán từ Maps); cấu hình org + link Rich Results Test tại Admin → Cấu hình.
 - Cờ `Seed` trong config (`appsettings.json` / `appsettings.Local.json`): `DemoCatalog`, `LuxuryCatalog`, `SourceSiteSync`, `RemoteImageImport`. Local mặc định tắt sync/seed demo. `AdminSeed` luôn chạy nhưng **không** ghi đè mật khẩu nếu đã có user `admin`.
 
 ## URL công khai
 
-- Trang tĩnh: `/{slug}` qua `Pages/Shop/Content.cshtml` + `PagePaths`. Không đưa lại link `/p/`.
+- Trang tĩnh: `/{slug}` qua `Pages/Shop/Content.cshtml` + `PagePaths`. Không đưa lại link `/p/`. Giới thiệu `/gioi-thieu` dùng trang Razor riêng (`Pages/Shop/About`) — slug reserved.
 - Giữ redirect `/p/{*slug}` → 301. Khi lưu/resolve slug dùng `PagePaths.NormalizeSlug` / `PublicUrl` / `IsReserved`.
 - Sản phẩm `/san-pham/{slug}`, danh mục `/danh-muc/{slug}`, blog `/blog/{slug}`, landing Ads `/lp/{slug}` — không trùng segment đầu trong `PagePaths.IsReserved`.
 - Landing Ads: Admin → Landing Page; layout `_ShopAdsLayout` (không full header/footer shop); đơn form LP gắn `Order.Source` = `LP:{slug}`.

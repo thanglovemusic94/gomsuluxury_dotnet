@@ -5,7 +5,7 @@ using WebShop.Data;
 
 namespace WebShop.Infrastructure;
 
-public sealed class HtmlBlockService(AppDbContext db, IMemoryCache cache)
+public sealed class HtmlBlockService(AppDbContext db, IMemoryCache cache, MediaTrashFilter trash)
 {
     private static readonly Regex Shortcode = new(
         @"\{\{\s*block\s*:\s*([a-z0-9\-]+)\s*\}\}",
@@ -21,7 +21,7 @@ public sealed class HtmlBlockService(AppDbContext db, IMemoryCache cache)
 
         var cacheKey = $"html-block:{key}";
         if (cache.TryGetValue(cacheKey, out string? cached))
-            return cached;
+            return cached is null ? null : await trash.ScrubHtmlAsync(cached, ct);
 
         var html = await db.HtmlBlocks.AsNoTracking()
             .Where(block => block.Key == key && block.IsActive)
@@ -31,27 +31,32 @@ public sealed class HtmlBlockService(AppDbContext db, IMemoryCache cache)
         if (html is not null)
             cache.Set(cacheKey, html, CacheTtl);
 
-        return html;
+        return html is null ? null : await trash.ScrubHtmlAsync(html, ct);
     }
 
     public async Task<string> ExpandAsync(string? html, CancellationToken ct = default)
     {
-        if (string.IsNullOrEmpty(html) || !html.Contains("{{", StringComparison.Ordinal))
-            return html ?? string.Empty;
+        if (string.IsNullOrEmpty(html))
+            return string.Empty;
 
-        var matches = Shortcode.Matches(html);
-        if (matches.Count == 0)
-            return html;
-
-        var result = html;
-        foreach (Match match in matches)
+        if (html.Contains("{{", StringComparison.Ordinal))
         {
-            var key = match.Groups[1].Value;
-            var blockHtml = await GetHtmlAsync(key, ct) ?? string.Empty;
-            result = result.Replace(match.Value, blockHtml, StringComparison.OrdinalIgnoreCase);
+            var matches = Shortcode.Matches(html);
+            if (matches.Count > 0)
+            {
+                var result = html;
+                foreach (Match match in matches)
+                {
+                    var key = match.Groups[1].Value;
+                    var blockHtml = await GetHtmlAsync(key, ct) ?? string.Empty;
+                    result = result.Replace(match.Value, blockHtml, StringComparison.OrdinalIgnoreCase);
+                }
+
+                html = result;
+            }
         }
 
-        return result;
+        return await trash.ScrubHtmlAsync(html, ct);
     }
 
     public void Invalidate(string? key = null)

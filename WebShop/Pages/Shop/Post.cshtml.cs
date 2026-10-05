@@ -7,9 +7,11 @@ using WebShop.Models;
 
 namespace WebShop.Pages.Shop;
 
-public class PostPageModel(AppDbContext db) : PageModel
+public class PostPageModel(AppDbContext db, MediaTrashFilter trash) : PageModel
 {
     public Post? Post { get; private set; }
+
+    public string? CoverImage { get; private set; }
 
     public async Task<IActionResult> OnGetAsync(string slug)
     {
@@ -20,10 +22,11 @@ public class PostPageModel(AppDbContext db) : PageModel
         if (Post is null)
             return NotFound();
 
+        CoverImage = await trash.LiveOrNullAsync(SiteSocial.PickImage(Post.SeoImage, Post.ImageUrl));
         ViewData["Title"] = Post.MetaTitle ?? Post.Title;
         ViewData["Description"] = Post.MetaDescription ?? Post.Summary;
         ViewData["OgType"] = "article";
-        ViewData["OgImage"] = SiteSocial.PickImage(Post.SeoImage, Post.ImageUrl);
+        ViewData["OgImage"] = CoverImage;
         if (HttpContext.Request is { } req)
         {
             var snapName = await db.SystemSettings.AsNoTracking()

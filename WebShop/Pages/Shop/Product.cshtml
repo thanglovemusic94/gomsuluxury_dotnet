@@ -1,10 +1,19 @@
 @page "/san-pham/{slug}"
 @model WebShop.Pages.Shop.ProductModel
 @inject WebShop.Infrastructure.HtmlBlockService Blocks
+@inject WebShop.Infrastructure.ShopStore Shop
 @using WebShop.Infrastructure
 @{
 	var item = Model.Product!;
-	var price = item.DiscountPrice ?? item.Price;
+	var price = ProductPricing.UnitPrice(item);
+	var contactOnly = ProductPricing.ShowContactOnly(item);
+	var snap = await Shop.GetAsync();
+	var telHref = SiteContact.TelHref(snap.Hotline);
+	var zaloHref = SiteContact.ZaloHref(snap.ZaloUrl, snap.Hotline);
+	var facebookHref = SiteContact.FacebookHref(snap.FacebookUrl);
+	var phoneLabel = SiteContact.DisplayPhone(snap.Hotline);
+	if (string.IsNullOrWhiteSpace(phoneLabel))
+		phoneLabel = "Hotline";
 	var description = await Blocks.ExpandAsync(item.Description);
 	var altBase = item.Name?.Trim() ?? "";
 	if (!string.IsNullOrEmpty(altBase) &&
@@ -31,6 +40,7 @@
 	var reviewCount = Model.Reviews.Count;
 	var reviewAvg = reviewCount > 0 ? Math.Round(Model.Reviews.Average(r => r.Rating), 1) : 0d;
 	var reviewStars = reviewCount > 0 ? (int)Math.Round(reviewAvg, MidpointRounding.AwayFromZero) : 0;
+	var specRows = ProductSpecs.Parse(item.ShortDescription);
 }
 
 <div class="container shop-page shop-page--detail">
@@ -178,17 +188,27 @@
 			<div class="shop-detail-buy">
 				<h1>@item.Name</h1>
 				<p class="shop-detail-buy__stock shop-detail-buy__stock--inline @(item.Stock < 1 ? "is-out" : null)">
-					@(item.Stock > 0 ? $"Còn {item.Stock} sản phẩm" : "Hết hàng")
+					<span>Tình trạng: @(item.Stock > 0 ? $"Còn {item.Stock} sản phẩm" : "Hết hàng")</span>
 				</p>
-				<div class="shop-detail-buy__deal shop-detail-buy__deal--desk">
-					<p class="shop-price shop-detail-buy__price">
-						<span class="shop-price__sale">@price.ToString("N0") đ</span>
-						@if (item.DiscountPrice is not null)
-						{
-							<s class="shop-price__was">@item.Price.ToString("N0") đ</s>
-						}
-					</p>
-				</div>
+				@if (contactOnly)
+				{
+					<div class="shop-detail-buy__ask shop-detail-buy__deal--desk">
+						<p class="shop-detail-buy__ask-label">Liên hệ tư vấn giá</p>
+						<p class="shop-detail-buy__ask-note">Giá tùy thuộc vào kích thước / yêu cầu đóng hộp quà tặng</p>
+					</div>
+				}
+				else
+				{
+					<div class="shop-detail-buy__deal shop-detail-buy__deal--desk shop-detail-buy__deal--soft">
+						<p class="shop-price shop-detail-buy__price">
+							<span class="shop-price__sale">@price.ToString("N0") đ</span>
+							@if (item.DiscountPrice is not null)
+							{
+								<s class="shop-price__was">@item.Price.ToString("N0") đ</s>
+							}
+						</p>
+					</div>
+				}
 				@if (reviewCount > 0)
 				{
 					<a class="shop-review-summary" href="#khach-hang-noi-gi">
@@ -201,33 +221,87 @@
 						<span class="shop-review-summary__text">@reviewAvg.ToString("0.0") · @reviewCount nhận xét</span>
 					</a>
 				}
-				@if (!string.IsNullOrWhiteSpace(item.ShortDescription))
+				@if (specRows.Count > 0)
+				{
+					<div class="shop-specs">
+						<h2 class="shop-specs__title">Thông tin sản phẩm</h2>
+						<dl class="shop-specs__list">
+							@foreach (var row in specRows)
+							{
+								<div class="shop-specs__row">
+									<dt>@row.Key</dt>
+									<dd>@row.Value</dd>
+								</div>
+							}
+						</dl>
+					</div>
+				}
+				else if (!string.IsNullOrWhiteSpace(item.ShortDescription))
 				{
 					<div class="shop-readmore" data-readmore>
 						<div class="shop-readmore__clip shop-detail-buy__short">@item.ShortDescription</div>
 						<button type="button" class="shop-readmore__btn" data-readmore-toggle hidden>Xem thêm</button>
 					</div>
 				}
-				<form method="post" asp-page-handler="Add" class="shop-buy-form" id="product-buy-form">
-					<div class="shop-buy-form__desk">
-						<label class="shop-buy-form__label" for="product-qty">Số lượng</label>
-						<input id="product-qty" class="form-control shop-buy-form__qty" type="number" name="quantity" value="1" min="1" max="@Math.Max(item.Stock, 1)" inputmode="numeric" aria-label="Số lượng" />
+				@if (contactOnly)
+				{
+					<div class="shop-contact-cta" id="product-buy-form">
+						@if (!string.IsNullOrWhiteSpace(telHref))
+						{
+							<a class="shop-contact-cta__btn shop-contact-cta__btn--phone" href="@telHref">
+								<i class="fa fa-phone" aria-hidden="true"></i>
+								<span>Gọi ngay: @phoneLabel</span>
+							</a>
+						}
+						@if (!string.IsNullOrWhiteSpace(zaloHref) || !string.IsNullOrWhiteSpace(facebookHref))
+						{
+							<div class="shop-contact-cta__secondary">
+								@if (!string.IsNullOrWhiteSpace(zaloHref))
+								{
+									<a class="shop-contact-cta__btn shop-contact-cta__btn--zalo" href="@zaloHref" target="_blank" rel="noopener noreferrer">
+										<i class="fa fa-commenting" aria-hidden="true"></i>
+										<span>Chat Zalo</span>
+									</a>
+								}
+								@if (!string.IsNullOrWhiteSpace(facebookHref))
+								{
+									<a class="shop-contact-cta__btn shop-contact-cta__btn--fb" href="@facebookHref" target="_blank" rel="noopener noreferrer">
+										<i class="fa fa-facebook-official" aria-hidden="true"></i>
+										<span>Chat Facebook</span>
+									</a>
+								}
+							</div>
+						}
 					</div>
-					<div class="shop-buy-form__bar">
-						<div class="shop-buy-form__price">
-							<span class="shop-buy-form__price-label">Giá bán</span>
-							<span class="shop-buy-form__price-value">@price.ToString("N0") đ</span>
-							@if (item.DiscountPrice is not null)
-							{
-								<s class="shop-buy-form__price-was">@item.Price.ToString("N0") đ</s>
-							}
+				}
+				else
+				{
+					<form method="post" asp-page-handler="Add" class="shop-buy-form" id="product-buy-form">
+						<div class="shop-buy-form__desk">
+							<label class="shop-buy-form__label" for="product-qty">Số lượng</label>
+							<input id="product-qty" class="form-control shop-buy-form__qty" type="number" name="quantity" value="1" min="1" max="@Math.Max(item.Stock, 1)" inputmode="numeric" aria-label="Số lượng" />
 						</div>
-						<button class="btn btn-primary shop-buy-form__submit" type="submit" @(item.Stock < 1 ? "disabled" : null)>
-							<span>Thêm vào giỏ</span>
-							<span class="shop-buy-form__submit-ico" aria-hidden="true"><i class="fa fa-shopping-cart"></i></span>
-						</button>
-					</div>
-				</form>
+						<div class="shop-buy-form__bar">
+							<div class="shop-buy-form__price">
+								<span class="shop-buy-form__price-label">Giá bán</span>
+								<span class="shop-buy-form__price-value">@price.ToString("N0") đ</span>
+								@if (item.DiscountPrice is not null)
+								{
+									<s class="shop-buy-form__price-was">@item.Price.ToString("N0") đ</s>
+								}
+							</div>
+							<button class="btn btn-primary shop-buy-form__submit" type="submit" @(item.Stock < 1 ? "disabled" : null)>
+								<span>Thêm vào giỏ</span>
+								<span class="shop-buy-form__submit-ico" aria-hidden="true"><i class="fa fa-shopping-cart"></i></span>
+							</button>
+						</div>
+					</form>
+				}
+				<ul class="shop-detail-trust" aria-label="Cam kết">
+					<li>Cam kết gốm Bát Tràng chính gốc 100%</li>
+					<li>Kiểm tra hàng trước khi thanh toán</li>
+					<li>Đổi trả 1-1 nếu vỡ hỏng do vận chuyển</li>
+				</ul>
 			</div>
 		</div>
 	</div>

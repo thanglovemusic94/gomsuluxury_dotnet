@@ -26,6 +26,9 @@ alwaysApply: false
 - Slider sản phẩm: fit media bằng contain / đúng tỷ lệ — không kéo giãn full bừa.
 - Product gallery: click ảnh to → lightbox quẹt được; desktop hover ô vuông loupe zoom nhẹ; thumb ≤4 grid, >4 `shop-thumbs--strip` kéo ngang (giữ cỡ ~4/ô).
 - Review SP: tóm tắt sao cạnh giá (`#khach-hang-noi-gi`); section “Khách hàng nói gì” ngay dưới gallery/buy (trước mô tả); grid ảnh/quote + badge; form gửi trong `<details>` phụ.
+- SP `HidePrice` / giá ≤ 0: card “Liên hệ”; chi tiết: nhãn giá đỏ đô (không khung), `ShortDescription` → `ProductSpecs` key-value, CTA chính Gọi (đỏ đô) + Zalo/FB outline 2 cột, trust bullets. Float Zalo hiện số hotline (`SiteContact`). Gallery thumb căn full width stage, active/hover viền gold.
+- Trang Giới thiệu `/gioi-thieu`: Razor `Pages/Shop/About` (khung ảnh) + nội dung qua HtmlBlock `about-*` (seed 1 lần, Admin sửa). Gallery ảnh từ Media.
+- Media soft-delete (Thùng rác): `MediaTrashFilter` — không dùng URL đã xóa khi render HtmlBlock / Content / mô tả SP (`ExpandAsync`/`ScrubHtml`), OG/ảnh cover About–Blog–Product. Invalidate khi xóa/khôi phục media.
 - HtmlBlock (`Component.InvokeAsync("HtmlBlock", …)`): HTML/CSS/JS sửa được trong DB; style scoped nằm trong block khi Admin cần chỉnh (vd. YouTube facade).
 
 ## Markup
@@ -34,4 +37,4 @@ alwaysApply: false
 - Ảnh: dùng `MediaStorage` / helper URL kích thước; tránh hotlink remote khi đã có media local.
 - Logo site (header/footer/ads bar): `MediaSize.Medium` (Max). Không `Thumb`/`Icon` (crop vuông). Không `MediaDynamicUrls` cho logo — path original thường lệch folder → 404 → fallback chữ.
 - Banner/slider: chỉ Medium..Large trong srcset (`SrcSetBetween`) — bỏ Thumb/Icon crop vuông.
-- Favicon + Open Graph trong `_ShopLayout` (`SiteSocial`); trang set `ViewData["OgImage"]` / `OgType` khi có ảnh riêng.
+- Favicon + Open Graph: partial `_OpenGraphMeta` (shop + LP Ads). Absolute `og:image` (Large), `og:image:width/height` 1200×630, `secure_url` khi https, `og:locale=vi_VN`. Trang set `ViewData["OgImage"]` / `OgType`; mặc định site `OgImageUrl` / Logo. Ảnh chia sẻ nên ≈1200×630, dưới 1MB.

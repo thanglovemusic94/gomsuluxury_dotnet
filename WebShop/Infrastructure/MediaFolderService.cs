@@ -9,7 +9,7 @@ namespace WebShop.Infrastructure;
 /// Built-in + custom media folders (SystemSettings <c>Media.CustomFolders</c>).
 /// Custom keys có thể lồng: <c>san-pham/chien-dich</c>.
 /// </summary>
-public sealed class MediaFolderService(AppDbContext db, IWebHostEnvironment env)
+public sealed class MediaFolderService(AppDbContext db, IWebHostEnvironment env, MediaTrashFilter trash)
 {
     public const string SettingsKey = "Media.CustomFolders";
 
@@ -154,7 +154,10 @@ public sealed class MediaFolderService(AppDbContext db, IWebHostEnvironment env)
         }
 
         if (assets.Count > 0)
+        {
             await db.SaveChangesAsync(ct);
+            trash.Invalidate();
+        }
 
         // Gỡ custom keys: chính folder + mọi con
         var customs = (await LoadCustomAsync(ct)).ToList();

@@ -45,6 +45,7 @@ builder.Services.AddSingleton<MediaUsageService>();
 builder.Services.AddScoped<MediaFolderService>();
 builder.Services.AddHostedService<MediaGarbageCollector>();
 builder.Services.AddShopImageSharp();
+builder.Services.AddScoped<MediaTrashFilter>();
 builder.Services.AddScoped<HtmlBlockService>();
 builder.Services.AddScoped<GeminiSeoService>();
 builder.Services.AddScoped<TemporaryCartService>();
@@ -266,6 +267,7 @@ using (var scope = app.Services.CreateScope())
     await ProductCategorySchema.EnsureAsync(db);
     await CategorySchema.EnsureAsync(db);
     await ProductReviewSchema.EnsureAsync(db);
+    await ProductSchema.EnsureAsync(db);
     await ShopNavSeed.EnsureAsync(db);
     await HtmlBlockSeed.EnsureAsync(db);
     await GiftLandingSeed.EnsureAsync(db);

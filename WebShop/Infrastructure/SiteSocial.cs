@@ -5,6 +5,10 @@ namespace WebShop.Infrastructure;
 /// <summary>Absolute URLs for favicon / Open Graph share previews.</summary>
 public static class SiteSocial
 {
+    /// <summary>Khuyến nghị Facebook/Zalo: tỷ lệ ~1.91:1.</summary>
+    public const int OgImageWidth = 1200;
+    public const int OgImageHeight = 630;
+
     public static string Absolute(HttpRequest request, string? pathOrUrl)
     {
         if (string.IsNullOrWhiteSpace(pathOrUrl))
@@ -14,9 +18,17 @@ public static class SiteSocial
         if (value.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
             || value.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
             || value.StartsWith("//", StringComparison.Ordinal))
-            return value.StartsWith("//", StringComparison.Ordinal)
-                ? $"{request.Scheme}:{value}"
-                : value;
+        {
+            if (value.StartsWith("//", StringComparison.Ordinal))
+                value = $"{request.Scheme}:{value}";
+
+            // Crawler FB/Zalo cần https cho og:image khi site chạy HTTPS (sau reverse proxy).
+            if (string.Equals(request.Scheme, "https", StringComparison.OrdinalIgnoreCase)
+                && value.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+                value = "https://" + value["http://".Length..];
+
+            return value;
+        }
 
         if (!value.StartsWith('/'))
             value = "/" + value;

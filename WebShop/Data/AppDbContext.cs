@@ -159,6 +159,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(product => product.ShortDescription).HasMaxLength(500);
             entity.Property(product => product.ImageUrl).HasMaxLength(500).IsRequired();
             entity.Property(product => product.IsVisible).HasDefaultValue(true);
+            entity.Property(product => product.HidePrice).HasDefaultValue(false);
             entity.Property(product => product.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             ConfigureSeo(entity);
             entity.HasIndex(product => product.Slug).IsUnique();

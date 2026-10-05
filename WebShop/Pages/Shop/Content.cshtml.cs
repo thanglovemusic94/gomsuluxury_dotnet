@@ -6,9 +6,11 @@ using WebShop.Infrastructure;
 
 namespace WebShop.Pages.Shop;
 
-public class ContentPageModel(AppDbContext db) : PageModel
+public class ContentPageModel(AppDbContext db, MediaTrashFilter trash) : PageModel
 {
     public Models.CustomPage? PageContent { get; private set; }
+
+    public string BodyHtml { get; private set; } = string.Empty;
 
     public async Task<IActionResult> OnGetAsync(string slug)
     {
@@ -21,10 +23,11 @@ public class ContentPageModel(AppDbContext db) : PageModel
         if (PageContent is null)
             return NotFound();
 
+        BodyHtml = await trash.ScrubHtmlAsync(PageContent.Content);
         ViewData["Title"] = PageContent.MetaTitle ?? PageContent.Title;
         ViewData["Description"] = PageContent.MetaDescription;
         ViewData["OgType"] = "article";
-        ViewData["OgImage"] = PageContent.SeoImage;
+        ViewData["OgImage"] = await trash.LiveOrNullAsync(PageContent.SeoImage);
         return Page();
     }
 }

@@ -2,7 +2,8 @@
 @using WebShop.Infrastructure
 @foreach (var item in Model)
 {
-	var price = item.DiscountPrice ?? item.Price;
+	var price = ProductPricing.UnitPrice(item);
+	var contactOnly = ProductPricing.ShowContactOnly(item);
 	var image = MediaUrls.For(item.ImageUrl, MediaSize.Thumb);
 	@* Card ~220px / 50vw — Thumb 400 đủ 2×; không kéo Medium 800 *@
 	var srcset = MediaUrls.SrcSetUpTo(item.ImageUrl, MediaSize.Thumb);
@@ -27,11 +28,18 @@
 			</span>
 			<h3 class="shop-card__title">@item.Name</h3>
 		</a>
-		<div class="shop-price">
-			<span class="shop-price__sale">@price.ToString("N0") đ</span>
-			@if (item.DiscountPrice is not null)
+		<div class="shop-price @(contactOnly ? "shop-price--contact" : null)">
+			@if (contactOnly)
 			{
-				<s class="shop-price__was">@item.Price.ToString("N0") đ</s>
+				<span class="shop-price__sale">Liên hệ</span>
+			}
+			else
+			{
+				<span class="shop-price__sale">@price.ToString("N0") đ</span>
+				@if (item.DiscountPrice is not null)
+				{
+					<s class="shop-price__was">@item.Price.ToString("N0") đ</s>
+				}
 			}
 		</div>
 	</article>

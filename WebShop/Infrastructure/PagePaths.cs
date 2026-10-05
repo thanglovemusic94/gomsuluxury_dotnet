@@ -10,6 +10,7 @@ public static class PagePaths
     {
         "admin", "login", "logout", "error", "accessdenied",
         "san-pham", "blog", "gio-hang", "thanh-toan", "danh-muc", "qua-bieu", "chot", "lp", "p",
+        "gioi-thieu",
         "css", "js", "lib", "uploads", "media", "favicon.ico"
     };
 
