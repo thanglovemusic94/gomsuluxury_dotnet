@@ -1210,7 +1210,7 @@ body.shop .shop-stage-list a span { color: inherit; }
 	height: auto;
 	aspect-ratio: 1 / 1;
 	max-height: none;
-	object-fit: cover;
+	object-fit: contain;
 	object-position: center;
 	background: #f6f4f1;
 	transition: opacity 0.35s ease;
@@ -2567,9 +2567,20 @@ body.shop .shop-foot-connect p {
 	background: #0068ff;
 	width: auto;
 	min-width: 44px;
-	padding: 0 12px;
+	height: 44px;
+	padding: 0 14px 0 12px;
 	border-radius: 999px;
 	gap: 8px;
+	align-items: center;
+}
+.shop-float__btn--zalo .fa {
+	flex: 0 0 auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	line-height: 1;
+	width: 1.15em;
+	height: 1.15em;
 }
 .shop-float__btn--zalo:hover { background: #0054cc; }
 .shop-float__label {
@@ -2577,6 +2588,8 @@ body.shop .shop-foot-connect p {
 	font-weight: 600;
 	letter-spacing: 0.02em;
 	white-space: nowrap;
+	line-height: 1.2;
+	display: inline-block;
 }
 .shop-price--contact .shop-price__sale,
 .shop-price.shop-price--contact { color: #8b0000; font-weight: 600; }
@@ -3533,6 +3546,31 @@ body.shop .login-dialog__submit:focus {
 		min-height: 48px;
 		font-size: 17px;
 	}
+	/* Giữ pill Zalo + số — không ép thành vòng tròn 48px (tránh icon/số đè nhau) */
+	.shop-float__btn--zalo {
+		width: auto;
+		min-width: 48px;
+		max-width: min(220px, calc(100vw - 72px));
+		height: 48px;
+		min-height: 48px;
+		padding: 0 14px 0 12px;
+		border-radius: 999px;
+		gap: 8px;
+	}
+	.shop-float__btn--zalo .fa {
+		flex: 0 0 auto;
+		width: 1.15em;
+		height: 1.15em;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		line-height: 1;
+		font-size: 16px;
+	}
+	.shop-float__label {
+		line-height: 1.2;
+		font-size: 12px;
+	}
 	/* Touch targets ≥ 48px */
 	.shop-mbar-btn {
 		width: 48px;
@@ -3835,8 +3873,9 @@ body.shop .login-dialog__submit:focus {
 	.shop-gallery__photo,
 	.shop-gallery .shop-gallery__photo {
 		aspect-ratio: 1 / 1;
-		object-fit: cover;
+		object-fit: contain;
 		object-position: center;
+		image-rendering: auto;
 	}
 	.shop-thumbs {
 		grid-template-columns: repeat(4, minmax(0, 1fr));

@@ -85,6 +85,34 @@ public static class MediaUrls
         return parts.Count == 0 ? null : string.Join(", ", parts);
     }
 
+    /// <summary>
+    /// Srcset chi tiết SP: Medium → Large → Original (bỏ Icon/Thumb để tránh trình duyệt chọn ảnh mờ).
+    /// </summary>
+    public static string? SrcSetDetail(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            return null;
+
+        var parts = new List<string>();
+        var medium = For(url, MediaSize.Medium);
+        var large = For(url, MediaSize.Large);
+        var original = For(url, MediaSize.Original);
+
+        if (!string.IsNullOrWhiteSpace(medium)
+            && medium.Contains("/uploads/optimized/", StringComparison.OrdinalIgnoreCase))
+            parts.Add($"{medium} {MediumW}w");
+
+        if (!string.IsNullOrWhiteSpace(large)
+            && large.Contains("/uploads/optimized/", StringComparison.OrdinalIgnoreCase))
+            parts.Add($"{large} {LargeW}w");
+
+        if (!string.IsNullOrWhiteSpace(original)
+            && !string.Equals(original, large, StringComparison.OrdinalIgnoreCase))
+            parts.Add($"{original} 2400w");
+
+        return parts.Count == 0 ? null : string.Join(", ", parts);
+    }
+
     private static string RegexReplaceSize(string url, string target)
     {
         return System.Text.RegularExpressions.Regex.Replace(

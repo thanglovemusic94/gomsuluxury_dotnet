@@ -23,14 +23,18 @@
 		altBase += " Gốm sứ";
 	}
 
-	var gallery = new List<(string Large, string Thumb, string SrcSet, string Alt)>();
+	var gallery = new List<(string Display, string Full, string Thumb, string? SrcSet, string Alt)>();
 	void AddGallery(string? url, string alt)
 	{
 		if (string.IsNullOrWhiteSpace(url)) return;
 		var large = MediaUrls.For(url, MediaSize.Large);
-		if (gallery.Any(g => string.Equals(g.Large, large, StringComparison.OrdinalIgnoreCase)))
+		var full = MediaUrls.For(url, MediaSize.Original);
+		if (string.IsNullOrWhiteSpace(full))
+			full = large;
+		if (gallery.Any(g => string.Equals(g.Full, full, StringComparison.OrdinalIgnoreCase)
+		                     || string.Equals(g.Display, large, StringComparison.OrdinalIgnoreCase)))
 			return;
-		gallery.Add((large, MediaUrls.For(url, MediaSize.Thumb), MediaUrls.SrcSet(url), alt));
+		gallery.Add((large, full, MediaUrls.For(url, MediaSize.Thumb), MediaUrls.SrcSetDetail(url), alt));
 	}
 
 	AddGallery(item.ImageUrl, altBase);
@@ -92,12 +96,12 @@
 									        data-gallery-open="@i"
 									        aria-label="Xem ảnh lớn @(i + 1)">
 										<img class="shop-gallery__photo"
-										     src="@slide.Large"
+										     src="@slide.Full"
 										     srcset="@slide.SrcSet"
-										     sizes="(max-width: 767px) 100vw, (max-width: 991px) 50vw, min(640px, 48vw)"
+										     sizes="(max-width: 767px) 100vw, (max-width: 991px) 50vw, min(720px, 48vw)"
 										     alt="@slide.Alt"
-										     width="1200"
-										     height="1200"
+										     width="1600"
+										     height="1600"
 										     fetchpriority="@(i == 0 ? "high" : "auto")"
 										     loading="@(i == 0 ? "eager" : "lazy")"
 										     decoding="async" />
@@ -167,10 +171,10 @@
 							{
 								var slide = gallery[i];
 								<div class="shop-lightbox__slide" data-lightbox-slide="@i">
-									<img src="@slide.Large"
-									     srcset="@slide.SrcSet"
-									     sizes="100vw"
+									<img src="@slide.Full"
 									     alt="@slide.Alt"
+									     width="2000"
+									     height="2000"
 									     loading="lazy"
 									     decoding="async" />
 								</div>
