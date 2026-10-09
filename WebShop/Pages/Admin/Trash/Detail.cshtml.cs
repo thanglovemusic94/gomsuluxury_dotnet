@@ -25,6 +25,9 @@ public class DetailModel(AppDbContext db) : PageModel
 
     public string? PreviewUrl { get; private set; }
 
+    /// <summary>Warning when hard-delete will also clear order lines / reviews (Trash still allows proceed).</summary>
+    public string? HardDeleteWarning { get; private set; }
+
     public IList<AuditLog> RelatedLogs { get; private set; } = [];
 
     public async Task<IActionResult> OnGetAsync()
@@ -41,6 +44,8 @@ public class DetailModel(AppDbContext db) : PageModel
                 DeletedAt = item.DeletedAt;
                 DeletedBy = item.DeletedBy;
                 PreviewUrl = item.ImageUrl;
+                var blockers = await ProductDeleteGuard.GetBlockersAsync(db, item.Id);
+                HardDeleteWarning = ProductDeleteGuard.TrashWarning(blockers);
                 Fields =
                 [
                     ("ID", item.Id.ToString()),
@@ -52,6 +57,7 @@ public class DetailModel(AppDbContext db) : PageModel
                     ("Giá vốn", item.CostPrice.ToString("N0")),
                     ("Tồn kho", item.Stock.ToString()),
                     ("Hiển thị", item.IsVisible ? "Có" : "Không"),
+                    ("Xóa cứng", blockers.Summary),
                     ("Ảnh", item.ImageUrl),
                     ("Mô tả ngắn", item.ShortDescription),
                     ("Mô tả", Truncate(item.Description, 800)),

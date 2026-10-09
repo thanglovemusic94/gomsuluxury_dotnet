@@ -7,7 +7,7 @@ using WebShop.Models;
 
 namespace WebShop.Pages.Admin.Settings;
 
-public class IndexModel(AppDbContext db, SiteSeoService siteSeo) : PageModel
+public class IndexModel(AppDbContext db, SiteSeoService siteSeo, MediaSettingsService mediaSettings, MediaStorage media) : PageModel
 {
     private static readonly HashSet<string> ManagedKeys = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -36,6 +36,12 @@ public class IndexModel(AppDbContext db, SiteSeoService siteSeo) : PageModel
     [BindProperty]
     public OrgInput Org { get; set; } = new();
 
+    [BindProperty]
+    public MediaInput Media { get; set; } = new();
+
+    [BindProperty]
+    public bool RegenerateMedia { get; set; }
+
     public async Task OnGetAsync()
     {
         AllowIndexing = await siteSeo.GetAllowIndexingAsync();
@@ -62,10 +68,53 @@ public class IndexModel(AppDbContext db, SiteSeoService siteSeo) : PageModel
             GeoCoordinates = geo
         };
 
+        var tune = mediaSettings.Current;
+        Media = new MediaInput
+        {
+            IconWidth = tune.IconWidth,
+            ThumbWidth = tune.ThumbWidth,
+            MediumWidth = tune.MediumWidth,
+            LargeWidth = tune.LargeWidth,
+            WebpQuality = tune.WebpQuality,
+            OtfQuality = tune.OtfQuality
+        };
+
         Items = settings
-            .Where(setting => !ManagedKeys.Contains(setting.Key))
+            .Where(setting => !ManagedKeys.Contains(setting.Key) && !MediaSettingsService.ManagedKeys.Contains(setting.Key))
             .OrderBy(setting => setting.Key)
             .ToList();
+    }
+
+    public async Task<IActionResult> OnPostMediaAsync()
+    {
+        var (ok, error) = await mediaSettings.SaveAsync(new MediaTune(
+            Media.IconWidth,
+            Media.ThumbWidth,
+            Media.MediumWidth,
+            Media.LargeWidth,
+            Media.WebpQuality,
+            Media.OtfQuality));
+
+        if (!ok)
+        {
+            TempData["Error"] = error ?? "Không lưu được cấu hình ảnh.";
+            return RedirectToPage();
+        }
+
+        if (RegenerateMedia)
+        {
+            var (regenOk, regenError) = await media.RegenerateAllAsync();
+            TempData[regenOk ? "Message" : "Error"] = regenOk
+                ? "Đã lưu cấu hình ảnh và tạo lại toàn bộ bản tối ưu."
+                : $"Đã lưu cấu hình ảnh. Tạo lại tối ưu: {regenError}";
+        }
+        else
+        {
+            TempData["Message"] =
+                "Đã lưu cấu hình ảnh (áp dụng ngay cho upload mới / OTF). Ảnh cũ: bật “Tạo lại tối ưu” hoặc vào Media → Tạo lại tất cả tối ưu.";
+        }
+
+        return RedirectToPage();
     }
 
     public async Task<IActionResult> OnPostSeoAsync()
@@ -130,7 +179,7 @@ public class IndexModel(AppDbContext db, SiteSeoService siteSeo) : PageModel
         if (setting is null)
             return NotFound();
 
-        if (ManagedKeys.Contains(setting.Key))
+        if (ManagedKeys.Contains(setting.Key) || MediaSettingsService.ManagedKeys.Contains(setting.Key))
         {
             TempData["Error"] = "Khóa này chỉnh ở form phía trên, không xóa tại bảng.";
             return RedirectToPage();
@@ -156,5 +205,15 @@ public class IndexModel(AppDbContext db, SiteSeoService siteSeo) : PageModel
         public string ZaloUrl { get; set; } = string.Empty;
         public string YoutubeUrl { get; set; } = string.Empty;
         public string GeoCoordinates { get; set; } = string.Empty;
+    }
+
+    public class MediaInput
+    {
+        public int IconWidth { get; set; } = 96;
+        public int ThumbWidth { get; set; } = 400;
+        public int MediumWidth { get; set; } = 800;
+        public int LargeWidth { get; set; } = 1200;
+        public int WebpQuality { get; set; } = 85;
+        public int OtfQuality { get; set; } = 85;
     }
 }

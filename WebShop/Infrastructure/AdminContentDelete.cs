@@ -73,17 +73,34 @@ public static class AdminContentDelete
 
         if (hard)
         {
-            var snapshots = items.Select(product => (
+            var blocked = new List<string>();
+            var allowed = new List<Models.Product>();
+            foreach (var product in items)
+            {
+                var msg = ProductDeleteGuard.Message(await ProductDeleteGuard.GetBlockersAsync(db, product.Id));
+                if (msg is not null)
+                    blocked.Add($"«{product.Name}»: {msg}");
+                else
+                    allowed.Add(product);
+            }
+
+            if (allowed.Count == 0)
+                return (0, string.Join(" · ", blocked.Take(5)));
+
+            var snapshots = allowed.Select(product => (
                 product.Id,
                 product.Name,
                 Details: $"Name: {product.Name}\nSlug: {product.Slug}\nPrice: {product.Price:0.##}\nStock: {product.Stock}\nImageUrl: {product.ImageUrl}\nCategoryId: {product.CategoryId}"
             )).ToList();
-            db.Products.RemoveRange(items);
+            db.Products.RemoveRange(allowed);
             var error = await DbSave.TryDeleteAsync(db);
             if (error is not null)
                 return (0, error);
             foreach (var row in snapshots)
                 await audit.LogAsync(AuditActions.HardDelete, AuditEntities.Product, row.Id, row.Name, "Xóa vĩnh viễn", row.Details);
+
+            if (blocked.Count > 0)
+                return (snapshots.Count, "Một số SP không xóa cứng được: " + string.Join(" · ", blocked.Take(3)));
             return (snapshots.Count, null);
         }
 

@@ -1,6 +1,7 @@
 @page "/blog/{slug}"
 @model WebShop.Pages.Shop.PostPageModel
 @inject WebShop.Infrastructure.HtmlBlockService Blocks
+@using WebShop.Infrastructure
 @{
     var item = Model.Post!;
     var body = await Blocks.ExpandAsync(item.Content);
@@ -12,14 +13,13 @@
 	@if (!string.IsNullOrWhiteSpace(Model.CoverImage))
 	{
 		<div class="shop-frame shop-frame--corners shop-frame--wan shop-frame--media" style="margin-bottom:16px;max-width:720px">
-			<img class="shop-photo"
-			     src="@WebShop.Infrastructure.MediaUrls.For(Model.CoverImage, WebShop.Infrastructure.MediaSize.Medium)"
-			     srcset="@WebShop.Infrastructure.MediaUrls.SrcSetUpTo(Model.CoverImage, WebShop.Infrastructure.MediaSize.Medium)"
-			     sizes="(max-width: 767px) 100vw, 720px"
-			     alt="@item.Title"
-			     width="960"
-			     height="600"
-			     decoding="async" />
+			<shop-img class="shop-photo"
+			          src="@Model.CoverImage"
+			          profile="post-cover"
+			          alt="@item.Title"
+			          width="1200"
+			          height="750"
+			          fetch-priority="high" />
 		</div>
 	}
 	@if (!string.IsNullOrWhiteSpace(item.Summary))

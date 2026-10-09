@@ -3,6 +3,7 @@
 @{
 	ViewData["Title"] = "Thùng rác";
 	ViewData["Menu"] = "Trash";
+	ViewData["AdminAssets"] = "bulk";
 	var pager = Model.Pager(Model.ListUrl);
 	var entityTypes = new[] { AuditEntities.Product, AuditEntities.Post, AuditEntities.Page, AuditEntities.Media };
 }
@@ -35,13 +36,40 @@
 	</div></div>
 </div>
 
-<div class="widget-box">
-	<div class="widget-header"><h4 class="widget-title">Mục đã xóa mềm (@Model.TotalCount)</h4></div>
+<div class="widget-box js-admin-bulk-root">
+	<form method="post" id="trash-bulk-form">
+		<input type="hidden" name="pageNumber" value="@Model.PageNumber" />
+		<input type="hidden" name="pageSize" value="@Model.PageSize" />
+		<input type="hidden" name="entityType" value="@Model.EntityType" />
+		<input type="hidden" name="q" value="@Model.Q" />
+		<div class="widget-header"><h4 class="widget-title">Mục đã xóa mềm (@Model.TotalCount)</h4></div>
+		<div class="admin-bulk-bar">
+			<label class="checkbox-inline" style="margin:0;">
+				<input type="checkbox" class="js-admin-select-all" /> Chọn tất cả trang này
+			</label>
+			<span class="text-muted">Đã chọn: <strong class="js-admin-bulk-count">0</strong></span>
+			<button type="submit"
+			        formaction="?handler=BulkRestore"
+			        class="btn btn-xs btn-success js-admin-bulk-delete"
+			        disabled
+			        onclick="return confirm('Khôi phục các mục đã chọn?');">
+				Khôi phục đã chọn
+			</button>
+			<button type="submit"
+			        formaction="?handler=BulkHardDelete"
+			        class="btn btn-xs btn-danger js-admin-bulk-delete"
+			        disabled
+			        onclick="return confirm('Xóa vĩnh viễn các mục đã chọn? Nếu có SP còn trong đơn/đánh giá, các dòng liên quan cũng bị gỡ — không hoàn tác.');">
+				Xóa cứng đã chọn
+			</button>
+		</div>
+	</form>
 	<div class="widget-body">
 		<div class="widget-main no-padding">
 		<table class="table table-striped table-bordered" style="margin:0;">
 			<thead>
 				<tr>
+					<th class="admin-check-col"></th>
 					<th>Loại</th>
 					<th>Tên</th>
 					<th>Xóa lúc</th>
@@ -52,11 +80,19 @@
 			<tbody>
 			@if (Model.Items.Count == 0)
 			{
-				<tr><td colspan="5" class="text-muted text-center">Không có mục phù hợp.</td></tr>
+				<tr><td colspan="6" class="text-muted text-center">Không có mục phù hợp.</td></tr>
 			}
 			else foreach (var item in Model.Items)
 			{
 				<tr data-href="/Admin/Trash/Detail?Type=@Uri.EscapeDataString(item.Type)&Id=@item.Id">
+					<td class="admin-check-col">
+						<input type="checkbox"
+						       class="js-admin-row-check"
+						       name="keys"
+						       value="@item.Type|@item.Id"
+						       form="trash-bulk-form"
+						       aria-label="Chọn #@item.Id" />
+					</td>
 					<td><span class="label label-info">@AuditEntities.Label(item.Type)</span></td>
 					<td>
 						<a href="/Admin/Trash/Detail?Type=@Uri.EscapeDataString(item.Type)&Id=@item.Id">#@item.Id · @item.Title</a>
@@ -74,7 +110,8 @@
 							<input type="hidden" name="q" value="@Model.Q" />
 							<button type="submit" class="btn btn-xs btn-success">Khôi phục</button>
 						</form>
-						<form method="post" asp-page-handler="HardDelete" class="inline" onsubmit="return confirm('Xóa vĩnh viễn? Không hoàn tác được.');">
+						<form method="post" asp-page-handler="HardDelete" class="inline"
+						      onsubmit="return confirm('Xóa vĩnh viễn? Nếu SP còn trong đơn/đánh giá, các dòng liên quan cũng bị gỡ — không hoàn tác.');">
 							<input type="hidden" name="type" value="@item.Type" />
 							<input type="hidden" name="id" value="@item.Id" />
 							<input type="hidden" name="pageNumber" value="@Model.PageNumber" />

@@ -14,15 +14,13 @@
 						{
 							<div class="shop-slider__slide">
 								<a href="@slide.LinkUrl">
-									<img src="@MediaUrls.For(slide.ImageUrl, MediaSize.Medium)"
-									     srcset="@MediaUrls.SrcSetBetween(slide.ImageUrl, MediaSize.Medium, MediaSize.Large)"
-									     sizes="(max-width: 991px) 100vw, min(1200px, 100vw)"
-									     alt="@slide.Alt"
-									     width="1200"
-									     height="675"
-									     loading="@(first ? "eager" : "lazy")"
-									     fetchpriority="@(first ? "high" : "auto")"
-									     decoding="async" />
+									<shop-img src="@slide.ImageUrl"
+									          profile="slider"
+									          alt="@slide.Alt"
+									          width="1600"
+									          height="900"
+									          loading="@(first ? "eager" : "lazy")"
+									          fetch-priority="@(first ? "high" : "auto")" />
 								</a>
 							</div>
 							first = false;

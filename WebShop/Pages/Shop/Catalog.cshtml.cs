@@ -22,7 +22,7 @@ public class CatalogFilterItem
 
 public class CatalogModel(AppDbContext db) : PageModel
 {
-    public const int PageSize = 16;
+    public const int PageSize = 20;
 
     [BindProperty(SupportsGet = true)]
     public string? Q { get; set; }
@@ -149,6 +149,7 @@ public class CatalogModel(AppDbContext db) : PageModel
             .Skip((PageNumber - 1) * PageSize)
             .Take(PageSize)
             .ToListAsync();
+        await ProductCardMedia.AttachHoverImagesAsync(db, Products);
 
         FromItem = TotalCount == 0 ? 0 : (PageNumber - 1) * PageSize + 1;
         ToItem = TotalCount == 0 ? 0 : FromItem + Products.Count - 1;

@@ -40,8 +40,10 @@ builder.Services.Configure<MediaOptions>(builder.Configuration.GetSection("Media
 builder.Services.Configure<GeminiOptions>(builder.Configuration.GetSection(GeminiOptions.SectionName));
 builder.Services.Configure<SeoOptions>(builder.Configuration.GetSection(SeoOptions.SectionName));
 builder.Services.AddScoped<SiteSeoService>();
+builder.Services.AddSingleton<MediaSettingsService>();
 builder.Services.AddSingleton<MediaStorage>();
 builder.Services.AddSingleton<MediaUsageService>();
+builder.Services.AddSingleton<MediaOriginalLookup>();
 builder.Services.AddScoped<MediaFolderService>();
 builder.Services.AddHostedService<MediaGarbageCollector>();
 builder.Services.AddShopImageSharp();
@@ -146,6 +148,7 @@ if (!string.IsNullOrEmpty(httpsPort) || urls.Contains("https://", StringComparis
 
 var uploadsPath = Path.Combine(app.Environment.WebRootPath, "uploads");
 Directory.CreateDirectory(uploadsPath);
+MediaWebRoot.Configure(app.Environment.WebRootPath);
 // On-the-fly resize/format for /uploads/originals/*?width=&format= (before static files).
 app.UseShopImageSharp();
 if (!app.Environment.IsDevelopment())
@@ -260,6 +263,7 @@ using (var scope = app.Services.CreateScope())
     await scope.ServiceProvider.GetRequiredService<TemporaryCartService>().EnsureSchemaAsync();
     await AdminSeed.EnsureAdminAsync(db);
     await scope.ServiceProvider.GetRequiredService<SiteSeoService>().EnsureSeedAsync();
+    await scope.ServiceProvider.GetRequiredService<MediaSettingsService>().EnsureSeedAsync();
     if (seed.GetValue("DemoCatalog", true))
         await DemoCatalog.EnsureAsync(db);
     if (seed.GetValue("LuxuryCatalog", true))
@@ -280,6 +284,9 @@ using (var scope = app.Services.CreateScope())
     }
     if (seed.GetValue("RemoteImageImport", true))
         await RemoteImageImport.EnsureAsync(db, media, httpFactory, logger);
+    await AboutPageSeed.EnsureAsync(
+        db, media, httpFactory,
+        scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("AboutPageSeed"));
     await MediaFolderBackfill.EnsureAsync(db, media, logger);
     await MediaOptimizeBackfill.EnsureAsync(db, media, logger);
 }

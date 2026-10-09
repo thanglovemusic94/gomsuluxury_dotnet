@@ -8,7 +8,7 @@ using WebShop.Models;
 
 namespace WebShop.Pages.Shop;
 
-public class ProductModel(AppDbContext db, CartService cart, MediaTrashFilter trash) : PageModel
+public class ProductModel(AppDbContext db, CartService cart, MediaTrashFilter trash, MediaOriginalLookup originals) : PageModel
 {
     public Product? Product { get; private set; }
 
@@ -121,6 +121,7 @@ public class ProductModel(AppDbContext db, CartService cart, MediaTrashFilter tr
             .OrderByDescending(item => item.CreatedAt)
             .Take(6)
             .ToListAsync();
+        await ProductCardMedia.AttachHoverImagesAsync(db, RelatedProducts);
 
         var categorySlug = await db.Categories.AsNoTracking()
             .Where(item => item.Id == Product.CategoryId && item.IsVisible)
@@ -136,6 +137,13 @@ public class ProductModel(AppDbContext db, CartService cart, MediaTrashFilter tr
         ViewData["OgImage"] = await trash.LiveOrNullAsync(SiteSocial.PickImage(Product.SeoImage, Product.ImageUrl));
         ViewData["ImmersiveDetail"] = true;
         ViewData["ShopAssets"] = "detail";
+        if (!string.IsNullOrWhiteSpace(Product.ImageUrl))
+        {
+            var img = Product.ImageUrl;
+            ViewData["LcpImage"] = MediaUrls.GallerySrc(img);
+            ViewData["LcpImageSrcSet"] = MediaUrls.SrcSetDetail(img, originals.Resolve(img));
+            ViewData["LcpImageSizes"] = MediaUrls.SizesProductGallery;
+        }
         if (HttpContext.Request is { } req)
         {
             var url = SiteSocial.Absolute(req, "/san-pham/" + Product.Slug);

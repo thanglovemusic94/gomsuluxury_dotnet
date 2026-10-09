@@ -92,14 +92,12 @@
 						@if (!string.IsNullOrWhiteSpace(item.ImageUrl))
 						{
 							<a href="/blog/@item.Slug" class="shop-post-card__media">
-								<img src="@MediaUrls.For(item.ImageUrl, MediaSize.Thumb)"
-								     alt="@item.Title"
-								     width="400"
-								     height="250"
-								     srcset="@MediaUrls.SrcSetUpTo(item.ImageUrl, MediaSize.Medium)"
-								     sizes="(max-width: 767px) 85vw, 360px"
-								     loading="lazy"
-								     decoding="async" />
+								<shop-img src="@item.ImageUrl"
+								          profile="blog-card"
+								          alt="@item.Title"
+								          width="800"
+								          height="500"
+								          loading="lazy" />
 							</a>
 						}
 						<div class="shop-post-card__body">

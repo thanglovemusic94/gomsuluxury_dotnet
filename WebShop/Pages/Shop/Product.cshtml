@@ -23,18 +23,18 @@
 		altBase += " Gốm sứ";
 	}
 
-	var gallery = new List<(string Display, string Full, string Thumb, string? SrcSet, string Alt)>();
+	var gallery = new List<(string Src, string Full, string Thumb, string Alt)>();
 	void AddGallery(string? url, string alt)
 	{
 		if (string.IsNullOrWhiteSpace(url)) return;
-		var large = MediaUrls.For(url, MediaSize.Large);
+		var src = MediaUrls.GallerySrc(url);
 		var full = MediaUrls.For(url, MediaSize.Original);
 		if (string.IsNullOrWhiteSpace(full))
-			full = large;
+			full = src;
 		if (gallery.Any(g => string.Equals(g.Full, full, StringComparison.OrdinalIgnoreCase)
-		                     || string.Equals(g.Display, large, StringComparison.OrdinalIgnoreCase)))
+		                     || string.Equals(g.Src, src, StringComparison.OrdinalIgnoreCase)))
 			return;
-		gallery.Add((large, full, MediaUrls.For(url, MediaSize.Thumb), MediaUrls.SrcSetDetail(url), alt));
+		gallery.Add((url, full, MediaUrls.For(url, MediaSize.Thumb), alt));
 	}
 
 	AddGallery(item.ImageUrl, altBase);
@@ -95,16 +95,14 @@
 									        class="shop-gallery__zoom"
 									        data-gallery-open="@i"
 									        aria-label="Xem ảnh lớn @(i + 1)">
-										<img class="shop-gallery__photo"
-										     src="@slide.Full"
-										     srcset="@slide.SrcSet"
-										     sizes="(max-width: 767px) 100vw, (max-width: 991px) 50vw, min(720px, 48vw)"
-										     alt="@slide.Alt"
-										     width="1600"
-										     height="1600"
-										     fetchpriority="@(i == 0 ? "high" : "auto")"
-										     loading="@(i == 0 ? "eager" : "lazy")"
-										     decoding="async" />
+										<shop-img class="shop-gallery__photo"
+										          src="@slide.Src"
+										          profile="gallery"
+										          alt="@slide.Alt"
+										          width="1600"
+										          height="1600"
+										          fetch-priority="@(i == 0 ? "high" : "auto")"
+										          loading="@(i == 0 ? "eager" : "lazy")" />
 									</button>
 								</div>
 							}

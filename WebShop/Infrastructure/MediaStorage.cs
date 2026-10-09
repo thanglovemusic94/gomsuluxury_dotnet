@@ -15,14 +15,20 @@ public sealed class MediaOptions
     public int ThumbWidth { get; set; } = 400;
     public int MediumWidth { get; set; } = 800;
     public int LargeWidth { get; set; } = 1200;
-    public int WebpQuality { get; set; } = 78;
+    public int WebpQuality { get; set; } = 85;
+    /// <summary>WebP quality for ImageSharp.Web OTF (?width=&amp;format=webp).</summary>
+    public int OtfQuality { get; set; } = 85;
     public long MaxUploadBytes { get; set; } = 15 * 1024 * 1024;
     public bool DedupeOnUpload { get; set; } = true;
     public bool GarbageCollectEnabled { get; set; } = true;
     public int GarbageCollectIntervalDays { get; set; } = 7;
 }
 
-public sealed partial class MediaStorage(IWebHostEnvironment env, IServiceScopeFactory scopes, IOptions<MediaOptions> options)
+public sealed partial class MediaStorage(
+    IWebHostEnvironment env,
+    IServiceScopeFactory scopes,
+    IOptions<MediaOptions> options,
+    MediaSettingsService mediaSettings)
 {
     private static readonly HashSet<string> ImageExt =
         new(StringComparer.OrdinalIgnoreCase) { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp" };
@@ -369,12 +375,14 @@ public sealed partial class MediaStorage(IWebHostEnvironment env, IServiceScopeF
     }
 
     private async Task<(bool Ok, string? Url, string? Error, MediaAsset? Asset)> SaveFullAsync(
-        IFormFile file, string type, string? alt, string? folder, CancellationToken ct)
+        IFormFile file, string type, string? alt, string? folder, CancellationToken ct,
+        long? maxBytesOverride = null)
     {
         if (file.Length <= 0)
             return (false, null, "File trống.", null);
-        if (file.Length > _options.MaxUploadBytes)
-            return (false, null, $"File tối đa {_options.MaxUploadBytes / (1024 * 1024)}MB.", null);
+        var maxBytes = maxBytesOverride ?? _options.MaxUploadBytes;
+        if (file.Length > maxBytes)
+            return (false, null, $"File tối đa {maxBytes / (1024 * 1024)}MB.", null);
 
         var ext = Path.GetExtension(file.FileName);
         var isImage = ImageExt.Contains(ext) || PassThroughImageExt.Contains(ext);
@@ -503,8 +511,10 @@ public sealed partial class MediaStorage(IWebHostEnvironment env, IServiceScopeF
         var bytes = await response.Content.ReadAsByteArrayAsync(ct);
         if (bytes.Length == 0)
             return (false, null, "File trống.", null);
-        if (bytes.Length > _options.MaxUploadBytes)
-            return (false, null, "File tối đa 15MB.", null);
+        // Remote import (WP media / video) may exceed Admin upload cap; keep a higher ceiling.
+        const long remoteMaxBytes = 50L * 1024 * 1024;
+        if (bytes.Length > remoteMaxBytes)
+            return (false, null, "File remote tối đa 50MB.", null);
 
         var ext = Path.GetExtension(uri.AbsolutePath);
         if (string.IsNullOrWhiteSpace(ext) || ext.Length > 5)
@@ -534,7 +544,14 @@ public sealed partial class MediaStorage(IWebHostEnvironment env, IServiceScopeF
             ContentType = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream"
         };
 
-        var saved = await SaveFullAsync(formFile, "Images", alt, folder, ct);
+        var isImage = ImageExt.Contains(ext) || PassThroughImageExt.Contains(ext);
+        var saved = await SaveFullAsync(
+            formFile,
+            isImage ? "Images" : "Files",
+            alt,
+            folder,
+            ct,
+            maxBytesOverride: remoteMaxBytes);
         if (!saved.Ok || saved.Asset is null)
             return saved;
 
@@ -895,11 +912,12 @@ public sealed partial class MediaStorage(IWebHostEnvironment env, IServiceScopeF
         await using var input = File.OpenRead(originalAbs);
         using var image = await Image.LoadAsync(input, ct);
 
+        var tune = mediaSettings.Current;
         // icon: nhỏ cho menu/danh mục; thumb: crop vuông cho card
-        _ = await SaveVariantAsync(image, safeBase, stamp, ym, folderKey, "icon", _options.IconWidth, squareCrop: true, asset, setPath: null, ct);
-        asset.ThumbUrl = await SaveVariantAsync(image, safeBase, stamp, ym, folderKey, "thumb", _options.ThumbWidth, squareCrop: true, asset, setPath: (a, p, u) => { a.ThumbPath = p; a.ThumbUrl = u; }, ct);
-        asset.MediumUrl = await SaveVariantAsync(image, safeBase, stamp, ym, folderKey, "medium", _options.MediumWidth, squareCrop: false, asset, setPath: (a, p, u) => { a.MediumPath = p; a.MediumUrl = u; }, ct);
-        asset.LargeUrl = await SaveVariantAsync(image, safeBase, stamp, ym, folderKey, "large", _options.LargeWidth, squareCrop: false, asset, setPath: (a, p, u) => { a.LargePath = p; a.LargeUrl = u; }, ct);
+        _ = await SaveVariantAsync(image, safeBase, stamp, ym, folderKey, "icon", tune.IconWidth, squareCrop: true, asset, setPath: null, ct);
+        asset.ThumbUrl = await SaveVariantAsync(image, safeBase, stamp, ym, folderKey, "thumb", tune.ThumbWidth, squareCrop: true, asset, setPath: (a, p, u) => { a.ThumbPath = p; a.ThumbUrl = u; }, ct);
+        asset.MediumUrl = await SaveVariantAsync(image, safeBase, stamp, ym, folderKey, "medium", tune.MediumWidth, squareCrop: false, asset, setPath: (a, p, u) => { a.MediumPath = p; a.MediumUrl = u; }, ct);
+        asset.LargeUrl = await SaveVariantAsync(image, safeBase, stamp, ym, folderKey, "large", tune.LargeWidth, squareCrop: false, asset, setPath: (a, p, u) => { a.LargePath = p; a.LargeUrl = u; }, ct);
     }
 
     private async Task<string> SaveVariantAsync(
@@ -945,7 +963,7 @@ public sealed partial class MediaStorage(IWebHostEnvironment env, IServiceScopeF
             }
         });
 
-        var encoder = new WebpEncoder { Quality = _options.WebpQuality };
+        var encoder = new WebpEncoder { Quality = mediaSettings.Current.WebpQuality };
         await clone.SaveAsync(abs, encoder, ct);
         var url = ToUrl(rel);
         setPath?.Invoke(asset, rel.Replace('\\', '/'), url);

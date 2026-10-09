@@ -18,16 +18,19 @@ alwaysApply: false
 ## Layout & UX
 
 - Mobile-first; giữ sticky buy-bar / tabbar.
+- Desktop (≥992): khung `--shop-max` ~1640px (rất rộng ~1760). Cột danh mục home `--shop-rail` ~340px (icon 48, chữ 15). Lưới SP `.shop-grid` 5 cột; tin `.shop-posts` 4 cột. SP liên quan vẫn 4 cột. Catalog 20 SP/trang (bội của 5). Trang chủ: 10 SP nổi bật, 4 bài. Tablet 3/2, mobile 2 cột.
+- Slider home: `sizes` khớp cột thật (`SizesHomeSlider`) để trình duyệt lấy OTF 1600/1920, không kéo file Large nhỏ lên full khung.
 - Tôn trọng `prefers-reduced-motion` với hover/animation (desktop hover OK khi cho phép motion).
-- Slider: LCP Medium + `SrcSetBetween(Medium, Large)`; dots dưới viewport (không đè slide); slide đầu `fetchpriority=high`.
+- Ảnh chính: `<shop-img profile="home-slider|slider|gallery|card|blog-card|post-cover">` — srcset/`sizes` theo profile; OTF WebP retina khi có original (`MediaOriginalLookup`). Không AVIF. LCP preload khớp Hero/gallery. Dots slider dưới viewport; slide/ảnh đầu `fetchpriority=high`.
+- Card SP (desktop ≥992): hover đổi sang ảnh gallery khác ảnh chính (`ProductCardMedia`, class `shop-card__alt`, fade ~0.55s) và vệt sáng chéo trên `::after` của `.shop-card__media` (transition `transform`, không keyframe). Không có ảnh phụ thì chỉ quét sáng. Quét sáng là hover chủ động — không tắt bằng `prefers-reduced-motion`.
 - Font: Be Vietnam + Cormorant + Font Awesome đều không chặn (`media=print` → `onload`).
 - FOUC: `_ShopLayout` / `_ShopAdsLayout` — inline nền `#fff` + chữ `#2b2622` ngay đầu `<head>`, nạp `shop.css` (hoặc ads CSS) sớm trước font/meta phụ. Không Turbo/HTMX.
 - JS shop: `defer`. Below-fold home: `content-visibility: auto`.
 - Slider sản phẩm: fit media bằng contain / đúng tỷ lệ — không kéo giãn full bừa.
 - Product gallery: click ảnh to → lightbox quẹt được; desktop hover ô vuông loupe zoom nhẹ; thumb ≤4 grid, >4 `shop-thumbs--strip` kéo ngang (giữ cỡ ~4/ô).
 - Review SP: tóm tắt sao cạnh giá (`#khach-hang-noi-gi`); section “Khách hàng nói gì” ngay dưới gallery/buy (trước mô tả); grid ảnh/quote + badge; form gửi trong `<details>` phụ.
-- SP `HidePrice` / giá ≤ 0: card “Liên hệ”; chi tiết: nhãn giá đỏ đô (không khung), `ShortDescription` → `ProductSpecs` key-value, CTA chính Gọi (đỏ đô) + Zalo/FB outline 2 cột, trust bullets. Float Zalo hiện số hotline (`SiteContact`). Gallery thumb căn full width stage, active/hover viền gold. Deploy: `ProductSchema` bật HidePrice toàn bộ **một lần** (`Products.HidePriceAll.v1`) — không ghi đè sau khi Admin chỉnh từng SP.
-- Trang Giới thiệu `/gioi-thieu`: Razor `Pages/Shop/About` (khung ảnh) + nội dung qua HtmlBlock `about-*` (seed 1 lần, Admin sửa). Gallery ảnh từ Media.
+- SP `HidePrice` / giá ≤ 0: card không hiện giá hay chữ “Liên hệ”, tên SP đậm hơn (`.shop-card--name`). Chi tiết: nhãn giá đỏ đô (không khung), `ShortDescription` → `ProductSpecs` key-value, CTA chính Gọi (đỏ đô) + Zalo/FB outline 2 cột, trust bullets. Typography chi tiết: H1 Cormorant ~22–32; giá/ask ~18–24 bold; H2 specs/mô tả ~16–20/600; body/specs 15/400 lh 1.6; CTA gọi 16/700 uppercase; trust 13–14 `#555` + ✓ gold. Float Zalo hiện số hotline (`SiteContact`). Gallery thumb căn full width stage, active/hover viền gold. Deploy: `ProductSchema` bật HidePrice toàn bộ **một lần** (`Products.HidePriceAll.v1`) — không ghi đè sau khi Admin chỉnh từng SP.
+- Trang Giới thiệu `/gioi-thieu`: Razor `Pages/Shop/About` render `CustomPages` slug `gioi-thieu` (`ExpandAsync`). Nội dung HTML + ảnh trong Content trang tĩnh; seed `AboutPageSeed` (bump `About.PageContent.v*`). Ảnh Large từ nguồn WP / media `trang`.
 - Media soft-delete (Thùng rác): `MediaTrashFilter` — không dùng URL đã xóa khi render HtmlBlock / Content / mô tả SP (`ExpandAsync`/`ScrubHtml`), OG/ảnh cover About–Blog–Product. Invalidate khi xóa/khôi phục media.
 - HtmlBlock (`Component.InvokeAsync("HtmlBlock", …)`): HTML/CSS/JS sửa được trong DB; style scoped nằm trong block khi Admin cần chỉnh (vd. YouTube facade).
 
@@ -36,5 +39,6 @@ alwaysApply: false
 - Trang shop dùng `Layout = "_ShopLayout"`. Độ rộng prose/nội dung thống nhất với trang tĩnh hiện có.
 - Ảnh: dùng `MediaStorage` / helper URL kích thước; tránh hotlink remote khi đã có media local.
 - Logo site (header/footer/ads bar): `MediaSize.Medium` (Max). Không `Thumb`/`Icon` (crop vuông). Không `MediaDynamicUrls` cho logo — path original thường lệch folder → 404 → fallback chữ.
-- Banner/slider: chỉ Medium..Large trong srcset (`SrcSetBetween`) — bỏ Thumb/Icon crop vuông.
+- Banner/slider: `SrcSetHero` (Medium..Large + OTF retina) — bỏ Thumb/Icon crop vuông. Gallery SP: `SrcSetDetail` (+ Original 2400w).
+- Card SP: `<shop-img profile="card">` Medium + srcset Thumb→Medium (`SizesProductCard`). Blog card: `blog-card` Medium→Large. Cover bài: `post-cover` Large + OTF khi có original.
 - Favicon + Open Graph: partial `_OpenGraphMeta` (shop + LP Ads). Absolute `og:image` (Large), `og:image:width/height` 1200×630, `secure_url` khi https, `og:locale=vi_VN`. Trang set `ViewData["OgImage"]` / `OgType`; mặc định site `OgImageUrl` / Logo. Ảnh chia sẻ nên ≈1200×630, dưới 1MB.

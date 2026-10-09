@@ -55,6 +55,10 @@ public class Product : ISoftDeletable
 
     public List<ProductImage> Images { get; set; } = [];
 
+    /// <summary>Ảnh gallery khác ảnh chính — chỉ dùng hover card, không lưu DB.</summary>
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public string? CardHoverImageUrl { get; set; }
+
     public List<ProductReview> Reviews { get; set; } = [];
 
     public List<OrderItem> OrderItems { get; set; } = [];

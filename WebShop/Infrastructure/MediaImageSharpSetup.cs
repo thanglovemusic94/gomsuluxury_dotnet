@@ -15,10 +15,19 @@ namespace WebShop.Infrastructure;
 public static class MediaImageSharpSetup
 {
     public const string CacheFolderName = "is-cache";
-    public const int MaxWidth = 1600;
-    public const int MaxHeight = 1600;
+    /// <summary>Retina hero/gallery OTF (CSS ~960px × 2).</summary>
+    public const int MaxWidth = 1920;
+    public const int MaxHeight = 1920;
     public const int MinDimension = 16;
     public const int DefaultQuality = 70;
+    /// <summary>OTF WebP quality — Admin → Cấu hình (<c>Media.OtfQuality</c>), default 85.</summary>
+    public static int OtfQuality { get; set; } = 85;
+    /// <summary>Alias for hero OTF helpers.</summary>
+    public static int HeroQuality
+    {
+        get => OtfQuality;
+        set => OtfQuality = value;
+    }
 
     private static readonly HashSet<string> AllowedFormats = new(StringComparer.OrdinalIgnoreCase)
     {

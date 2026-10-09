@@ -25,6 +25,10 @@ public static class MediaDynamicUrls
         if (string.IsNullOrWhiteSpace(original))
             return url;
 
+        // Only ImageSharp.Web pipeline — skip remote / non-upload paths.
+        if (!original.StartsWith("/uploads/originals/", StringComparison.OrdinalIgnoreCase))
+            return url;
+
         width = Math.Clamp(width, MediaImageSharpSetup.MinDimension, MediaImageSharpSetup.MaxWidth);
         quality ??= MediaImageSharpSetup.DefaultQuality;
         quality = Math.Clamp(quality.Value, 30, 90);
@@ -45,6 +49,20 @@ public static class MediaDynamicUrls
         });
 
         return original + qs.ToUriComponent();
+    }
+
+    /// <summary>OTF WebP at hero quality for sharp main images (retina).</summary>
+    public static string Hero(string? url, int width) =>
+        For(url, width, format: "webp", quality: MediaImageSharpSetup.HeroQuality, resizeMode: "max");
+
+    /// <summary>OTF from a known OriginalUrl (skip path guessing).</summary>
+    public static string HeroFromOriginal(string? originalUrl, int width)
+    {
+        if (string.IsNullOrWhiteSpace(originalUrl)
+            || !originalUrl.StartsWith("/uploads/originals/", StringComparison.OrdinalIgnoreCase))
+            return string.Empty;
+
+        return For(originalUrl, width, format: "webp", quality: MediaImageSharpSetup.HeroQuality, resizeMode: "max");
     }
 
     public static string ToOriginalPath(string url)

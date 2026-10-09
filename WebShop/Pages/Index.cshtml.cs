@@ -6,7 +6,7 @@ using WebShop.Models;
 
 namespace WebShop.Pages;
 
-public class IndexModel(AppDbContext db, ShopStore shop) : PageModel
+public class IndexModel(AppDbContext db, ShopStore shop, MediaOriginalLookup originals) : PageModel
 {
     public string SiteName { get; private set; } = "WebShop";
 
@@ -33,10 +33,11 @@ public class IndexModel(AppDbContext db, ShopStore shop) : PageModel
         Slides = await ShopSlides.LoadAsync(db);
         if (Slides.Count > 0)
         {
-            // LCP: Medium..Large (Max) — không Thumb crop vuông.
-            ViewData["LcpImage"] = MediaUrls.For(Slides[0].ImageUrl, MediaSize.Medium);
-            ViewData["LcpImageSrcSet"] = MediaUrls.SrcSetBetween(Slides[0].ImageUrl, MediaSize.Medium, MediaSize.Large);
-            ViewData["LcpImageSizes"] = "(max-width: 991px) 100vw, min(920px, calc(100vw - 280px))";
+            // LCP: Large + OTF retina srcset (không Thumb crop vuông).
+            var lcpUrl = Slides[0].ImageUrl;
+            ViewData["LcpImage"] = MediaUrls.HeroSrc(lcpUrl);
+            ViewData["LcpImageSrcSet"] = MediaUrls.SrcSetHero(lcpUrl, originals.Resolve(lcpUrl));
+            ViewData["LcpImageSizes"] = MediaUrls.SizesHomeSlider;
             ViewData["OgImage"] = Slides[0].ImageUrl;
         }
 
@@ -47,8 +48,9 @@ public class IndexModel(AppDbContext db, ShopStore shop) : PageModel
         Products = await db.Products.AsNoTracking()
             .WhereListedOnShop()
             .OrderByDescending(item => item.CreatedAt)
-            .Take(8)
+            .Take(10)
             .ToListAsync();
+        await ProductCardMedia.AttachHoverImagesAsync(db, Products);
 
         GiftProducts = await LoadGiftProductsAsync();
         if (GiftProducts.Count > 0)
@@ -57,7 +59,7 @@ public class IndexModel(AppDbContext db, ShopStore shop) : PageModel
         Posts = await db.Posts.AsNoTracking()
             .Where(item => item.IsPublished)
             .OrderByDescending(item => item.CreatedAt)
-            .Take(3)
+            .Take(4)
             .ToListAsync();
     }
 
@@ -77,7 +79,10 @@ public class IndexModel(AppDbContext db, ShopStore shop) : PageModel
                 .Take(4)
                 .ToListAsync();
             if (fromCat.Count > 0)
+            {
+                await ProductCardMedia.AttachHoverImagesAsync(db, fromCat);
                 return fromCat;
+            }
         }
 
         var slugs = GiftLandingSeed.FallbackCategorySlugs;
@@ -88,7 +93,10 @@ public class IndexModel(AppDbContext db, ShopStore shop) : PageModel
             .Take(4)
             .ToListAsync();
         if (fallback.Count > 0)
+        {
+            await ProductCardMedia.AttachHoverImagesAsync(db, fallback);
             return fallback;
+        }
 
         return Products.Take(4).ToList();
     }

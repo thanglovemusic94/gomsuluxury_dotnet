@@ -6,7 +6,7 @@ using WebShop.Infrastructure;
 
 namespace WebShop.Pages.Shop;
 
-public class ContentPageModel(AppDbContext db, MediaTrashFilter trash) : PageModel
+public class ContentPageModel(AppDbContext db, HtmlBlockService blocks, MediaTrashFilter trash) : PageModel
 {
     public Models.CustomPage? PageContent { get; private set; }
 
@@ -23,7 +23,8 @@ public class ContentPageModel(AppDbContext db, MediaTrashFilter trash) : PageMod
         if (PageContent is null)
             return NotFound();
 
-        BodyHtml = await trash.ScrubHtmlAsync(PageContent.Content);
+        // Expand {{ block:key }} shortcodes (same as blog / product description).
+        BodyHtml = await blocks.ExpandAsync(PageContent.Content);
         ViewData["Title"] = PageContent.MetaTitle ?? PageContent.Title;
         ViewData["Description"] = PageContent.MetaDescription;
         ViewData["OgType"] = "article";

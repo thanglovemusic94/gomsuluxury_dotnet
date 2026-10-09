@@ -19,10 +19,10 @@
 									<a href="@item.Url">
 										@if (!string.IsNullOrWhiteSpace(item.IconUrl))
 										{
-											<img src="@MediaUrls.For(item.IconUrl, MediaSize.Icon)"
+											<img src="@MediaUrls.For(item.IconUrl, MediaSize.Thumb)"
 											     alt=""
-											     width="38"
-											     height="38"
+											     width="48"
+											     height="48"
 											     loading="lazy"
 											     decoding="async" />
 										}
@@ -56,19 +56,15 @@
 									}
 									@foreach (var slide in slides)
 									{
-										@* Medium..Large (Max) — không Thumb crop vuông *@
-										var slideSrc = MediaUrls.For(slide.ImageUrl, MediaSize.Medium);
 										<div class="shop-slider__slide">
 											<a href="@slide.LinkUrl">
-												<img src="@slideSrc"
-												     srcset="@MediaUrls.SrcSetBetween(slide.ImageUrl, MediaSize.Medium, MediaSize.Large)"
-												     sizes="(max-width: 991px) 100vw, min(920px, calc(100vw - 280px))"
-												     alt="@slide.Alt"
-												     width="1200"
-												     height="675"
-												     loading="@(first ? "eager" : "lazy")"
-												     fetchpriority="@(first ? "high" : "auto")"
-												     decoding="async" />
+												<shop-img src="@slide.ImageUrl"
+												          profile="home-slider"
+												          alt="@slide.Alt"
+												          width="1600"
+												          height="900"
+												          loading="@(first ? "eager" : "lazy")"
+												          fetch-priority="@(first ? "high" : "auto")" />
 											</a>
 										</div>
 										first = false;

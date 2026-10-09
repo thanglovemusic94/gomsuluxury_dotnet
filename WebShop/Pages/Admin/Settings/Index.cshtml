@@ -182,6 +182,82 @@
 <div class="space-10"></div>
 
 <div class="widget-box">
+	<div class="widget-header">
+		<h4 class="widget-title">
+			<i class="ace-icon fa fa-picture-o"></i>
+			Ảnh / Media (kích thước &amp; chất lượng)
+		</h4>
+	</div>
+	<div class="widget-body">
+		<div class="widget-main">
+			<p class="help-block">
+				Áp dụng ngay cho <strong>ảnh upload mới</strong> và OTF (<code>?width=&amp;format=webp</code>).
+				Ảnh cũ giữ bản cũ cho đến khi tạo lại tối ưu. Srcset shop dùng đúng số px bên dưới.
+			</p>
+			<form method="post" asp-page-handler="Media" class="form-horizontal">
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Icon (px)</label>
+					<div class="col-sm-3">
+						<input asp-for="Media.IconWidth" type="number" min="32" max="256" class="form-control" />
+						<span class="help-block">Crop vuông — menu / danh mục.</span>
+					</div>
+					<label class="col-sm-2 control-label">Thumb (px)</label>
+					<div class="col-sm-3">
+						<input asp-for="Media.ThumbWidth" type="number" min="100" max="900" class="form-control" />
+						<span class="help-block">Crop vuông — thumbnail nhỏ.</span>
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Medium (px)</label>
+					<div class="col-sm-3">
+						<input asp-for="Media.MediumWidth" type="number" min="400" max="1600" class="form-control" />
+						<span class="help-block">Giữ tỉ lệ — card / nội dung.</span>
+					</div>
+					<label class="col-sm-2 control-label">Large (px)</label>
+					<div class="col-sm-3">
+						<input asp-for="Media.LargeWidth" type="number" min="800" max="2400" class="form-control" />
+						<span class="help-block">Giữ tỉ lệ — slider / cover.</span>
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">WebP quality</label>
+					<div class="col-sm-3">
+						<input asp-for="Media.WebpQuality" type="number" min="50" max="95" class="form-control" />
+						<span class="help-block">Preset icon→large (50–95). Khuyến nghị 80–85.</span>
+					</div>
+					<label class="col-sm-2 control-label">OTF quality</label>
+					<div class="col-sm-3">
+						<input asp-for="Media.OtfQuality" type="number" min="50" max="95" class="form-control" />
+						<span class="help-block">Resize on-the-fly 1600/1920.</span>
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label">Tạo lại tối ưu</label>
+					<div class="col-sm-9">
+						<label style="font-weight:normal;margin-top:7px;">
+							<input asp-for="RegenerateMedia" type="checkbox" />
+							Tạo lại toàn bộ icon/thumb/medium/large ngay sau khi lưu (có thể mất vài phút)
+						</label>
+						<p class="help-block" style="margin-bottom:0;">
+							Hoặc sau này vào <a href="/Admin/Media">Media</a> → <em>Tạo lại tất cả tối ưu</em>.
+						</p>
+					</div>
+				</div>
+				<div class="clearfix form-actions" style="margin-bottom:0;">
+					<div class="col-sm-offset-3 col-sm-9">
+						<button type="submit" class="btn btn-primary btn-sm">
+							<i class="ace-icon fa fa-check"></i> Lưu cấu hình ảnh
+						</button>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<div class="space-10"></div>
+
+<div class="widget-box">
 	<div class="widget-header"><h4 class="widget-title">Cấu hình khác</h4></div>
 	<div class="widget-body">
 		<div class="widget-main no-padding">

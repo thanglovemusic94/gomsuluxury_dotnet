@@ -12,7 +12,8 @@ alwaysApply: false
 - List: paging qua helper sẵn; thumb list theo token size trong `admin.css` (đổi CSS/Razor cần restart).
 - List → Edit: `tr[data-href]` / `.js-admin-row-link[data-href]` + `admin-list.js` (global layout); click dòng mở Edit/Detail, bỏ qua checkbox/nút/form; Ctrl/⌘+click mở tab mới. Nút **Quay lại**: `ViewData["AdminBackHref"]` + partial `_AdminBackLink` trên Edit/Detail.
 - Danh mục: `Category.IsVisible` (Admin Ẩn/Hiện hoặc checkbox Edit). Ẩn → không vào menu/filter shop (kể cả con Menu Header `/danh-muc/...` trong `ShopStore`); sản phẩm chỉ thuộc danh mục ẩn cũng không list (`ShopCatalogQuery.WhereListedOnShop`). Schema: `CategorySchema.EnsureAsync`.
-- Soft-delete + bulk: checkbox qua `admin-bulk.js` và `AdminContentDelete` — soft vào Thùng rác; hard chỉ nơi Trash đã làm. Nạp `admin-bulk.js` khi `ViewData["AdminAssets"]` chứa `bulk`.
+- Soft-delete + bulk: checkbox qua `admin-bulk.js` và `AdminContentDelete` — soft vào Thùng rác; hard chỉ nơi Trash đã làm. Nạp `admin-bulk.js` khi `ViewData["AdminAssets"]` chứa `bulk`. Thùng rác: chọn nhiều (`keys`=`Type|Id`) — bulk Khôi phục / Xóa cứng. SP còn đơn/đánh giá: list SP vẫn chặn hard; Trash cảnh báo rồi cho xóa tiếp (`ProductDeleteGuard.ClearRelatedAsync` gỡ dòng đơn + đánh giá).
+- Nhật ký (`/Admin/AuditLogs`): chọn nhiều → xóa cứng bản ghi log (không thùng rác; không dùng modal trash/hard của `js-admin-bulk-form`).
 - Tồn kho: trừ/hoàn qua `StockInventory` (UPDATE atomic `Stock >= qty`); Checkout / Landing / Livestream / Admin tạo·hủy đơn dùng transaction.
 - Đánh giá SP: Admin → Sản phẩm → Edit thêm curated (`Source` Livestream/Inbox/Web, ảnh tuỳ chọn, duyệt). Schema `ProductReviewSchema`. Chỉ nội dung thật; shop form public thu gọn secondary. Ảnh: `.js-media-paste` + `WebShopEditor.bindMediaPasteTargets()` — Ctrl+V / kéo thả upload qua `/Admin/Media?handler=UploadAjax`.
 - Giá SP: `HidePrice` = ẩn giá trên shop (vẫn lưu giá Admin) → CTA Gọi / Zalo / Facebook (`ProductPricing.ShowContactOnly`). Giá ≤ 0 cũng coi như liên hệ. Schema `ProductSchema`.
@@ -28,10 +29,12 @@ alwaysApply: false
 ## Trang tĩnh & SEO
 
 - Lưu slug: `PagePaths.NormalizeSlug` + `IsReserved`. Placeholder/help hiển thị `/{slug}`.
+- Content trang tĩnh (`Content.cshtml`): `HtmlBlockService.ExpandAsync` — shortcode `{{ block:key }}` như blog/mô tả SP (kèm scrub media trash).
 - Tái dùng `_SeoFields` / `SeoInput` cho meta (counter, preview Desktop/Mobile, fallback). Điểm SEO: `SeoScoreCalculator` checklist tự động, badge chỉ đọc. Từ khóa: chip multi-KW (cụm đầu = chính chấm điểm; phụ highlight + bonus nhẹ). Gemini chỉ gợi ý chữ.
 - Landing Ads: Admin → **Landing Page** (`/Admin/Landings`); URL `/lp/{slug}`; schema `LandingPageSchema.EnsureAsync`.
 - LP Ads P1: Tracking (`MetaPixelId` / `TikTokPixelId` / `HeadScripts` / `BodyScripts`); `OfferEndsAt` countdown; `LandingPageProduct.AdsPrice`; list cột Tracking + số đơn (`Order.Source=LP:{slug}`); SEO block collapsed (LP `noindex`).
 - Index toàn site: Admin → Cấu hình → checkbox “Cho phép index” (`SiteSeoService` / `Seo.AllowIndexing`). Không hard-code chỉ trong appsettings.
+- Media width/quality: Admin → Cấu hình → form Ảnh/Media (`MediaSettingsService` / khóa `Media.*`). `appsettings` Media chỉ seed mặc định. Đổi xong: upload mới + OTF áp dụng ngay; ảnh cũ cần regenerate (checkbox form hoặc Media → Tạo lại tất cả).
 - Role Viewer: banner “chỉ xem” + `admin--readonly`; không dựa vào ẩn nút thôi — server chặn POST `/Admin`.
 - Schema org: form Doanh nghiệp trong Cấu hình; Product/Article schema tự động — không bắt biên tập viên nhập JSON-LD.
 

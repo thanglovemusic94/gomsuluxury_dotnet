@@ -9,7 +9,8 @@
     "RemoteImageImport": false
   },
   "Media": {
-    "WebpQuality": 78
+    "WebpQuality": 85,
+    "OtfQuality": 85
   },
   "Seo": {
     "AllowIndexing": false

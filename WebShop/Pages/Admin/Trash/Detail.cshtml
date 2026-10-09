@@ -56,13 +56,29 @@
 					<input type="hidden" name="id" value="@Model.Id" />
 					<button type="submit" class="btn btn-success btn-block"><i class="fa fa-undo"></i> Khôi phục</button>
 				</form>
-				<form method="post" action="/Admin/Trash?handler=HardDelete" onsubmit="return confirm('Xóa vĩnh viễn? Không hoàn tác được.');" style="margin-bottom:8px;">
+				@{
+					var hardConfirm = string.IsNullOrWhiteSpace(Model.HardDeleteWarning)
+						? "Xóa vĩnh viễn? Không hoàn tác được."
+						: "Sản phẩm còn liên kết đơn/đánh giá. Vẫn xóa cứng? Các dòng đơn và đánh giá liên quan sẽ bị gỡ — không hoàn tác.";
+					var hardLabel = string.IsNullOrWhiteSpace(Model.HardDeleteWarning) ? "Xóa cứng" : "Vẫn xóa cứng";
+				}
+				@if (!string.IsNullOrWhiteSpace(Model.HardDeleteWarning))
+				{
+					<div class="alert alert-warning" style="margin-bottom:10px;font-size:12px;">
+						@Model.HardDeleteWarning
+					</div>
+				}
+				<form method="post" action="/Admin/Trash?handler=HardDelete"
+				      onsubmit="return confirm('@hardConfirm');"
+				      style="margin-bottom:8px;">
 					@Html.AntiForgeryToken()
 					<input type="hidden" name="type" value="@Model.Type" />
 					<input type="hidden" name="id" value="@Model.Id" />
-					<button type="submit" class="btn btn-danger btn-block"><i class="fa fa-times"></i> Xóa cứng</button>
+					<button type="submit" class="btn btn-danger btn-block">
+						<i class="fa fa-times"></i> @hardLabel
+					</button>
 				</form>
-				<a class="btn btn-default btn-block" href="/Admin/Trash">Quay lại thùng rác</a>
+				<a class="btn btn-default btn-block" href="/Admin/Trash" style="margin-top:8px;">Quay lại thùng rác</a>
 			</div></div>
 		</div>
 

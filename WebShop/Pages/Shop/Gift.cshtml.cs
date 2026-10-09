@@ -81,6 +81,7 @@ public class GiftModel(AppDbContext db, ShopStore shop) : PageModel
                 .ToListAsync();
         }
 
+        await ProductCardMedia.AttachHoverImagesAsync(db, products);
         Products = products;
         if (products.Count > 0 && !string.IsNullOrWhiteSpace(products[0].ImageUrl))
         {
