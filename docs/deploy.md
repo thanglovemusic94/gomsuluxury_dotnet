@@ -144,6 +144,8 @@ sudo ln -s /etc/nginx/sites-available/webshop /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
+Site mẫu đã có `server_tokens off` trong `server { }`. VPS đang chạy (kể cả block SSL do certbot thêm, hoặc host `sslip.io`) cần cùng dòng đó trong từng `server { }` **hoặc một lần** trong `http { }` của `/etc/nginx/nginx.conf`, rồi `sudo nginx -t && sudo systemctl reload nginx`. Header `Server` còn chữ `nginx`, mất số phiên bản và `(Ubuntu)`.
+
 3. Cấp chứng chỉ Let’s Encrypt:
 
 ```bash
