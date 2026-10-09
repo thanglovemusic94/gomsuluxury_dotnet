@@ -24,13 +24,30 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     {
         options.LoginPath = "/Login";
         options.AccessDeniedPath = "/AccessDenied";
-        options.Cookie.Name = "WebShop.Auth";
+        options.Cookie.Name = "gomsuluxury.Auth";
         options.Cookie.HttpOnly = true;
         options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
         options.SlidingExpiration = true;
         // Mặc định cho cookie persistent (tick “Ghi nhớ đăng nhập”); session cookie khi không tick.
         options.ExpireTimeSpan = TimeSpan.FromDays(30);
     });
+builder.Services.Configure<Microsoft.AspNetCore.Mvc.CookieTempDataProviderOptions>(options =>
+{
+    options.Cookie.Name = "gomsuluxury.Td";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+});
+builder.Services.AddAntiforgery(options =>
+{
+    options.Cookie.Name = "gomsuluxury.Af";
+    options.FormFieldName = "gomsu_token";
+    options.HeaderName = "X-Gomsu-Token";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+});
+builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
 builder.Services.AddAuthorization();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<CartService>();

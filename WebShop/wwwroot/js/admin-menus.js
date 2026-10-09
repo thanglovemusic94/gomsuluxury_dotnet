@@ -5,7 +5,7 @@
 	if (!root || typeof Sortable === "undefined") return;
 
 	var statusEl = document.getElementById("menu-tree-status");
-	var tokenInput = document.querySelector("#menu-reorder-af input[name='__RequestVerificationToken']");
+	var tokenInput = document.querySelector("#menu-reorder-af input[name='gomsu_token']");
 	var saveTimer = null;
 	var sortables = [];
 
@@ -36,7 +36,7 @@
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
-				"RequestVerificationToken": tokenInput ? tokenInput.value : ""
+				"X-Gomsu-Token": tokenInput ? tokenInput.value : ""
 			},
 			body: JSON.stringify(payload),
 			credentials: "same-origin"

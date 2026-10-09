@@ -11,7 +11,7 @@ namespace WebShop.Pages;
 
 public class LoginModel(AppDbContext db) : PageModel
 {
-    public const string RememberUserCookie = "WebShop.RememberUser";
+    public const string RememberUserCookie = "gomsuluxury.RememberUser";
 
     [BindProperty]
     public LoginInput Input { get; set; } = new();

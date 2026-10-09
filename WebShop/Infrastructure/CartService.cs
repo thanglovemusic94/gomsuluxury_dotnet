@@ -19,7 +19,7 @@ public class CartLine
 
 public class CartService(IHttpContextAccessor http)
 {
-    private const string Key = "WebShop.Cart";
+    private const string Key = "gomsuluxury.Cart";
 
     public IReadOnlyList<CartLine> Get()
     {

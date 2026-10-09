@@ -29,7 +29,7 @@ Stack: ASP.NET Core 8 Razor Pages + EF Core SQLite. Thư mục app: `WebShop/`. 
 
 ## Đăng nhập
 
-- “Ghi nhớ đăng nhập” = cookie phiên ~30 ngày + nhớ **tên đăng nhập** (cookie `WebShop.RememberUser`). Không lưu mật khẩu plaintext.
+- “Ghi nhớ đăng nhập” = cookie phiên ~30 ngày + nhớ **tên đăng nhập** (cookie `gomsuluxury.RememberUser`). Không lưu mật khẩu plaintext. Cookie phía trình duyệt dùng tiền tố `gomsuluxury` (`Auth`, `Cart`, `Td`, `Af`), field form `gomsu_token`, header `X-Gomsu-Token`. Không để tên mặc định `.AspNetCore` / `WebShop` trên cookie hay HTML.
 - Không tick = session cookie; xóa cookie tên đăng nhập.
 - Form login: checkbox native (không dùng class ACE `ace` vì CSS ẩn input). Có `autocomplete` để trình duyệt gợi ý mật khẩu.
 - Đăng xuất vẫn phải login lại; “ghi nhớ” giúp khỏi đăng nhập lại sau khi **đóng trình duyệt**.

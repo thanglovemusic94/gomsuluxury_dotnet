@@ -23,7 +23,7 @@
 	var uploadProgress = document.getElementById("mediaUploadProgress");
 	var uploadBar = document.getElementById("mediaUploadBar");
 	var uploadText = document.getElementById("mediaUploadText");
-	var tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+	var tokenInput = document.querySelector('input[name="gomsu_token"]');
 	var token = tokenInput ? tokenInput.value : "";
 	var toastTimer;
 	var activeCard = null;
@@ -271,7 +271,7 @@
 			if (usageBtn.getAttribute("data-loaded") === "1") return;
 			panel.innerHTML = "Đang tải…";
 			fetch("/Admin/Media?handler=Usage&id=" + encodeURIComponent(id), {
-				headers: { Accept: "application/json", RequestVerificationToken: token }
+				headers: { Accept: "application/json", "X-Gomsu-Token": token }
 			})
 				.then(function (r) { return r.json(); })
 				.then(function (items) {
@@ -322,14 +322,14 @@
 			}
 			var file = list[done];
 			var body = new FormData();
-			body.append("__RequestVerificationToken", token);
+			body.append("gomsu_token", token);
 			body.append("file", file);
 			body.append("folder", folder);
 			body.append("alt", alt);
 			body.append("Type", "Images");
 			fetch("/Admin/Media?handler=UploadAjax", {
 				method: "POST",
-				headers: { RequestVerificationToken: token },
+				headers: { "X-Gomsu-Token": token },
 				body: body
 			})
 				.then(function (r) { return r.json(); })
@@ -423,11 +423,11 @@
 			seoBtn.disabled = true;
 			if (seoStatus) seoStatus.textContent = "Đang phân tích...";
 			var body = new URLSearchParams();
-			body.append("__RequestVerificationToken", token);
+			body.append("gomsu_token", token);
 			ids.forEach(function (id) { body.append("ids", id); });
 			fetch("/Admin/Media?handler=PreviewSeo", {
 				method: "POST",
-				headers: { RequestVerificationToken: token },
+				headers: { "X-Gomsu-Token": token },
 				body: body
 			}).then(function (r) { return r.json(); }).then(function (rows) {
 				seoRows.innerHTML = "";
@@ -510,11 +510,11 @@
 			applyBtn.disabled = true;
 			if (seoStatus) seoStatus.textContent = "Đang áp dụng...";
 			var body = new URLSearchParams();
-			body.append("__RequestVerificationToken", token);
+			body.append("gomsu_token", token);
 			body.append("payload", JSON.stringify(payload));
 			fetch("/Admin/Media?handler=ApplySeo", {
 				method: "POST",
-				headers: { RequestVerificationToken: token },
+				headers: { "X-Gomsu-Token": token },
 				body: body
 			}).then(function (r) { return r.json(); }).then(function (result) {
 				showToast(esc(result.message || "Đã xong."));

@@ -343,7 +343,7 @@
 				return el.value || '';
 			}
 			function token() {
-				var el = document.querySelector('input[name="__RequestVerificationToken"]');
+				var el = document.querySelector('input[name="gomsu_token"]');
 				return el ? el.value : '';
 			}
 			function listHtml(items) {
@@ -359,7 +359,7 @@
 				btn.disabled = true;
 
 				var data = new FormData();
-				data.append('__RequestVerificationToken', token());
+				data.append('gomsu_token', token());
 				data.append('Name', field('Input.Name'));
 				data.append('Slug', field('Input.Slug'));
 				data.append('FocusKeyword', field('Seo.SeoFocusKeyword'));

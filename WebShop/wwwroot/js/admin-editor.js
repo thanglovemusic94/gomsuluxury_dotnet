@@ -190,7 +190,7 @@ window.WebShopEditor = (function () {
 	}
 
 	function antiforgeryToken() {
-		var el = document.querySelector('input[name="__RequestVerificationToken"]');
+		var el = document.querySelector('input[name="gomsu_token"]');
 		return el ? el.value : '';
 	}
 
@@ -204,14 +204,14 @@ window.WebShopEditor = (function () {
 		var name = file.name && file.name !== 'image.png'
 			? file.name
 			: ('paste-' + Date.now() + '.png');
-		body.append('__RequestVerificationToken', token);
+		body.append('gomsu_token', token);
 		body.append('file', file, name);
 		body.append('folder', folder || 'san-pham');
 		body.append('alt', '');
 		body.append('Type', 'Images');
 		fetch('/Admin/Media?handler=UploadAjax', {
 			method: 'POST',
-			headers: { RequestVerificationToken: token },
+			headers: { "X-Gomsu-Token": token },
 			body: body
 		})
 			.then(function (r) { return r.json(); })
